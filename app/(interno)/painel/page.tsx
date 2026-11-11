@@ -8,6 +8,8 @@ import { formatarData } from "@/lib/datas";
 import { SeloPrazo } from "@/components/app/selo-prazo";
 import { PainelRh } from "@/components/app/painel-rh";
 import { PainelSst } from "@/components/app/painel-sst";
+import { PainelSuprimentos } from "@/components/app/painel-suprimentos";
+import { resumoSuprimentos } from "@/modules/contratacoes/painel-suprimentos";
 import { resumoSst } from "@/modules/terceiros/painel-sst";
 import { filaDeAnalise, vencimentosProximos, visitasSolicitadas } from "@/modules/terceiros/analise";
 import { lerParametros } from "@/lib/configuracao";
@@ -28,15 +30,17 @@ export default async function PaginaPainel() {
   const supabase = await criarClienteServidor();
   const ehRh = usuario.papeis.includes("rh");
   const ehSst = usuario.papeis.includes("sst");
+  const ehSuprimentos = temAlgumPapel(usuario.papeis, ["suprimentos", "gerente_suprimentos"]);
   // Quem só é do RH e/ou da segurança do trabalho vê o painel focado no que é dele.
   const focoTerceiros = (ehRh || ehSst) && !temAlgumPapel(usuario.papeis, ["admin", "coordenador_obra", "suprimentos", "gerente_suprimentos", "contratos", "direcao"]);
-  const [abertas, { data: contratacoes }, rh, sst] = await Promise.all([
+  const [abertas, { data: contratacoes }, rh, sst, supr] = await Promise.all([
     etapasEmAberto(),
     supabase.from("contratacoes").select("id, situacao"),
     ehRh
       ? Promise.all([filaDeAnalise(), visitasSolicitadas(), vencimentosProximos(30), lerParametros()]).catch(() => null)
       : Promise.resolve(null),
     ehSst ? resumoSst().catch(() => null) : Promise.resolve(null),
+    ehSuprimentos ? resumoSuprimentos().catch(() => null) : Promise.resolve(null),
   ]);
   const emAndamento = (contratacoes ?? []).filter((c) => c.situacao === "em_andamento").length;
   const liberadas = (contratacoes ?? []).filter((c) => c.situacao === "liberada").length;
@@ -67,6 +71,7 @@ export default async function PaginaPainel() {
         </section>
       )}
 
+      {supr && <PainelSuprimentos {...supr} ehGerente={usuario.papeis.includes("gerente_suprimentos")} />}
       {rh && <PainelRh fila={rh[0]} visitas={rh[1].length} vencendo={rh[2].vencendo} vencidos={rh[2].vencidos} prazoUteis={rh[3].prazoAnaliseRh.uteis} />}
       {sst && <PainelSst {...sst} />}
 
