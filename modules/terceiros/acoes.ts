@@ -10,6 +10,7 @@ import { criarClienteAdmin } from "@/lib/supabase/admin";
 import { envPublico } from "@/lib/env";
 import { cnpjValido, cpfValido, somenteDigitos } from "@/lib/documentos-br";
 import { mensagemDeErro, type EstadoFormulario } from "@/lib/formulario";
+import { reenviarAcesso } from "@/modules/acesso/reenvio";
 import { documentosDaEmpresa, documentosDoVinculo } from "./consultas";
 import { podeEnviarParaAnalise } from "./dominio/documentos";
 
@@ -69,6 +70,20 @@ export async function convidarEmpresa(_: EstadoFormulario, dados: FormData): Pro
   revalidatePath("/terceiros/empresas");
   if (erroVinculo) return { erro: mensagemDeErro(erroVinculo, "Convite enviado, mas o acesso não foi ligado à empresa.") };
   return { ok: erroConvite ? `Empresa cadastrada e ligada ao acesso que ${email} já tinha.` : `Empresa cadastrada. Convite enviado para ${email}.` };
+}
+
+/** Reenvia o e-mail de acesso ao portal para os responsáveis da empresa. */
+export async function reenviarConviteEmpresa(empresaId: string): Promise<EstadoFormulario> {
+  await exigirPapel("admin", "suprimentos", "gerente_suprimentos", "contratos");
+  if (!z.uuid().safeParse(empresaId).success) return { erro: "Empresa inválida." };
+  const supabase = await criarClienteServidor();
+  const { data, error } = await supabase.from("empresa_usuarios").select("usuario_id").eq("empresa_id", empresaId);
+  if (error) return { erro: mensagemDeErro(error, "Não foi possível carregar o acesso da empresa.") };
+  if (!data.length) return { erro: "Esta empresa ainda não tem acesso ao portal." };
+  const resultados = [];
+  for (const { usuario_id } of data) resultados.push(await reenviarAcesso(usuario_id));
+  const falha = resultados.find((r) => r.erro);
+  return falha ?? { ok: resultados.map((r) => r.ok).join(" ") };
 }
 
 // Portal: arquivos (empresa, pessoa, foto, visita) ----------------------------------------

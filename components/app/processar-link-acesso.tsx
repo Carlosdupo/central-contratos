@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { criarClienteNavegador } from "@/lib/supabase/browser";
 
@@ -22,7 +23,7 @@ export function ProcessarLinkAcesso() {
 
     // Tira os tokens da barra de endereço antes de qualquer outra coisa.
     window.history.replaceState(null, "", window.location.pathname + window.location.search);
-    const expirado = "O link expirou ou já foi usado. Peça um novo.";
+    const expirado = "O link expirou ou já foi usado.";
 
     (async () => {
       if (falhou || !accessToken || !refreshToken) return setMensagem(expirado);
@@ -35,5 +36,9 @@ export function ProcessarLinkAcesso() {
   }, [router]);
 
   if (!mensagem) return null;
-  return <p role="alert" className="rounded-xl bg-warn-soft px-3.5 py-2.5 text-[13px] text-warn">{mensagem}</p>;
+  return (
+    <p role="alert" className="rounded-xl bg-warn-soft px-3.5 py-2.5 text-[13px] text-warn">
+      {mensagem} <Link href="/recuperar-senha?novo=1" className="font-semibold underline">Pedir um novo link</Link>
+    </p>
+  );
 }

@@ -4,8 +4,9 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 import { exigirPapel } from "@/modules/acesso/sessao";
 import { PAPEIS, ROTULO_PAPEL } from "@/modules/acesso/papeis";
-import { alterarSituacaoUsuario, salvarObrasDoUsuario, salvarPerfis } from "@/modules/admin/acoes";
+import { alterarSituacaoUsuario, reenviarConviteUsuario, salvarObrasDoUsuario, salvarPerfis } from "@/modules/admin/acoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
+import { criarClienteAdmin } from "@/lib/supabase/admin";
 import { Formulario, Marcador } from "@/components/app/formulario";
 
 export const metadata: Metadata = { title: "Usuário" };
@@ -16,12 +17,15 @@ export default async function PaginaUsuario({ params }: PageProps<"/admin/usuari
   if (!z.uuid().safeParse(id).success) notFound();
 
   const supabase = await criarClienteServidor();
-  const [{ data: usuario }, { data: papeis }, { data: obras }, { data: obrasDoUsuario }] = await Promise.all([
+  const [{ data: usuario }, { data: papeis }, { data: obras }, { data: obrasDoUsuario }, { data: auth }] = await Promise.all([
     supabase.from("usuarios").select("id, nome, email, ativo, tipo").eq("id", id).maybeSingle(),
     supabase.from("usuario_papeis").select("papel").eq("usuario_id", id),
     supabase.from("obras").select("id, codigo, nome, ativa").order("nome"),
     supabase.from("usuario_obras").select("obra_id").eq("usuario_id", id),
+    // Situação do convite vem do Auth (só leitura, depois de conferir o papel admin).
+    criarClienteAdmin().auth.admin.getUserById(id),
   ]);
+  const jaEntrou = !!auth?.user?.last_sign_in_at;
   if (!usuario || usuario.tipo !== "interno") notFound();
 
   const perfis = new Set((papeis ?? []).map((p) => p.papel));
@@ -61,6 +65,22 @@ export default async function PaginaUsuario({ params }: PageProps<"/admin/usuari
                 ))}
               </div>
             </Formulario>
+          )}
+        </section>
+
+        <section className="painel">
+          <div>
+            <h3 className="subtitulo">E-mail de acesso</h3>
+            <p className="mt-1 text-[13px] text-muted-foreground">
+              {jaEntrou
+                ? "A pessoa já entrou no sistema. Se esqueceu a senha, envie um link para ela criar uma nova."
+                : "Convite pendente: a pessoa ainda não entrou. Se o link expirou ou o e-mail se perdeu, envie um novo convite (o anterior deixa de valer)."}
+            </p>
+          </div>
+          {usuario.ativo ? (
+            <Formulario acao={reenviarConviteUsuario.bind(null, usuario.id)} textoBotao={jaEntrou ? "Enviar link de nova senha" : "Reenviar convite"} variante="neutro" />
+          ) : (
+            <p className="text-[13px] text-faint">Reative o usuário para enviar um novo acesso.</p>
           )}
         </section>
 

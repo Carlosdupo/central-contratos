@@ -11,6 +11,8 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarCnpj } from "@/lib/documentos-br";
 import { ListaDocumentosEmpresa } from "@/components/app/lista-documentos-empresa";
 import { SITUACAO_EMPRESA } from "@/modules/terceiros/rotulos";
+import { reenviarConviteEmpresa } from "@/modules/terceiros/acoes";
+import { Formulario } from "@/components/app/formulario";
 
 export const metadata: Metadata = { title: "Empresa" };
 
@@ -33,6 +35,7 @@ export default async function PaginaEmpresa({ params }: PageProps<"/terceiros/em
   // Quem abre arquivos (a RLS confere de novo; ASO só RH/SST).
   const podeAbrir = temAlgumPapel(usuario.papeis, ["admin", "suprimentos", "contratos", "rh", "sst"]);
   const [classe, rotulo] = SITUACAO_EMPRESA[empresa.situacao];
+  const podeReenviar = temAlgumPapel(usuario.papeis, ["admin", "suprimentos", "gerente_suprimentos", "contratos"]) && (acessos ?? []).length > 0;
 
   return (
     <>
@@ -51,6 +54,15 @@ export default async function PaginaEmpresa({ params }: PageProps<"/terceiros/em
         <div><div className="text-xs font-medium text-faint">Contato</div>{empresa.email}{empresa.telefone ? ` · ${empresa.telefone}` : ""}</div>
         <div><div className="text-xs font-medium text-faint">Obras</div>{(obras ?? []).map((o) => (o.obras as { nome: string } | null)?.nome).filter(Boolean).join(", ") || "—"}</div>
         <div><div className="text-xs font-medium text-faint">Acesso ao portal</div>{(acessos ?? []).map((a) => (a.usuarios as { email: string } | null)?.email).filter(Boolean).join(", ") || "—"}</div>
+        {podeReenviar && (
+          <Formulario
+            acao={reenviarConviteEmpresa.bind(null, empresa.id)}
+            textoBotao="Reenviar e-mail de acesso"
+            variante="neutro"
+            className="ml-auto flex items-center"
+            confirmar="Enviar um novo e-mail de acesso ao portal? Se a empresa ainda não entrou, o convite anterior deixa de valer."
+          />
+        )}
       </div>
 
       <section className="painel">

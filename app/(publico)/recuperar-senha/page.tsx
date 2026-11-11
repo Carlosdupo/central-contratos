@@ -5,12 +5,17 @@ import { Campo, FormularioAcesso } from "@/components/app/formulario-acesso";
 
 export const metadata: Metadata = { title: "Recuperar senha" };
 
-export default function PaginaRecuperarSenha() {
+export default async function PaginaRecuperarSenha({ searchParams }: PageProps<"/recuperar-senha">) {
+  const novoLink = (await searchParams).novo === "1";
   return (
     <>
       <div>
-        <h1 className="subtitulo">Recuperar senha</h1>
-        <p className="mt-1 text-[13.5px] text-muted-foreground">Enviamos um link para você criar uma senha nova.</p>
+        <h1 className="subtitulo">{novoLink ? "Pedir novo link de acesso" : "Recuperar senha"}</h1>
+        <p className="mt-1 text-[13.5px] text-muted-foreground">
+          {novoLink
+            ? "Digite o e-mail que recebeu o convite. Enviamos um link novo para você criar a senha."
+            : "Enviamos um link para você criar uma senha nova."}
+        </p>
       </div>
       <FormularioAcesso acao={pedirNovaSenha} textoBotao="Enviar link">
         <Campo id="email" rotulo="E-mail" tipo="email" autoComplete="username" />

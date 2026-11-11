@@ -1,9 +1,10 @@
 "use server";
 
+import { criarClienteAdmin } from "@/lib/supabase/admin";
+import { reenviarAcesso } from "./reenvio";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { envPublico } from "@/lib/env";
 
 import type { EstadoFormulario } from "@/lib/formulario";
 
@@ -42,12 +43,19 @@ export async function pedirNovaSenha(_: EstadoFormulario, dados: FormData): Prom
   const lido = esquemaEmail.safeParse({ email: dados.get("email") });
   if (!lido.success) return { erro: lido.error.issues[0].message };
 
-  const supabase = await criarClienteServidor();
-  await supabase.auth.resetPasswordForEmail(lido.data.email.toLowerCase(), {
-    redirectTo: `${envPublico.NEXT_PUBLIC_SITE_URL}/auth/confirmar?proximo=/definir-senha`,
-  });
+  // Quem ainda não entrou recebe o convite de novo; quem já entrou, o link de nova senha.
+  // Os links funcionam em qualquer navegador (inclusive se a pessoa abrir o e-mail no celular).
+  const { data: usuario } = await criarClienteAdmin()
+    .from("usuarios")
+    .select("id, ativo")
+    .eq("email", lido.data.email.toLowerCase())
+    .maybeSingle();
+  if (usuario?.ativo) {
+    const r = await reenviarAcesso(usuario.id);
+    if (r.erro?.startsWith("Muitos")) return r;
+  }
   // Resposta igual exista ou não a conta.
-  return { ok: "Se o e-mail estiver cadastrado, você vai receber um link para criar uma nova senha." };
+  return { ok: "Se o e-mail estiver cadastrado, você vai receber um link de acesso em alguns minutos. Confira também a caixa de spam." };
 }
 
 // Mesma regra do Supabase Auth (config.toml): 10+ caracteres, maiúscula, minúscula e número.

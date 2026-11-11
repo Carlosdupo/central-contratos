@@ -8,6 +8,7 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
 import { envPublico } from "@/lib/env";
 import { mensagemDeErro, type EstadoFormulario } from "@/lib/formulario";
+import { reenviarAcesso } from "@/modules/acesso/reenvio";
 import { ehChaveParametro, lerParametroDoFormulario, PARAMETROS_SOMENTE_LEITURA } from "./parametros";
 
 // Todas as ações exigem papel admin com verificação em duas etapas (exigirPapel redireciona se faltar).
@@ -47,6 +48,12 @@ export async function convidarUsuario(_: EstadoFormulario, dados: FormData): Pro
   revalidatePath("/admin/usuarios");
   if (erroPapeis) return { erro: `Convite enviado, mas os perfis não foram salvos: ${mensagemDeErro(erroPapeis, "tente pela tela do usuário")}.` };
   return { ok: `Convite enviado para ${lido.data.email}.` };
+}
+
+export async function reenviarConviteUsuario(usuarioId: string): Promise<EstadoFormulario> {
+  await exigirPapel("admin");
+  if (!uuid.safeParse(usuarioId).success) return { erro: "Usuário inválido." };
+  return reenviarAcesso(usuarioId);
 }
 
 export async function salvarPerfis(usuarioId: string, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
