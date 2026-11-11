@@ -36,7 +36,7 @@ export function ListaDocumentosEmpresa({ itens, editavel, podeAbrir }: { itens: 
                   <input name="texto" defaultValue={item.valorTexto ?? ""} placeholder="Nome da contabilidade e telefone" aria-label={item.tipo.nome} className="campo max-w-[360px] py-1.5" />
                 </Formulario>
               ) : (
-                <EnviarArquivo tipo={item.tipo.codigo} regra={item.tipo.regra_validade} competencia={item.competencia} />
+                <EnviarArquivo dono={{ tipo: "empresa" }} tipoDoc={item.tipo.codigo} regra={item.tipo.regra_validade} competencia={item.competencia} />
               ))}
           </div>
         );

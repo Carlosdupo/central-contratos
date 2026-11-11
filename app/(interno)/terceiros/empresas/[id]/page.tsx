@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 import { exigirInterno } from "@/modules/acesso/sessao";
 import { temAlgumPapel } from "@/modules/acesso/papeis";
-import { documentosDaEmpresa } from "@/modules/terceiros/consultas";
+import { documentosDaEmpresa, equipeDaEmpresa } from "@/modules/terceiros/consultas";
+import { linksDasFotos } from "@/modules/terceiros/fotos";
+import { ListaEquipe } from "@/components/app/lista-equipe";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarCnpj } from "@/lib/documentos-br";
 import { ListaDocumentosEmpresa } from "@/components/app/lista-documentos-empresa";
@@ -25,6 +27,8 @@ export default async function PaginaEmpresa({ params }: PageProps<"/terceiros/em
     documentosDaEmpresa(id),
   ]);
   if (!empresa) notFound();
+  const equipe = await equipeDaEmpresa(id);
+  const fotos = await linksDasFotos(equipe.map((m) => m.fotoPath));
 
   // Quem abre arquivos (a RLS confere de novo; ASO só RH/SST).
   const podeAbrir = temAlgumPapel(usuario.papeis, ["admin", "suprimentos", "contratos", "rh", "sst"]);
@@ -52,9 +56,17 @@ export default async function PaginaEmpresa({ params }: PageProps<"/terceiros/em
       <section className="painel">
         <div>
           <h2 className="subtitulo">Documentos da empresa</h2>
-          <p className="mt-1 text-[13px] text-muted-foreground">Toda abertura de arquivo fica registrada. A análise pelo RH entra na próxima fase.</p>
+          <p className="mt-1 text-[13px] text-muted-foreground">Toda abertura de arquivo fica registrada.</p>
         </div>
         <ListaDocumentosEmpresa itens={documentos.itens} editavel={false} podeAbrir={podeAbrir} />
+      </section>
+
+      <section className="painel">
+        <div>
+          <h2 className="subtitulo">Equipe</h2>
+          <p className="mt-1 text-[13px] text-muted-foreground">{equipe.length} pessoa(s). Clique para ver os documentos de cada uma.</p>
+        </div>
+        <ListaEquipe equipe={equipe} fotos={fotos} linkBase="/terceiros/pessoas" />
       </section>
     </>
   );

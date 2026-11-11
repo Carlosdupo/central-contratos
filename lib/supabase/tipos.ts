@@ -75,6 +75,57 @@ export type Database = {
           },
         ]
       }
+      alocacoes: {
+        Row: {
+          bloqueio_motivo: string | null
+          created_at: string
+          id: string
+          integracao_data: string | null
+          liberado_em: string | null
+          obra_id: string
+          situacao: Database["public"]["Enums"]["situacao_alocacao"]
+          updated_at: string
+          vinculo_id: string
+        }
+        Insert: {
+          bloqueio_motivo?: string | null
+          created_at?: string
+          id?: string
+          integracao_data?: string | null
+          liberado_em?: string | null
+          obra_id: string
+          situacao?: Database["public"]["Enums"]["situacao_alocacao"]
+          updated_at?: string
+          vinculo_id: string
+        }
+        Update: {
+          bloqueio_motivo?: string | null
+          created_at?: string
+          id?: string
+          integracao_data?: string | null
+          liberado_em?: string | null
+          obra_id?: string
+          situacao?: Database["public"]["Enums"]["situacao_alocacao"]
+          updated_at?: string
+          vinculo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alocacoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alocacoes_vinculo_id_fkey"
+            columns: ["vinculo_id"]
+            isOneToOne: false
+            referencedRelation: "vinculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       auditoria: {
         Row: {
           acao: string
@@ -239,6 +290,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tipos_documento"
             referencedColumns: ["codigo"]
+          },
+          {
+            foreignKeyName: "documentos_vinculo_fk"
+            columns: ["vinculo_id"]
+            isOneToOne: false
+            referencedRelation: "vinculos"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -431,6 +489,13 @@ export type Database = {
             referencedRelation: "usuarios"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "envios_vinculo_fk"
+            columns: ["vinculo_id"]
+            isOneToOne: false
+            referencedRelation: "vinculos"
+            referencedColumns: ["id"]
+          },
         ]
       }
       feriados: {
@@ -576,6 +641,47 @@ export type Database = {
           {
             foreignKeyName: "parametros_updated_by_fkey"
             columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pessoas: {
+        Row: {
+          cpf: string
+          created_at: string
+          created_by: string | null
+          foto_path: string | null
+          id: string
+          nome: string
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          cpf: string
+          created_at?: string
+          created_by?: string | null
+          foto_path?: string | null
+          id?: string
+          nome: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cpf?: string
+          created_at?: string
+          created_by?: string | null
+          foto_path?: string | null
+          id?: string
+          nome?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pessoas_created_by_fkey"
+            columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "usuarios"
             referencedColumns: ["id"]
@@ -730,15 +836,179 @@ export type Database = {
         }
         Relationships: []
       }
+      vinculos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          eletricidade: boolean
+          empresa_id: string
+          funcao: string
+          id: string
+          pessoa_id: string
+          tipo: Database["public"]["Enums"]["tipo_vinculo"]
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          eletricidade?: boolean
+          empresa_id: string
+          funcao: string
+          id?: string
+          pessoa_id: string
+          tipo: Database["public"]["Enums"]["tipo_vinculo"]
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          eletricidade?: boolean
+          empresa_id?: string
+          funcao?: string
+          id?: string
+          pessoa_id?: string
+          tipo?: Database["public"]["Enums"]["tipo_vinculo"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vinculos_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vinculos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas_terceiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vinculos_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visitas: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data: string
+          decidido_em: string | null
+          decidido_por: string | null
+          documento_foto_nome: string
+          documento_foto_path: string
+          id: string
+          motivo: string | null
+          obra_id: string
+          situacao: Database["public"]["Enums"]["situacao_visita"]
+          vinculo_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data: string
+          decidido_em?: string | null
+          decidido_por?: string | null
+          documento_foto_nome: string
+          documento_foto_path: string
+          id?: string
+          motivo?: string | null
+          obra_id: string
+          situacao?: Database["public"]["Enums"]["situacao_visita"]
+          vinculo_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          decidido_em?: string | null
+          decidido_por?: string | null
+          documento_foto_nome?: string
+          documento_foto_path?: string
+          id?: string
+          motivo?: string | null
+          obra_id?: string
+          situacao?: Database["public"]["Enums"]["situacao_visita"]
+          vinculo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitas_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitas_decidido_por_fkey"
+            columns: ["decidido_por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitas_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitas_vinculo_id_fkey"
+            columns: ["vinculo_id"]
+            isOneToOne: false
+            referencedRelation: "vinculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      buscar_pessoas: {
+        Args: { p_termo: string }
+        Returns: {
+          cpf_mascarado: string
+          empresa: string
+          funcao: string
+          integracao_data: string
+          nome: string
+          obra: string
+          situacao: Database["public"]["Enums"]["situacao_alocacao"]
+          tipo: Database["public"]["Enums"]["tipo_vinculo"]
+          vinculo_id: string
+        }[]
+      }
+      cadastrar_pessoa: {
+        Args: {
+          p_cpf: string
+          p_eletricidade: boolean
+          p_empresa: string
+          p_funcao: string
+          p_nome: string
+          p_obra: string
+          p_telefone: string
+          p_tipo: Database["public"]["Enums"]["tipo_vinculo"]
+        }
+        Returns: string
+      }
+      cpf_mascarado: { Args: { p_pessoa: string }; Returns: string }
       enviar_documentos_empresa: {
         Args: { p_empresa: string }
         Returns: string
       }
+      enviar_documentos_pessoa: { Args: { p_vinculo: string }; Returns: string }
       registrar_acesso_arquivo: { Args: { p_arquivo: string }; Returns: string }
       registrar_arquivo_empresa: {
         Args: {
@@ -755,12 +1025,40 @@ export type Database = {
         }
         Returns: string
       }
+      registrar_arquivo_pessoa: {
+        Args: {
+          p_data_emissao?: string
+          p_data_validade?: string
+          p_mime: string
+          p_nome: string
+          p_sha256: string
+          p_storage_path: string
+          p_tamanho: number
+          p_tipo: string
+          p_vinculo: string
+        }
+        Returns: string
+      }
+      registrar_foto_pessoa: {
+        Args: { p_storage_path: string; p_vinculo: string }
+        Returns: undefined
+      }
       registrar_primeiro_acesso: {
         Args: { p_empresa: string }
         Returns: undefined
       }
       salvar_texto_empresa: {
         Args: { p_empresa: string; p_texto: string; p_tipo: string }
+        Returns: string
+      }
+      solicitar_visita: {
+        Args: {
+          p_data: string
+          p_nome: string
+          p_obra: string
+          p_storage_path: string
+          p_vinculo: string
+        }
         Returns: string
       }
     }
@@ -783,6 +1081,14 @@ export type Database = {
         | "data_informada"
         | "sem_validade"
         | "mensal"
+      situacao_alocacao:
+        | "rascunho"
+        | "em_analise"
+        | "pendente"
+        | "aguardando_empresa"
+        | "integracao_agendada"
+        | "liberado"
+        | "bloqueado"
       situacao_documento:
         | "anexado"
         | "enviado"
@@ -797,7 +1103,9 @@ export type Database = {
         | "aprovada"
         | "bloqueada"
       situacao_envio: "aberto" | "concluido"
+      situacao_visita: "solicitada" | "aprovada" | "recusada"
       tipo_usuario: "interno" | "externo"
+      tipo_vinculo: "funcionario" | "socio_diario" | "socio_esporadico"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -948,6 +1256,15 @@ export const Constants = {
         "sem_validade",
         "mensal",
       ],
+      situacao_alocacao: [
+        "rascunho",
+        "em_analise",
+        "pendente",
+        "aguardando_empresa",
+        "integracao_agendada",
+        "liberado",
+        "bloqueado",
+      ],
       situacao_documento: [
         "anexado",
         "enviado",
@@ -964,7 +1281,9 @@ export const Constants = {
         "bloqueada",
       ],
       situacao_envio: ["aberto", "concluido"],
+      situacao_visita: ["solicitada", "aprovada", "recusada"],
       tipo_usuario: ["interno", "externo"],
+      tipo_vinculo: ["funcionario", "socio_diario", "socio_esporadico"],
     },
   },
 } as const

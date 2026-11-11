@@ -29,6 +29,13 @@ export const IconeEmpresas = () => (
   </Icone>
 );
 
+export const IconeBusca = () => (
+  <Icone>
+    <circle cx="11" cy="11" r="6.5" />
+    <path d="M20 20l-4.2-4.2" />
+  </Icone>
+);
+
 export const IconeApp = () => (
   <span className="grid size-9 shrink-0 place-items-center rounded-[9px] bg-gradient-to-br from-[#3d9bff] to-[#0062d6] text-white shadow-[inset_0_0_0_.5px_rgba(0,0,0,.15),0_2px_6px_rgba(0,98,214,.3)]">
     <Icone tamanho={20}>

@@ -56,8 +56,7 @@ export async function documentosDaEmpresa(empresaId: string): Promise<{ itens: I
   ]);
   if (error) throw new Error("Falha ao carregar os documentos.");
 
-  // Pessoas na obra entram na F2; até lá a regra da CIPA não dispara.
-  const exigidos = documentosExigidos(catalogo.matriz, "empresa", { pessoasNaObra: 0 });
+  const exigidos = documentosExigidos(catalogo.matriz, "empresa", { pessoasNaObra: await pessoasNaObraDaEmpresa(empresaId) });
   const itens = exigidos
     .map((codigo) => catalogo.tipos.get(codigo))
     .filter((t): t is TipoDocumento => !!t)
@@ -76,4 +75,86 @@ export async function documentosDaEmpresa(empresaId: string): Promise<{ itens: I
       };
     });
   return { itens, hoje, competencia };
+}
+
+// Equipe (F2) ---------------------------------------------------------------------------------
+
+export type ItemDocumentoPessoa = Omit<ItemDocumentoEmpresa, "competencia" | "valorTexto">;
+
+/** Documentos exigidos de uma pessoa (pela matriz, conforme tipo e eletricidade), com a situação de cada um. */
+export async function documentosDoVinculo(vinculoId: string) {
+  const supabase = await criarClienteServidor();
+  const hoje = agoraNoFuso().data;
+  const [catalogo, { data: vinculo }, { data: docs, error }] = await Promise.all([
+    carregarCatalogo(),
+    supabase.from("vinculos").select("id, tipo, eletricidade, empresa_id").eq("id", vinculoId).maybeSingle(),
+    supabase
+      .from("documentos")
+      .select("id, tipo_documento, situacao, data_emissao, data_validade, arquivo_atual_id, motivo_reprovacao")
+      .eq("vinculo_id", vinculoId),
+  ]);
+  if (error) throw new Error("Falha ao carregar os documentos.");
+  if (!vinculo) return null;
+  if (vinculo.tipo === "socio_esporadico") return { vinculo, itens: [] as ItemDocumentoPessoa[], hoje };
+
+  const exigidos = documentosExigidos(catalogo.matriz, vinculo.tipo, { eletricidade: vinculo.eletricidade });
+  const itens: ItemDocumentoPessoa[] = exigidos
+    .map((codigo) => catalogo.tipos.get(codigo))
+    .filter((t): t is TipoDocumento => !!t)
+    .map((tipo) => {
+      const doc = (docs ?? []).find((d) => d.tipo_documento === tipo.codigo);
+      const validade = doc ? validadeDoDocumento(tipo, doc, catalogo.meses) : null;
+      return {
+        tipo,
+        estado: estadoDoItem(doc ? { situacao: doc.situacao as SituacaoDocumento, validade } : undefined, hoje),
+        documentoId: doc?.id ?? null,
+        arquivoId: doc?.arquivo_atual_id ?? null,
+        validade,
+        motivo: doc?.motivo_reprovacao ?? null,
+      };
+    });
+  return { vinculo, itens, hoje };
+}
+
+export type MembroEquipe = {
+  vinculoId: string;
+  pessoaId: string;
+  nome: string;
+  tipo: "funcionario" | "socio_diario" | "socio_esporadico";
+  funcao: string;
+  fotoPath: string | null;
+  alocacoes: { obra: string; situacao: string; integracaoData: string | null }[];
+};
+
+export async function equipeDaEmpresa(empresaId: string): Promise<MembroEquipe[]> {
+  const supabase = await criarClienteServidor();
+  const { data, error } = await supabase
+    .from("vinculos")
+    .select("id, tipo, funcao, pessoas(id, nome, foto_path), alocacoes(situacao, integracao_data, obras(nome))")
+    .eq("empresa_id", empresaId)
+    .eq("ativo", true);
+  if (error) throw new Error("Falha ao carregar a equipe.");
+  return (data ?? [])
+    .map((v) => ({
+      vinculoId: v.id,
+      pessoaId: v.pessoas?.id ?? "",
+      nome: v.pessoas?.nome ?? "—",
+      fotoPath: v.pessoas?.foto_path ?? null,
+      tipo: v.tipo,
+      funcao: v.funcao,
+      alocacoes: (v.alocacoes ?? []).map((a) => ({ obra: a.obras?.nome ?? "—", situacao: a.situacao, integracaoData: a.integracao_data })),
+    }))
+    .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+}
+
+/** Pessoas que contam para a regra da CIPA (todas as alocadas, exceto sócio esporádico). P10 pendente: por obra ou total. */
+export async function pessoasNaObraDaEmpresa(empresaId: string): Promise<number> {
+  const supabase = await criarClienteServidor();
+  const { count } = await supabase
+    .from("vinculos")
+    .select("id", { count: "exact", head: true })
+    .eq("empresa_id", empresaId)
+    .eq("ativo", true)
+    .neq("tipo", "socio_esporadico");
+  return count ?? 0;
 }

@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { exigirExterno } from "@/modules/acesso/sessao";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { documentosDaEmpresa } from "@/modules/terceiros/consultas";
+import { documentosDaEmpresa, equipeDaEmpresa } from "@/modules/terceiros/consultas";
+import { linksDasFotos } from "@/modules/terceiros/fotos";
+import { ListaEquipe } from "@/components/app/lista-equipe";
+import Link from "next/link";
 import { enviarDocumentosEmpresa } from "@/modules/terceiros/acoes";
 import { podeEnviarParaAnalise } from "@/modules/terceiros/dominio/documentos";
 import { ListaDocumentosEmpresa } from "@/components/app/lista-documentos-empresa";
@@ -30,6 +33,8 @@ export default async function PaginaPortal() {
   ]);
   const prazoRh = prazo?.valor as { dias: number; uteis: boolean } | undefined;
 
+  const equipe = await equipeDaEmpresa(empresaId);
+  const fotos = await linksDasFotos(equipe.map((m) => m.fotoPath));
   const [classe, rotulo, explicacao] = SITUACAO[empresa?.situacao ?? "cadastro_incompleto"];
   const faltam = itens.filter((i) => ["falta", "reprovado", "vencido"].includes(i.estado)).length;
   const aprovados = itens.filter((i) => i.estado === "aprovado").length;
@@ -64,7 +69,16 @@ export default async function PaginaPortal() {
         )}
       </section>
 
-      <p className="text-[13px] text-faint">O cadastro da equipe (funcionários e sócios) entra na próxima etapa do portal.</p>
+      <section className="painel">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="subtitulo">Equipe</h2>
+            <p className="mt-1 text-[13px] text-muted-foreground">Funcionários e sócios que vão à obra. Cada pessoa tem os próprios documentos.</p>
+          </div>
+          <Link href="/portal/equipe/nova" className="botao botao-primario botao-pequeno">+ Adicionar pessoa</Link>
+        </div>
+        <ListaEquipe equipe={equipe} fotos={fotos} linkBase="/portal/equipe" />
+      </section>
     </>
   );
 }
