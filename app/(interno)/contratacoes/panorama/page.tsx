@@ -127,7 +127,7 @@ export default async function PaginaPanorama({ searchParams }: PageProps<"/contr
           </div>
         )}
       </section>
-      <p className="text-[12.5px] text-faint">✓ data = área liberou · N/A = etapa não se aplica · — = ainda não chegou na área. Passe o mouse sobre "Em andamento" para ver a etapa.</p>
+      <p className="text-[12.5px] text-faint">✓ data = área liberou · N/A = etapa não se aplica · — = ainda não chegou na área. Passe o mouse sobre &ldquo;Em andamento&rdquo; para ver a etapa.</p>
     </>
   );
 }
