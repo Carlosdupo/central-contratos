@@ -22,7 +22,6 @@ type LinhaUsuario = {
   email: string;
   tipo: "interno" | "externo";
   ativo: boolean;
-  usuario_papeis: { papel: string }[];
 };
 
 export const obterUsuarioAtual = cache(async (): Promise<UsuarioAtual | null> => {
@@ -31,11 +30,13 @@ export const obterUsuarioAtual = cache(async (): Promise<UsuarioAtual | null> =>
   const claims = data?.claims;
   if (!claims?.sub) return null;
 
-  const { data: linha } = await supabase
-    .from("usuarios")
-    .select("id, nome, email, tipo, ativo, usuario_papeis(papel)")
-    .eq("id", claims.sub)
-    .maybeSingle<LinhaUsuario>();
+  // Duas consultas: usuario_papeis tem duas ligações com usuarios (usuario_id e created_by),
+  // e o embed do PostgREST fica ambíguo.
+  const [{ data: linha, error: erroUsuario }, { data: papeis, error: erroPapeis }] = await Promise.all([
+    supabase.from("usuarios").select("id, nome, email, tipo, ativo").eq("id", claims.sub).maybeSingle<LinhaUsuario>(),
+    supabase.from("usuario_papeis").select("papel").eq("usuario_id", claims.sub),
+  ]);
+  if (erroUsuario || erroPapeis) throw new Error("Falha ao carregar o usuário logado.");
   if (!linha || !linha.ativo) return null;
 
   return {
@@ -43,7 +44,7 @@ export const obterUsuarioAtual = cache(async (): Promise<UsuarioAtual | null> =>
     nome: linha.nome,
     email: linha.email,
     tipo: linha.tipo,
-    papeis: linha.usuario_papeis.map((p) => p.papel).filter(ehPapel),
+    papeis: (papeis ?? []).map((p) => p.papel as string).filter(ehPapel),
     verificado: claims.aal === "aal2",
   };
 });
