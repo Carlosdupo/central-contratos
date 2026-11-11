@@ -7,6 +7,8 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarData } from "@/lib/datas";
 import { SeloPrazo } from "@/components/app/selo-prazo";
 import { PainelRh } from "@/components/app/painel-rh";
+import { PainelSst } from "@/components/app/painel-sst";
+import { resumoSst } from "@/modules/terceiros/painel-sst";
 import { filaDeAnalise, vencimentosProximos, visitasSolicitadas } from "@/modules/terceiros/analise";
 import { lerParametros } from "@/lib/configuracao";
 
@@ -25,14 +27,16 @@ export default async function PaginaPainel() {
   const usuario = await exigirInterno();
   const supabase = await criarClienteServidor();
   const ehRh = usuario.papeis.includes("rh");
-  // Quem só é do RH (ou RH e segurança do trabalho) vê o painel focado no que é dele.
-  const focoRh = ehRh && !temAlgumPapel(usuario.papeis, ["admin", "coordenador_obra", "suprimentos", "gerente_suprimentos", "contratos", "direcao"]);
-  const [abertas, { data: contratacoes }, rh] = await Promise.all([
+  const ehSst = usuario.papeis.includes("sst");
+  // Quem só é do RH e/ou da segurança do trabalho vê o painel focado no que é dele.
+  const focoTerceiros = (ehRh || ehSst) && !temAlgumPapel(usuario.papeis, ["admin", "coordenador_obra", "suprimentos", "gerente_suprimentos", "contratos", "direcao"]);
+  const [abertas, { data: contratacoes }, rh, sst] = await Promise.all([
     etapasEmAberto(),
     supabase.from("contratacoes").select("id, situacao"),
     ehRh
       ? Promise.all([filaDeAnalise(), visitasSolicitadas(), vencimentosProximos(30), lerParametros()]).catch(() => null)
       : Promise.resolve(null),
+    ehSst ? resumoSst().catch(() => null) : Promise.resolve(null),
   ]);
   const emAndamento = (contratacoes ?? []).filter((c) => c.situacao === "em_andamento").length;
   const liberadas = (contratacoes ?? []).filter((c) => c.situacao === "liberada").length;
@@ -50,7 +54,7 @@ export default async function PaginaPainel() {
         <div>
           <h1 className="titulo">Olá, {primeiroNome}</h1>
           <p className="mt-1.5 max-w-[66ch] text-[15px] text-muted-foreground">
-            {focoRh ? "Documentos de terceiros esperando você e o que vence nos próximos dias." : "Onde cada contratação está parada, com quem e há quanto tempo."}
+            {focoTerceiros ? (ehRh && ehSst ? "Documentos para conferir, integrações e vencimentos." : ehRh ? "Documentos de terceiros esperando você e o que vence nos próximos dias." : "Integrações de segurança agendadas e a situação das equipes.") : "Onde cada contratação está parada, com quem e há quanto tempo."}
           </p>
         </div>
         {usuario.papeis.includes("coordenador_obra") && <Link href="/contratacoes/nova" className="botao botao-primario">+ Nova contratação</Link>}
@@ -64,16 +68,17 @@ export default async function PaginaPainel() {
       )}
 
       {rh && <PainelRh fila={rh[0]} visitas={rh[1].length} vencendo={rh[2].vencendo} vencidos={rh[2].vencidos} prazoUteis={rh[3].prazoAnaliseRh.uteis} />}
+      {sst && <PainelSst {...sst} />}
 
-      {!focoRh && <div className="grid grid-cols-4 gap-4 max-lg:grid-cols-2">
+      {!focoTerceiros && <div className="grid grid-cols-4 gap-4 max-lg:grid-cols-2">
         <Kpi n={emAndamento} rotulo="Em andamento" />
         <Kpi n={comAtraso} rotulo="Com etapa atrasada" alerta />
         <Kpi n={assinatura} rotulo="Aguardando assinatura" />
         <Kpi n={liberadas} rotulo="Liberadas para a obra" />
       </div>}
 
-      <div className={focoRh ? "flex flex-col gap-5" : "grid items-start gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]"}>
-        {!focoRh && <section className="painel">
+      <div className={focoTerceiros ? "flex flex-col gap-5" : "grid items-start gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]"}>
+        {!focoTerceiros && <section className="painel">
           <div className="flex items-end justify-between"><h2 className="subtitulo">Etapas em aberto</h2><span className="text-[13px] text-muted-foreground">{abertas.length} etapas</span></div>
           {abertas.length === 0 ? (
             <p className="text-[14px] text-muted-foreground">Nenhuma etapa em aberto.</p>
@@ -101,7 +106,7 @@ export default async function PaginaPainel() {
 
         <div className="flex flex-col gap-5">
           <section className="painel">
-            <h2 className="subtitulo">{focoRh ? "Contratações com etapa do RH" : "Minhas pendências"}</h2>
+            <h2 className="subtitulo">{focoTerceiros ? "Contratações com etapa sua" : "Minhas pendências"}</h2>
             {minhas.length === 0 ? (
               <p className="text-[14px] text-muted-foreground">Nada pendente para você nas contratações.</p>
             ) : (
