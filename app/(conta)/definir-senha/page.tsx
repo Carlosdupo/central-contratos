@@ -10,7 +10,7 @@ export default function PaginaDefinirSenha() {
     <>
       <div>
         <h1 className="subtitulo">Criar senha</h1>
-        <p className="mt-1 text-[13.5px] text-muted">
+        <p className="mt-1 text-[13.5px] text-muted-foreground">
           Pelo menos 10 caracteres, com letra maiúscula, letra minúscula e número.
         </p>
       </div>

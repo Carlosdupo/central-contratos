@@ -18,7 +18,7 @@ export default async function PaginaLogin({ searchParams }: PageProps<"/login">)
     <>
       <div>
         <h1 className="subtitulo">Entrar</h1>
-        <p className="mt-1 text-[13.5px] text-muted">Use o e-mail do convite que você recebeu.</p>
+        <p className="mt-1 text-[13.5px] text-muted-foreground">Use o e-mail do convite que você recebeu.</p>
       </div>
       {erro && <p className="rounded-xl bg-warn-soft px-3.5 py-2.5 text-[13px] text-warn">{erro}</p>}
       <FormularioAcesso acao={entrar} textoBotao="Entrar">
@@ -26,7 +26,7 @@ export default async function PaginaLogin({ searchParams }: PageProps<"/login">)
         <Campo id="email" rotulo="E-mail" tipo="email" autoComplete="username" />
         <Campo id="senha" rotulo="Senha" tipo="password" autoComplete="current-password" />
       </FormularioAcesso>
-      <Link href="/recuperar-senha" className="text-center text-[13px] text-accent">
+      <Link href="/recuperar-senha" className="text-center text-[13px] text-primary">
         Esqueci minha senha
       </Link>
     </>

@@ -14,7 +14,7 @@ export default async function PaginaVerificacao() {
     <>
       <div>
         <h1 className="subtitulo">Verificação em duas etapas</h1>
-        <p className="mt-1 text-[13.5px] text-muted">
+        <p className="mt-1 text-[13.5px] text-muted-foreground">
           Seu perfil acessa dados sensíveis. Use um aplicativo autenticador (Google Authenticator, Microsoft
           Authenticator ou similar) para gerar o código de 6 dígitos.
         </p>

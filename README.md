@@ -52,8 +52,13 @@ tests/unit/     testes das regras (Vitest)
 | `npm run dev` | Sobe o sistema em modo de desenvolvimento |
 | `npm run lint` / `npm run typecheck` | Padrões de código e tipos |
 | `npm test` | Testes das regras (Vitest) |
-| `npm run test:db` | Testes do banco e da RLS (precisa de Docker; roda no CI) |
+| `npm run test:db` | Testes do banco e da RLS no Supabase local (precisa de Docker; roda no CI) |
+| `npm run test:db:remoto` | Os mesmos testes no projeto ligado, sem Docker (cada arquivo roda em transação desfeita no fim) |
+| `npm run db:tipos` | Gera `lib/supabase/tipos.ts` a partir do banco |
 | `npm run db:push` | Aplica as migrations no projeto Supabase ligado (nuvem) |
+
+## Administração
+O menu **Administração** (só admin com verificação em duas etapas) tem: usuários (convite, perfis, obras do coordenador, desativar), obras, parâmetros de negócio, feriados e auditoria.
 
 ## Regras do repositório
 - Toda mudança de banco é uma **migration nova** em `supabase/migrations`. Nunca altere o banco pelo painel.

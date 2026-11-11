@@ -60,7 +60,7 @@ export function VerificacaoDuasEtapas() {
     router.refresh();
   }
 
-  if (estado.etapa === "carregando") return <p className="text-[13.5px] text-muted">Preparando…</p>;
+  if (estado.etapa === "carregando") return <p className="text-[13.5px] text-muted-foreground">Preparando…</p>;
   if (estado.etapa === "falha") return <p className="text-[13px] text-bad">{estado.mensagem}</p>;
 
   return (
@@ -70,14 +70,14 @@ export function VerificacaoDuasEtapas() {
           {/* QR code em SVG gerado pelo Supabase Auth */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={estado.qrCode} alt="QR code para o aplicativo autenticador" width={180} height={180} className="rounded-lg bg-white p-2" />
-          <p className="text-center text-xs text-muted">
+          <p className="text-center text-xs text-muted-foreground">
             Escaneie com o aplicativo. Sem câmera? Digite a chave:
-            <span className="mt-1 block break-all font-mono text-fg">{estado.segredo}</span>
+            <span className="mt-1 block break-all font-mono text-foreground">{estado.segredo}</span>
           </p>
         </div>
       )}
       <label htmlFor="codigo" className="flex flex-col gap-1.5">
-        <span className="text-[12.5px] font-medium text-muted">Código de 6 dígitos</span>
+        <span className="text-[12.5px] font-medium text-muted-foreground">Código de 6 dígitos</span>
         <input
           id="codigo"
           inputMode="numeric"

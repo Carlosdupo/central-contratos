@@ -11,14 +11,14 @@ export default async function PaginaPainel() {
     <>
       <div>
         <h1 className="titulo">Olá, {primeiroNome}</h1>
-        <p className="mt-1.5 max-w-[66ch] text-[15px] text-muted">
+        <p className="mt-1.5 max-w-[66ch] text-[15px] text-muted-foreground">
           Aqui vão aparecer as contratações e os envios de documentos que dependem de você.
         </p>
       </div>
       {usuario.papeis.length === 0 && (
         <section className="painel">
           <h2 className="subtitulo">Seu usuário ainda não tem perfil</h2>
-          <p className="text-[14px] text-muted">Peça ao administrador para atribuir seus perfis de acesso.</p>
+          <p className="text-[14px] text-muted-foreground">Peça ao administrador para atribuir seus perfis de acesso.</p>
         </section>
       )}
     </>

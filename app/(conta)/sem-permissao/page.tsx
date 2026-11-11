@@ -8,7 +8,7 @@ export default function PaginaSemPermissao() {
     <>
       <div>
         <h1 className="subtitulo">Sem permissão</h1>
-        <p className="mt-1 text-[13.5px] text-muted">
+        <p className="mt-1 text-[13.5px] text-muted-foreground">
           Seu usuário não tem acesso a esta área. Se precisar, peça ao administrador para ajustar seus perfis.
         </p>
       </div>

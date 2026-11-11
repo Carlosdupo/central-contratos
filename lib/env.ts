@@ -10,7 +10,8 @@ const esquemaPublico = z.object({
 // Variáveis só do servidor. Lidas por lib/env.server.ts.
 export const esquemaServidor = z.object({
   SUPABASE_SECRET_KEY: z.string().min(20),
-  CRON_SECRET: z.string().min(32).optional(),
+  // Vazio no .env conta como não informado.
+  CRON_SECRET: z.preprocess((v) => (v === "" ? undefined : v), z.string().min(32).optional()),
 });
 
 // O Next só injeta NEXT_PUBLIC_* quando o nome aparece literalmente no código.

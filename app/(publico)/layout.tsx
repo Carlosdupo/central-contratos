@@ -9,7 +9,7 @@ export default function LayoutPublico({ children }: LayoutProps<"/">) {
           <IconeApp />
           <div className="leading-tight">
             <div className="text-[15px] font-semibold tracking-tight">Central de Contratos</div>
-            <div className="text-xs text-muted">Contratação de empreiteiros e terceiros</div>
+            <div className="text-xs text-muted-foreground">Contratação de empreiteiros e terceiros</div>
           </div>
         </div>
         <section className="painel">

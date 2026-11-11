@@ -11,7 +11,12 @@ insert into auth.users (id, email, raw_app_meta_data, raw_user_meta_data) values
 insert into public.usuario_papeis (usuario_id, papel) values
   ('00000000-0000-0000-0000-0000000000a1', 'admin'),
   ('00000000-0000-0000-0000-0000000000c1', 'coordenador_obra');
-insert into public.obras (codigo, nome, cidade, uf) values ('IPE', 'Residencial Ipê', 'Chapecó', 'SC');
+insert into public.obras (codigo, nome, cidade, uf) values ('IPE-TESTE', 'Residencial Ipê', 'Chapecó', 'SC');
+-- Teste independente do ambiente: num banco com dados, outros admins e obras já existem.
+-- Tudo isto é desfeito pelo rollback no fim.
+delete from public.usuario_papeis where papel = 'admin' and usuario_id <> '00000000-0000-0000-0000-0000000000a1';
+delete from public.usuario_obras;
+delete from public.obras where codigo <> 'IPE-TESTE';
 
 select is(
   (select count(*)::int from pg_tables where schemaname = 'public' and not rowsecurity), 0,
@@ -50,7 +55,7 @@ select throws_ok(
 
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000000a1", "role": "authenticated", "aal": "aal2"}', true);
 select lives_ok(
-  $$ insert into public.obras (codigo, nome, cidade, uf) values ('AUR', 'Edifício Aurora', 'Chapecó', 'SC') $$,
+  $$ insert into public.obras (codigo, nome, cidade, uf) values ('AUR-TESTE', 'Edifício Aurora', 'Chapecó', 'SC') $$,
   'Admin com verificação em duas etapas cria obra');
 select throws_ok(
   $$ delete from public.usuario_papeis where usuario_id = '00000000-0000-0000-0000-0000000000a1' and papel = 'admin' $$,

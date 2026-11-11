@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, type ReactNode } from "react";
-import type { EstadoFormulario } from "@/modules/acesso/acoes";
+import type { EstadoFormulario } from "@/lib/formulario";
 
 type Props = {
   acao: (estado: EstadoFormulario, dados: FormData) => Promise<EstadoFormulario>;
@@ -27,7 +27,7 @@ export function FormularioAcesso({ acao, textoBotao, children }: Props) {
 export function Campo(props: { id: string; rotulo: string; tipo?: string; autoComplete?: string; padrao?: string }) {
   return (
     <label htmlFor={props.id} className="flex flex-col gap-1.5">
-      <span className="text-[12.5px] font-medium text-muted">{props.rotulo}</span>
+      <span className="text-[12.5px] font-medium text-muted-foreground">{props.rotulo}</span>
       <input
         id={props.id}
         name={props.id}

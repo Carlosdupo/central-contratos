@@ -5,7 +5,7 @@ import { z } from "zod";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { envPublico } from "@/lib/env";
 
-export type EstadoFormulario = { erro?: string; ok?: string };
+import type { EstadoFormulario } from "@/lib/formulario";
 
 // Só aceita caminhos internos, para o "proximo" não virar redirecionamento para outro site.
 function destinoSeguro(valor: FormDataEntryValue | null): string {
