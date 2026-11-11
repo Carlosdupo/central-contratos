@@ -104,3 +104,40 @@ export async function detalheDoEnvio(envioId: string) {
     obras: (envio.vinculos?.alocacoes ?? []).map((a) => a.obras?.nome).filter((n): n is string => !!n),
   };
 }
+
+export type DocumentoVencendo = { id: string; documento: string; empresa: string; empresaId: string; pessoa: string | null; vinculoId: string | null; validade: DataISO };
+
+/** Documentos aprovados que vencem nos próximos `dias` dias (mais próximos primeiro) e quantos já venceram. */
+export async function vencimentosProximos(dias = 30): Promise<{ vencendo: DocumentoVencendo[]; vencidos: number }> {
+  const supabase = await criarClienteServidor();
+  const [{ data, error }, { count: vencidos }, catalogo] = await Promise.all([
+    supabase
+      .from("documentos")
+      .select("id, tipo_documento, data_emissao, data_validade, empresa_id, vinculo_id, empresas_terceiras(razao_social), vinculos(pessoas(nome))")
+      .eq("situacao", "aprovado"),
+    supabase.from("documentos").select("id", { count: "exact", head: true }).eq("situacao", "vencido"),
+    carregarCatalogo(),
+  ]);
+  if (error) throw new Error("Falha ao carregar os vencimentos.");
+  const hoje = agoraNoFuso().data;
+  const limite = new Date(`${hoje}T12:00:00Z`);
+  limite.setUTCDate(limite.getUTCDate() + dias);
+  const ate = limite.toISOString().slice(0, 10);
+  const vencendo = (data ?? [])
+    .map((d) => {
+      const tipo = catalogo.tipos.get(d.tipo_documento);
+      const validade = tipo ? validadeDoDocumento(tipo, d, catalogo.meses) : null;
+      return {
+        id: d.id,
+        documento: tipo?.nome ?? d.tipo_documento,
+        empresa: d.empresas_terceiras?.razao_social ?? "—",
+        empresaId: d.empresa_id,
+        pessoa: d.vinculos?.pessoas?.nome ?? null,
+        vinculoId: d.vinculo_id,
+        validade,
+      };
+    })
+    .filter((d): d is DocumentoVencendo => !!d.validade && d.validade >= hoje && d.validade <= ate)
+    .sort((a, b) => a.validade.localeCompare(b.validade));
+  return { vencendo, vencidos: vencidos ?? 0 };
+}
