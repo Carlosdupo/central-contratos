@@ -154,6 +154,18 @@ export async function salvarCondicoesGerente(contratacao: string, _: EstadoFormu
   return { ok: "Condições salvas." };
 }
 
+export async function novaProposta(contratacao: string, cotacao: string, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
+  await exigirInterno();
+  if (!uuid.safeParse(cotacao).success) return { erro: "Cotação inválida." };
+  const valor = lerValor(dados.get("valor"));
+  if (!Number.isFinite(valor) || valor <= 0) return { erro: "Informe o valor da nova proposta." };
+  const supabase = await criarClienteServidor();
+  const { data, error } = await supabase.rpc("nova_proposta", { p_cotacao: cotacao, p_valor: Number(valor.toFixed(2)) });
+  if (error) return { erro: mensagemDeErro(error, error.message ?? "Não foi possível registrar a proposta.") };
+  recarregar(contratacao);
+  return { ok: `${data}ª proposta registrada.` };
+}
+
 export async function pularNegociacao(contratacao: string): Promise<EstadoFormulario> {
   await exigirInterno();
   const supabase = await criarClienteServidor();

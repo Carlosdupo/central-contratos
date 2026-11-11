@@ -80,7 +80,7 @@ export async function detalheDaContratacao(id: string) {
   const [{ data: c }, { data: etapas }, { data: cotacoes }, { data: assinaturas }, { data: assinantes }, fluxo, feriados] = await Promise.all([
     supabase.from("contratacoes").select("*, obras(nome), empresas_terceiras(id, razao_social, situacao)").eq("id", id).maybeSingle(),
     supabase.from("contratacao_etapas").select("etapa, situacao, iniciada_em, concluida_em, usuarios:concluida_por(nome)").eq("contratacao_id", id),
-    supabase.from("cotacoes").select("id, fornecedor, cnpj, valor, prazo_dias, escolhida").eq("contratacao_id", id).order("valor"),
+    supabase.from("cotacoes").select("id, fornecedor, cnpj, valor, prazo_dias, escolhida, cotacao_propostas(rodada, valor)").eq("contratacao_id", id).order("valor"),
     supabase.from("assinaturas").select("ordem, assinado_em, usuarios:assinado_por(nome)").eq("contratacao_id", id),
     supabase.from("assinantes_fluxo").select("ordem, rotulo, papel").order("ordem"),
     carregarFluxo(),

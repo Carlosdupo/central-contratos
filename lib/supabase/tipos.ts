@@ -431,6 +431,48 @@ export type Database = {
           },
         ]
       }
+      cotacao_propostas: {
+        Row: {
+          cotacao_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          rodada: number
+          valor: number
+        }
+        Insert: {
+          cotacao_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          rodada: number
+          valor: number
+        }
+        Update: {
+          cotacao_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          rodada?: number
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cotacao_propostas_cotacao_id_fkey"
+            columns: ["cotacao_id"]
+            isOneToOne: false
+            referencedRelation: "cotacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cotacao_propostas_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cotacoes: {
         Row: {
           cnpj: string
@@ -1633,6 +1675,10 @@ export type Database = {
           p_marcado: boolean
         }
         Returns: undefined
+      }
+      nova_proposta: {
+        Args: { p_cotacao: string; p_valor: number }
+        Returns: number
       }
       processar_vencimentos: { Args: { p_hoje: string }; Returns: Json }
       pular_negociacao: { Args: { p_contratacao: string }; Returns: undefined }

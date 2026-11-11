@@ -1,7 +1,7 @@
 -- F6: fluxo de contratação (12 etapas, regra dos R$ 4.000, pular, assinaturas em ordem, visibilidade A8).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(27);
+select plan(31);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000c01', 'coord@teste.local', '{}'),
@@ -59,6 +59,12 @@ select lives_ok(format($$ select public.concluir_etapa(%L, 1::smallint) $$, (sel
 select lives_ok(format($$ select public.registrar_cotacao(%L, x.f, x.c, 3000, 10) from (values ('Forn 1', '11222333000181'), ('Forn 2', '11444777000161'), ('Forn 3', '11222333000262')) x(f, c) $$, (select id from ids where nome = 'pequena')), 'Pequena: 3 cotações');
 select lives_ok(format($$ select public.concluir_etapa(%L, 2::smallint) $$, (select id from ids where nome = 'pequena')), 'Pequena: conclui a etapa 2');
 select throws_ok(format($$ select public.concluir_etapa(%L, 3::smallint) $$, (select id from ids where nome = 'pequena')), 'P0001', null, 'Etapa 3 exige fornecedor e valor final');
+select lives_ok(format($$ select public.nova_proposta(id, 2900) from public.cotacoes where contratacao_id = %L and fornecedor = 'Forn 2' $$, (select id from ids where nome = 'pequena')), 'Obra registra a 2a proposta');
+select lives_ok(format($$ select public.nova_proposta(id, 2850) from public.cotacoes where contratacao_id = %L and fornecedor = 'Forn 2' $$, (select id from ids where nome = 'pequena')), 'Obra registra a 3a proposta');
+select is((select array_agg(p.valor order by p.rodada)::text from public.cotacao_propostas p join public.cotacoes q on q.id = p.cotacao_id where q.contratacao_id = (select id from ids where nome = 'pequena') and q.fornecedor = 'Forn 2'),
+  '{3000.00,2900.00,2850.00}', 'Histórico guarda as 3 rodadas');
+select throws_ok(format($$ select public.nova_proposta(id, 2000) from public.cotacoes where contratacao_id = %L limit 1 $$, (select id from ids where nome = 'grande')),
+  'P0001', 'Nova proposta só durante a negociação (etapa 3 ou 5).', 'Fora da negociação não há nova proposta');
 select lives_ok(format($$ select public.definir_fornecedor(id, 2800) from public.cotacoes where contratacao_id = %L and fornecedor = 'Forn 2' $$, (select id from ids where nome = 'pequena')), 'Obra escolhe o fornecedor com o valor final');
 select is((select valor_negociado from public.contratacoes where id = (select id from ids where nome = 'pequena')), 2800.00, 'Valor final gravado');
 

@@ -7,7 +7,7 @@ import { temAlgumPapel, type Papel } from "@/modules/acesso/papeis";
 import { detalheDaContratacao } from "@/modules/contratacoes/consultas";
 import { TIPO_CONTRATACAO, TRILHAS, formatarReais } from "@/modules/contratacoes/rotulos";
 import {
-  assinarContrato, cancelarContratacao, concluirEtapa, definirFornecedor, pularNegociacao, reabrirEtapa, registrarCotacao, salvarCampoEtapa, salvarCondicoesGerente, salvarEmailFornecedor,
+  assinarContrato, cancelarContratacao, concluirEtapa, definirFornecedor, novaProposta, pularNegociacao, reabrirEtapa, registrarCotacao, salvarCampoEtapa, salvarCondicoesGerente, salvarEmailFornecedor,
 } from "@/modules/contratacoes/acoes";
 import { equipeDaEmpresa } from "@/modules/terceiros/consultas";
 import { linksDasFotos } from "@/modules/terceiros/fotos";
@@ -54,6 +54,8 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
   const ehAdmin = usuario.papeis.includes("admin");
 
   const podeEscolher = (sel.etapa === 3 && c.negociacao === "obra") || sel.etapa === 5;
+  // Rodadas de negociação: obra na etapa 3 (negociação pela obra) ou Suprimentos na etapa 5.
+  const podeNegociar = (sel.etapa === 3 && c.negociacao === "obra") || sel.etapa === 5;
   const opcoes = fornecedorTravado ? cotacoes.filter((q) => q.escolhida) : cotacoes;
   const empresasCadastradas =
     sel.etapa === 2 && pode
@@ -171,6 +173,19 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                       <span className="min-w-0">
                         <span className="block font-medium">{q.fornecedor}{Number(q.valor) === menor && cotacoes.length > 1 && <span className="ml-2 rounded-full bg-ok-soft px-2 py-px text-[11px] font-semibold text-ok">menor valor</span>}</span>
                         <span className="block font-mono text-xs text-muted-foreground">{formatarCnpj(q.cnpj)} · {formatarReais(Number(q.valor))}{q.prazo_dias ? ` · ${q.prazo_dias} d` : ""}</span>
+                        {q.cotacao_propostas.length > 1 && (
+                          <span className="mt-0.5 block text-xs text-muted-foreground">
+                            {[...q.cotacao_propostas].sort((a, b) => a.rodada - b.rodada).map((r) => `${r.rodada}ª ${formatarReais(Number(r.valor))}`).join(" → ")}
+                          </span>
+                        )}
+                        {pode && podeNegociar && (
+                          <details className="mt-1.5">
+                            <summary className="cursor-pointer text-[12.5px] font-medium text-primary">Nova proposta</summary>
+                            <Formulario acao={novaProposta.bind(null, id, q.id)} textoBotao="Registrar" className="mt-1.5 flex flex-wrap items-center gap-2">
+                              <input name="valor" placeholder="Novo valor (R$)" aria-label={`Nova proposta de ${q.fornecedor}`} className="campo max-w-[180px] py-1.5" />
+                            </Formulario>
+                          </details>
+                        )}
                       </span>
                       {q.escolhida && <span className="selo selo-info">Escolhido{c.valor_negociado ? ` · final ${formatarReais(Number(c.valor_negociado))}` : ""}</span>}
                     </div>
