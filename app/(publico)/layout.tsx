@@ -1,4 +1,5 @@
 import { IconeApp } from "@/components/app/icones";
+import { ProcessarLinkAcesso } from "@/components/app/processar-link-acesso";
 
 export default function LayoutPublico({ children }: LayoutProps<"/">) {
   return (
@@ -11,7 +12,10 @@ export default function LayoutPublico({ children }: LayoutProps<"/">) {
             <div className="text-xs text-muted">Contratação de empreiteiros e terceiros</div>
           </div>
         </div>
-        <section className="painel">{children}</section>
+        <section className="painel">
+          <ProcessarLinkAcesso />
+          {children}
+        </section>
       </div>
     </main>
   );

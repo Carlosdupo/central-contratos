@@ -31,14 +31,13 @@ tests/unit/     testes das regras (Vitest)
    npx supabase link --project-ref SEU_PROJECT_REF
    npm run db:push
    ```
-5. **Configurar o Auth no painel do Supabase** (o `config.toml` só vale para o ambiente local):
-   - Authentication → Sign In / Providers: desligar **Allow new users to sign up**.
-   - Authentication → Policies de senha: mínimo de 10 caracteres, com maiúsculas, minúsculas e números; ligar a proteção contra senhas vazadas (planos pagos).
-   - Authentication → Multi-Factor: ligar **TOTP**.
-   - Authentication → URL Configuration: Site URL = endereço do sistema; Redirect URLs = `<endereço>/auth/confirmar`.
-   - Authentication → Email Templates, em **Invite user** e **Reset password**, troque o link por:
-     `{{ .SiteURL }}/auth/confirmar?token_hash={{ .TokenHash }}&type=invite&proximo=/definir-senha`
-     (no modelo de recuperação use `type=recovery`).
+5. **Configurar o Auth:** as configurações de `supabase/config.toml` (cadastro aberto desligado, TOTP, regra de senha) são enviadas ao projeto com:
+   ```bash
+   npx supabase config diff
+   npx supabase config push
+   ```
+   No painel, em Authentication → URL Configuration: Site URL = endereço do sistema; Redirect URLs = `<endereço>/auth/confirmar`.
+   **Modelos de e-mail:** o plano gratuito sem SMTP próprio não deixa trocar os modelos. O sistema aceita o link padrão do Supabase (`components/app/processar-link-acesso.tsx` e `/auth/confirmar?code=`). Os modelos em português estão em `supabase/templates` e serão ligados no `config.toml` quando o envio pelo Resend estiver configurado.
 6. **Primeiro administrador:** em Authentication → Users → *Invite user*, convide o seu e-mail. Depois, no SQL Editor:
    ```sql
    insert into public.usuario_papeis (usuario_id, papel)
