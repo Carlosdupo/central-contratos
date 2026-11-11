@@ -1,6 +1,8 @@
-import { formatarData } from "@/lib/datas";
+import { agoraNoFuso, diasCorridosEntre, formatarData } from "@/lib/datas";
 import type { ItemDocumentoPessoa } from "@/modules/terceiros/consultas";
 import { BotaoAbrirArquivo, EnviarArquivo, SeloEstado } from "./documentos";
+
+const diasAte = (data: string) => diasCorridosEntre(agoraNoFuso().data, data);
 
 // Documentos de uma pessoa. "editavel" no portal; só leitura para a equipe interna.
 export function ListaDocumentosPessoa({ vinculoId, itens, editavel, podeAbrir }: { vinculoId: string; itens: ItemDocumentoPessoa[]; editavel: boolean; podeAbrir: (sensivel: boolean) => boolean }) {
@@ -22,6 +24,7 @@ export function ListaDocumentosPessoa({ vinculoId, itens, editavel, podeAbrir }:
               </div>
               <div className="flex items-center gap-3">
                 {podeAbrir(item.tipo.sensivel) && item.arquivoId && <BotaoAbrirArquivo arquivoId={item.arquivoId} />}
+                {item.estado === "aprovado" && item.validade && diasAte(item.validade) <= 30 && <span className="selo selo-alerta">Vence em {diasAte(item.validade)} d</span>}
                 <SeloEstado estado={item.estado} />
               </div>
             </div>

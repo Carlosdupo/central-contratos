@@ -60,6 +60,14 @@ tests/unit/     testes das regras (Vitest)
 ## Administração
 O menu **Administração** (só admin com verificação em duas etapas) tem: usuários (convite, perfis, obras do coordenador, desativar), obras, parâmetros de negócio, feriados e auditoria.
 
+## Tarefas agendadas (Vercel Cron, `vercel.json`)
+| Rota | Quando | O que faz |
+|---|---|---|
+| `/api/cron/vencimentos` | todo dia, 06h (Brasília) | Marca vencidos, bloqueia quem ficou irregular, enfileira avisos de 30/15/0 dias |
+| `/api/cron/notificacoes` | todo dia, 08h (Brasília) | Reenvia por e-mail os avisos que ficaram na fila |
+
+As duas exigem o cabeçalho `Authorization: Bearer <CRON_SECRET>` (a Vercel envia sozinha quando `CRON_SECRET` está configurado).
+
 ## Regras do repositório
 - Toda mudança de banco é uma **migration nova** em `supabase/migrations`. Nunca altere o banco pelo painel.
 - Toda tabela nova precisa de **RLS** e de teste pgTAP; o CI falha se alguma tabela ficar sem RLS.

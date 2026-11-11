@@ -1,9 +1,11 @@
-import { formatarData } from "@/lib/datas";
+import { agoraNoFuso, diasCorridosEntre, formatarData } from "@/lib/datas";
 import { formatarCompetencia } from "@/modules/terceiros/dominio/documentos";
 import type { ItemDocumentoEmpresa } from "@/modules/terceiros/consultas";
 import { salvarTextoEmpresa } from "@/modules/terceiros/acoes";
 import { BotaoAbrirArquivo, EnviarArquivo, SeloEstado } from "./documentos";
 import { Formulario } from "./formulario";
+
+const diasAte = (data: string) => diasCorridosEntre(agoraNoFuso().data, data);
 
 // Lista de documentos da empresa. "editavel" no portal da empresa; só leitura para a equipe interna.
 export function ListaDocumentosEmpresa({ itens, editavel, podeAbrir }: { itens: ItemDocumentoEmpresa[]; editavel: boolean; podeAbrir: boolean }) {
@@ -27,6 +29,7 @@ export function ListaDocumentosEmpresa({ itens, editavel, podeAbrir }: { itens: 
               </div>
               <div className="flex items-center gap-3">
                 {podeAbrir && item.arquivoId && <BotaoAbrirArquivo arquivoId={item.arquivoId} />}
+                {item.estado === "aprovado" && item.validade && diasAte(item.validade) <= 30 && <span className="selo selo-alerta">Vence em {diasAte(item.validade)} d</span>}
                 <SeloEstado estado={item.estado} />
               </div>
             </div>

@@ -159,6 +159,35 @@ export type Database = {
         }
         Relationships: []
       }
+      avisos_vencimento: {
+        Row: {
+          criado_em: string
+          documento_id: string
+          marco: number
+          validade: string
+        }
+        Insert: {
+          criado_em?: string
+          documento_id: string
+          marco: number
+          validade: string
+        }
+        Update: {
+          criado_em?: string
+          documento_id?: string
+          marco?: number
+          validade?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avisos_vencimento_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "documentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documento_arquivos: {
         Row: {
           documento_id: string
@@ -1148,6 +1177,7 @@ export type Database = {
         Returns: string
       }
       enviar_documentos_pessoa: { Args: { p_vinculo: string }; Returns: string }
+      processar_vencimentos: { Args: { p_hoje: string }; Returns: Json }
       registrar_acesso_arquivo: { Args: { p_arquivo: string }; Returns: string }
       registrar_arquivo_empresa: {
         Args: {
@@ -1180,6 +1210,16 @@ export type Database = {
       }
       registrar_foto_pessoa: {
         Args: { p_storage_path: string; p_vinculo: string }
+        Returns: undefined
+      }
+      registrar_integracao: {
+        Args: {
+          p_alocacao: string
+          p_assunto: string
+          p_nova_data: string
+          p_presente: boolean
+          p_texto: string
+        }
         Returns: undefined
       }
       registrar_primeiro_acesso: {
