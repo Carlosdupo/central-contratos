@@ -7,6 +7,7 @@ import { exigirInterno, exigirPapel } from "@/modules/acesso/sessao";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { cnpjValido, somenteDigitos } from "@/lib/documentos-br";
 import { mensagemDeErro, type EstadoFormulario } from "@/lib/formulario";
+import { liberarPortalDaContratacao } from "@/modules/terceiros/acesso-portal";
 
 // Ações do fluxo de contratação. Quem pode agir em cada etapa é conferido no banco (app.pode_agir_como),
 // inclusive o coordenador só nas obras dele.
@@ -83,6 +84,18 @@ const esquemaCotacao = z.object({
   prazo: z.number().int().min(1).max(3650).optional(),
 });
 
+export async function salvarEmailFornecedor(contratacao: string, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
+  await exigirInterno();
+  if (!uuid.safeParse(contratacao).success) return { erro: "Dados inválidos." };
+  const lido = z.email("Informe um e-mail válido.").safeParse(String(dados.get("email") ?? "").trim().toLowerCase());
+  if (!lido.success) return { erro: lido.error.issues[0].message };
+  const supabase = await criarClienteServidor();
+  const { error } = await supabase.rpc("salvar_email_fornecedor", { p_contratacao: contratacao, p_email: lido.data });
+  if (error) return { erro: mensagemDeErro(error, error.message ?? "Não foi possível salvar.") };
+  recarregar(contratacao);
+  return { ok: "E-mail salvo." };
+}
+
 export async function registrarCotacao(contratacao: string, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
   await exigirInterno();
   if (!uuid.safeParse(contratacao).success) return { erro: "Dados inválidos." };
@@ -125,8 +138,10 @@ export async function concluirEtapa(contratacao: string, numeroEtapa: number): P
   const supabase = await criarClienteServidor();
   const { error } = await supabase.rpc("concluir_etapa", { p_contratacao: contratacao, p_etapa: numeroEtapa });
   if (error) return { erro: mensagemDeErro(error, error.message ?? "Não foi possível concluir.") };
+  // Autorização do gerente: o banco já ligou a empresa à obra; aqui sai o convite do portal.
+  const ok = numeroEtapa === 6 ? await liberarPortalDaContratacao(contratacao) : "Etapa concluída.";
   recarregar(contratacao);
-  return { ok: "Etapa concluída." };
+  return { ok };
 }
 
 export async function assinarContrato(contratacao: string, ordem: number): Promise<EstadoFormulario> {

@@ -7,10 +7,10 @@ import { z } from "zod";
 import { exigirExterno, exigirPapel, obterUsuarioAtual } from "@/modules/acesso/sessao";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
-import { envPublico } from "@/lib/env";
 import { cnpjValido, cpfValido, somenteDigitos } from "@/lib/documentos-br";
 import { mensagemDeErro, type EstadoFormulario } from "@/lib/formulario";
 import { reenviarAcesso } from "@/modules/acesso/reenvio";
+import { convidarResponsavel } from "./acesso-portal";
 import { documentosDaEmpresa, documentosDoVinculo } from "./consultas";
 import { podeEnviarParaAnalise } from "./dominio/documentos";
 
@@ -51,25 +51,10 @@ export async function convidarEmpresa(_: EstadoFormulario, dados: FormData): Pro
   const { error: erroObra } = await supabase.from("empresa_obras").insert({ empresa_id: empresa.id, obra_id: obra });
   if (erroObra) return { erro: mensagemDeErro(erroObra, "Empresa cadastrada, mas a obra não foi ligada.") };
 
-  // Responsável da empresa: usuário externo convidado por e-mail.
-  const { data: convite, error: erroConvite } = await criarClienteAdmin().auth.admin.inviteUserByEmail(email, {
-    data: { nome: razao, tipo: "externo" },
-    redirectTo: `${envPublico.NEXT_PUBLIC_SITE_URL}/login`,
-  });
-  let usuarioId = convite?.user?.id;
-  if (erroConvite) {
-    // E-mail já cadastrado: só liga se for de outra empresa terceirizada (nunca um usuário interno).
-    const { data: existente } = await supabase.from("usuarios").select("id, tipo").eq("email", email).maybeSingle();
-    if (!existente || existente.tipo !== "externo") {
-      revalidatePath("/terceiros/empresas");
-      return { erro: "Empresa cadastrada, mas o convite não foi enviado: este e-mail já é de um usuário interno ou houve falha no envio." };
-    }
-    usuarioId = existente.id;
-  }
-  const { error: erroVinculo } = await supabase.from("empresa_usuarios").insert({ usuario_id: usuarioId!, empresa_id: empresa.id });
+  const acesso = await convidarResponsavel(empresa.id, email, razao);
   revalidatePath("/terceiros/empresas");
-  if (erroVinculo) return { erro: mensagemDeErro(erroVinculo, "Convite enviado, mas o acesso não foi ligado à empresa.") };
-  return { ok: erroConvite ? `Empresa cadastrada e ligada ao acesso que ${email} já tinha.` : `Empresa cadastrada. Convite enviado para ${email}.` };
+  if (acesso.erro) return { erro: `Empresa cadastrada, mas ${acesso.erro}` };
+  return { ok: acesso.jaTinha ? `Empresa cadastrada e ligada ao acesso que ${email} já tinha.` : `Empresa cadastrada. Convite enviado para ${email}.` };
 }
 
 /** Reenvia o e-mail de acesso ao portal para os responsáveis da empresa. */

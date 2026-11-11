@@ -16,7 +16,6 @@ insert into public.obras (codigo, nome, cidade, uf) values ('IPE-TESTE', 'Reside
 -- Tudo isto é desfeito pelo rollback no fim.
 delete from public.usuario_papeis where papel = 'admin' and usuario_id <> '00000000-0000-0000-0000-0000000000a1';
 delete from public.usuario_obras;
-delete from public.obras where codigo <> 'IPE-TESTE';
 
 select is(
   (select count(*)::int from pg_tables where schemaname = 'public' and not rowsecurity), 0,
@@ -32,7 +31,7 @@ select is(
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000000c1", "role": "authenticated", "aal": "aal1"}', true);
 
-select is((select count(*)::int from public.obras), 1, 'Coordenador vê as obras');
+select ok((select count(*)::int from public.obras where codigo = 'IPE-TESTE') = 1, 'Coordenador vê as obras');
 select throws_ok(
   $$ insert into public.obras (codigo, nome, cidade, uf) values ('X', 'Obra X', 'Chapecó', 'SC') $$,
   '42501', null, 'Coordenador não cria obra');

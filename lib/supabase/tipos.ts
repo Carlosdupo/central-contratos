@@ -300,6 +300,7 @@ export type Database = {
           empresa_id: string | null
           fluxo_versao: number
           fornecedor_cnpj: string | null
+          fornecedor_email: string | null
           fornecedor_nome: string | null
           id: string
           limite_obra: number
@@ -324,6 +325,7 @@ export type Database = {
           empresa_id?: string | null
           fluxo_versao?: number
           fornecedor_cnpj?: string | null
+          fornecedor_email?: string | null
           fornecedor_nome?: string | null
           id?: string
           limite_obra: number
@@ -348,6 +350,7 @@ export type Database = {
           empresa_id?: string | null
           fluxo_versao?: number
           fornecedor_cnpj?: string | null
+          fornecedor_email?: string | null
           fornecedor_nome?: string | null
           id?: string
           limite_obra?: number
@@ -1614,6 +1617,10 @@ export type Database = {
       }
       salvar_campo_etapa: {
         Args: { p_contratacao: string; p_etapa: number; p_valor: string }
+        Returns: undefined
+      }
+      salvar_email_fornecedor: {
+        Args: { p_contratacao: string; p_email: string }
         Returns: undefined
       }
       salvar_texto_empresa: {

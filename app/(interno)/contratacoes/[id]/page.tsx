@@ -7,7 +7,7 @@ import { temAlgumPapel, type Papel } from "@/modules/acesso/papeis";
 import { detalheDaContratacao } from "@/modules/contratacoes/consultas";
 import { TIPO_CONTRATACAO, TRILHAS, formatarReais } from "@/modules/contratacoes/rotulos";
 import {
-  assinarContrato, cancelarContratacao, concluirEtapa, escolherFornecedor, pularNegociacao, reabrirEtapa, registrarCotacao, salvarCampoEtapa,
+  assinarContrato, cancelarContratacao, concluirEtapa, escolherFornecedor, pularNegociacao, reabrirEtapa, registrarCotacao, salvarCampoEtapa, salvarEmailFornecedor,
 } from "@/modules/contratacoes/acoes";
 import { equipeDaEmpresa } from "@/modules/terceiros/consultas";
 import { linksDasFotos } from "@/modules/terceiros/fotos";
@@ -179,9 +179,6 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                   </p>
                 )}
                 {sel.etapa === 5 && c.negociacao_pulada && <p className="rounded-xl bg-primary-soft px-3.5 py-2.5 text-[13px]">A obra não negociou. A equalização e a negociação ficam com Suprimentos.</p>}
-                {c.fornecedor_cnpj && !empresa && (
-                  <p className="text-[13px] text-muted-foreground">O fornecedor ainda não está cadastrado como empresa. <Link href="/terceiros/empresas" className="text-primary">Convidar empresa</Link> com o mesmo CNPJ.</p>
-                )}
               </div>
             )}
 
@@ -206,8 +203,29 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
               </div>
             )}
 
+            {[5, 6].includes(sel.etapa) && sel.situacao !== "pendente" && c.fornecedor_cnpj && (
+              <div className="flex flex-col gap-2">
+                <h3 className="text-[14px] font-semibold">Acesso do fornecedor ao portal</h3>
+                {empresa ? (
+                  <p className="text-[13px] text-muted-foreground">
+                    {c.fornecedor_nome} já está cadastrado como empresa. {sel.etapa === 6 && sel.situacao === "em_andamento" ? `Ao autorizar, ele passa a poder cadastrar a equipe para ${c.obras?.nome}.` : ""}
+                  </p>
+                ) : sel.situacao === "em_andamento" && pode ? (
+                  <Formulario acao={salvarEmailFornecedor.bind(null, id)} textoBotao="Salvar e-mail" className="flex flex-wrap items-end gap-2">
+                    <CampoTexto nome="email" rotulo={`E-mail de ${c.fornecedor_nome ?? "fornecedor"} para o portal`} tipo="email" padrao={c.fornecedor_email} className="min-w-[240px] flex-1" />
+                  </Formulario>
+                ) : (
+                  <p className="text-[13px]"><span className="text-muted-foreground">E-mail para o portal:</span> {c.fornecedor_email ?? "—"}</p>
+                )}
+                {!empresa && sel.situacao === "em_andamento" && (
+                  <p className="text-[12.5px] text-muted-foreground">Na autorização do gerente, a empresa é cadastrada e recebe o convite do portal neste e-mail para enviar os documentos e a equipe.</p>
+                )}
+              </div>
+            )}
             {sel.etapa === 6 && sel.situacao !== "pendente" && (
-              <p className="rounded-xl bg-primary-soft px-3.5 py-2.5 text-[13px]">A data da autorização fica registrada sozinha (antes ia para a planilha compartilhada).</p>
+              <p className="rounded-xl bg-primary-soft px-3.5 py-2.5 text-[13px]">
+                Ao autorizar, o fornecedor ganha acesso ao portal para {c.obras?.nome} e já pode enviar os documentos da empresa e da equipe. A data da autorização fica registrada sozinha.
+              </p>
             )}
             {sel.etapa === 10 && empresa && <p className="rounded-xl bg-primary-soft px-3.5 py-2.5 text-[13px]">A situação da equipe vem do portal da empresa (abaixo). O RH confere os documentos em Análise do RH.</p>}
 
