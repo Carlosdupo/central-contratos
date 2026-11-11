@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: Lint, tipos, testes e build
+    runs-on: ubuntu-latest
+    env:
+      # Valores fictícios só para o build passar; nenhum dado real no CI.
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder_000000
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      SUPABASE_SECRET_KEY: sb_secret_ci_placeholder_0000000000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  banco:
+    name: Migrations e testes do banco (RLS)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Subir Supabase local
+        run: npx supabase start -x studio,imgproxy,inbucket,edge-runtime,logflare,vector,supavisor,realtime
+      - name: Testes pgTAP
+        run: npx supabase test db
+      - name: Migrations batem com o banco
+        run: |
+          npx supabase db diff --local > /tmp/diff.sql
+          if [ -s /tmp/diff.sql ]; then echo "Há alterações no banco fora das migrations:"; cat /tmp/diff.sql; exit 1; fi

@@ -1,0 +1,969 @@
+<title>Central de Contratos de Obra</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: barra lateral translúcida estilo macOS + área de trabalho cinza-clara com cartões brancos; no detalhe, listas agrupadas (estilo Ajustes do iOS) à esquerda e inspetor da etapa à direita */
+:root{
+  --bg:#f5f5f7; --surface:#ffffff; --fill:#f2f2f5; --fill-2:#e8e8ed; --sep:rgba(60,60,67,.14); --sep-strong:rgba(60,60,67,.3);
+  --fg:#1d1d1f; --muted:#6e6e73; --faint:#86868b;
+  --accent:#0071e3; --accent-ink:#ffffff; --accent-soft:#e8f1fd;
+  --ok:#1f8a3a; --ok-soft:#e4f6e8; --ok-fill:#34c759; --warn:#b25000; --warn-soft:#fff2e0; --bad:#d70015; --bad-soft:#ffe9ea; --info:#0062c4; --info-soft:#e8f1fd;
+  --side:rgba(246,246,248,.82); --glass:rgba(245,245,247,.78);
+  --shadow:0 1px 1px rgba(0,0,0,.03),0 6px 24px rgba(0,0,0,.05);
+  --f-display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI Variable Display","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --f-body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI Variable Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --f-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#000000; --surface:#1c1c1e; --fill:#2c2c2e; --fill-2:#3a3a3c; --sep:rgba(84,84,88,.5); --sep-strong:rgba(120,120,128,.6);
+  --fg:#f5f5f7; --muted:#a1a1a6; --faint:#8d8d93;
+  --accent:#0a84ff; --accent-ink:#ffffff; --accent-soft:#0f2a47;
+  --ok:#30d158; --ok-soft:#10301b; --ok-fill:#30d158; --warn:#ff9f0a; --warn-soft:#3a2805; --bad:#ff453a; --bad-soft:#3d1513; --info:#64b5ff; --info-soft:#0f2a47;
+  --side:rgba(28,28,30,.78); --glass:rgba(0,0,0,.72);
+  --shadow:0 0 0 .5px rgba(255,255,255,.06); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#000000; --surface:#1c1c1e; --fill:#2c2c2e; --fill-2:#3a3a3c; --sep:rgba(84,84,88,.5); --sep-strong:rgba(120,120,128,.6);
+  --fg:#f5f5f7; --muted:#a1a1a6; --faint:#8d8d93;
+  --accent:#0a84ff; --accent-ink:#ffffff; --accent-soft:#0f2a47;
+  --ok:#30d158; --ok-soft:#10301b; --ok-fill:#30d158; --warn:#ff9f0a; --warn-soft:#3a2805; --bad:#ff453a; --bad-soft:#3d1513; --info:#64b5ff; --info-soft:#0f2a47;
+  --side:rgba(28,28,30,.78); --glass:rgba(0,0,0,.72);
+  --shadow:0 0 0 .5px rgba(255,255,255,.06); color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.47;letter-spacing:-.006em;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent);outline-offset:2px;border-radius:8px}
+.app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100%}
+
+/* barra lateral */
+.side{position:sticky;top:0;align-self:start;height:100vh;background:var(--side);backdrop-filter:saturate(180%) blur(24px);-webkit-backdrop-filter:saturate(180%) blur(24px);border-right:.5px solid var(--sep);display:flex;flex-direction:column;gap:22px;padding-block:22px;padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:14px}
+.brand{display:flex;align-items:center;gap:11px;font-family:var(--f-display);font-weight:600;font-size:15px;letter-spacing:-.015em;line-height:1.2;padding:0 6px}
+.brand small{display:block;font-family:var(--f-body);font-weight:400;font-size:12px;letter-spacing:0;color:var(--muted)}
+.appicon{width:36px;height:36px;border-radius:9px;flex:none;display:grid;place-items:center;color:#fff;background:linear-gradient(160deg,#3d9bff,#0062d6);box-shadow:inset 0 0 0 .5px rgba(0,0,0,.15),0 2px 6px rgba(0,98,214,.3)}
+.nav{display:flex;flex-direction:column;gap:1px}
+.nav .grp{font-size:11.5px;font-weight:600;color:var(--faint);padding:16px 10px 5px}
+.nav a{display:flex;align-items:center;gap:10px;color:var(--fg);text-decoration:none;padding:7px 10px;border-radius:8px;font-size:13.5px;transition:background .15s}
+.nav a .ni{display:grid;color:var(--accent)}
+.nav a:hover{background:var(--fill-2)}
+.nav a.on{background:var(--accent);color:var(--accent-ink)}
+.nav a.on .ni{color:inherit}
+.nav a.soon{color:var(--muted)}
+.nav a.soon .ni{color:var(--faint)}
+.nav a.soon.on{color:var(--accent-ink)}
+.nav a .tag{margin-left:auto;font-size:10.5px;font-weight:500;background:var(--fill-2);color:var(--muted);border-radius:999px;padding:1px 7px}
+.nav a.on .tag{background:rgba(255,255,255,.22);color:inherit}
+
+/* área principal */
+.main{min-width:0;display:flex;flex-direction:column}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 20px;padding-block:11px;padding-left:36px;padding-right:max(20px,env(safe-area-inset-right,0px));background:var(--glass);backdrop-filter:saturate(180%) blur(24px);-webkit-backdrop-filter:saturate(180%) blur(24px);border-bottom:.5px solid var(--sep)}
+.demo{font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
+.demo b{color:var(--warn);background:var(--warn-soft);font-weight:600;padding:2px 9px;border-radius:999px;font-size:11.5px}
+.perfil{display:flex;align-items:center;gap:8px;font-size:13px}
+.perfil label{color:var(--muted)}
+.perfil select{border-radius:999px;background:var(--fill);border:0;padding:6px 30px 6px 14px;font-weight:500}
+.content{padding-block:34px 64px;padding-left:36px;padding-right:max(20px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:26px;max-width:1280px;width:100%}
+
+h1{font-family:var(--f-display);font-weight:700;font-size:34px;line-height:1.1;margin:0;letter-spacing:-.025em;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:600;font-size:19px;line-height:1.25;margin:0;letter-spacing:-.018em}
+h3{font-size:14px;margin:0;font-weight:600;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:6px 0 0;max-width:66ch;font-size:15px}
+.mono{font-family:var(--f-mono);font-size:12px;letter-spacing:0}
+.muted{color:var(--muted)}
+.head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:14px}
+.content > a.muted{color:var(--accent)!important;font-size:14px;margin-bottom:-12px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;background:var(--fill-2);padding:8px 18px;border-radius:999px;cursor:pointer;text-decoration:none;font-weight:500;font-size:14px;white-space:nowrap;color:var(--fg);transition:background .15s,transform .1s,filter .15s}
+.btn:hover{background:color-mix(in srgb,var(--fill-2) 80%,var(--fg) 8%)}
+.btn:active{transform:scale(.97)}
+.btn.pri{background:var(--accent);color:var(--accent-ink)}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.sm{padding:5px 13px;font-size:13px}
+.btn[disabled]{opacity:.35;cursor:not-allowed;filter:none;transform:none}
+input[type=text],input[type=number],select,textarea{background:var(--fill);border:1px solid transparent;border-radius:10px;padding:9px 12px;width:100%;min-width:0;transition:border-color .15s,box-shadow .15s,background .15s}
+input[type=text]:focus,input[type=number]:focus,select:focus{outline:none;background:var(--surface);border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 20%,transparent)}
+input:disabled{opacity:.6}
+select{width:auto}
+input[type=file]{font-size:13px;color:var(--muted)}
+input[type=file]::file-selector-button{border:0;background:var(--fill-2);color:var(--fg);border-radius:999px;padding:6px 14px;margin-right:10px;font:inherit;cursor:pointer}
+
+/* indicadores */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.kpi{background:var(--surface);border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;gap:6px;box-shadow:var(--shadow)}
+.kpi .n{font-family:var(--f-display);font-size:40px;font-weight:700;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.kpi .l{color:var(--muted);font-size:13px;font-weight:500}
+.kpi.alert .n{color:var(--bad)}
+
+.panel{background:var(--surface);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:16px;min-width:0;box-shadow:var(--shadow)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:20px;align-items:start}
+
+/* tabelas */
+.tw{overflow-x:auto;margin-inline:-6px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th{text-align:left;font-size:12px;color:var(--faint);font-weight:500;padding:0 12px 9px;border-bottom:.5px solid var(--sep);white-space:nowrap}
+td{padding:12px;border-bottom:.5px solid var(--sep);vertical-align:top}
+tr:last-child td{border-bottom:0}
+tr.link{cursor:pointer;transition:background .12s}
+tr.link:hover td{background:var(--fill)}
+tr.link:hover td:first-child{border-radius:10px 0 0 10px}
+tr.link:hover td:last-child{border-radius:0 10px 10px 0}
+td .t{font-weight:500}
+td .s{font-size:12.5px;color:var(--muted)}
+
+/* selos */
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.chip::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.chip.ok{color:var(--ok);background:var(--ok-soft)}
+.chip.warn{color:var(--warn);background:var(--warn-soft)}
+.chip.bad{color:var(--bad);background:var(--bad-soft)}
+.chip.info{color:var(--info);background:var(--info-soft)}
+.chip.neutral{color:var(--muted);background:var(--fill)}
+.area{font-size:11.5px;font-weight:600;color:var(--faint)}
+
+.bar{height:6px;border-radius:999px;background:var(--fill-2);overflow:hidden;min-width:70px}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:999px}
+.load{display:flex;flex-direction:column;gap:12px}
+.load .row{display:grid;grid-template-columns:150px minmax(0,1fr) 54px;gap:12px;align-items:center;font-size:13px}
+.load .row .bar{height:8px}
+.load .row .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+.load .row .v em{font-style:normal;color:var(--bad);font-weight:600}
+
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.filters select{border-radius:999px;background:var(--surface);box-shadow:var(--shadow);padding:8px 32px 8px 16px;font-weight:500}
+
+/* detalhe */
+.meta{display:flex;flex-wrap:wrap;gap:12px 32px;font-size:14px;background:var(--surface);border-radius:18px;padding:16px 22px;box-shadow:var(--shadow)}
+.meta div{display:flex;flex-direction:column;gap:2px}
+.meta span{font-size:12px;color:var(--faint);font-weight:500}
+.det{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:24px;align-items:start}
+.det > .panel:first-child{background:transparent;box-shadow:none;padding:0;gap:22px}
+.track{display:flex;flex-direction:column}
+.track + .track{margin-top:0}
+.track .th{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:0 16px 7px}
+.track .th h3{font-size:12.5px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:.03em}
+.par{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.par-note{font-size:12.5px;color:var(--faint);display:flex;align-items:center;gap:10px;margin-block:-6px}
+.par-note::before,.par-note::after{content:"";flex:1;border-top:.5px solid var(--sep-strong)}
+.st{position:relative;display:grid;grid-template-columns:26px minmax(0,1fr);gap:12px;align-items:center;text-align:left;width:100%;background:var(--surface);border:0;padding:11px 16px;cursor:pointer;transition:background .15s}
+.st:hover{background:var(--fill)}
+.track .st{border-radius:0}
+.track .th + .st{border-radius:14px 14px 0 0}
+.track .st:last-child{border-radius:0 0 14px 14px}
+.track .th + .st:last-child{border-radius:14px}
+.track .st + .st::before{content:"";position:absolute;top:0;left:54px;right:0;border-top:.5px solid var(--sep)}
+.panel > .st{border-radius:12px;background:var(--fill)}
+.panel > .st:hover{background:var(--fill-2)}
+.st.sel,.st.sel:hover{background:var(--accent-soft)}
+.st.sel .nm{color:var(--accent)}
+.st.pend .nm{color:var(--muted)}
+.dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:600;border:1.5px solid var(--sep-strong);color:var(--faint);background:transparent;font-variant-numeric:tabular-nums}
+.st.ok .dot{background:var(--ok-fill);border-color:var(--ok-fill);color:#fff}
+.st.and .dot{border:2px solid var(--accent);color:var(--accent);background:var(--surface);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 16%,transparent)}
+.st .nm{font-weight:500;line-height:1.3}
+.st .ln{display:flex;flex-wrap:wrap;gap:3px 8px;align-items:center;margin-top:3px;font-size:12px;color:var(--muted)}
+
+.side-panel{position:sticky;top:76px;display:flex;flex-direction:column;gap:20px}
+.side-panel .panel:first-child{gap:18px}
+.chk{display:flex;flex-direction:column;background:var(--fill);border-radius:12px;overflow:hidden}
+.chk label{position:relative;display:flex;gap:12px;align-items:center;padding:11px 14px;cursor:pointer;transition:background .12s}
+.chk label + label::before{content:"";position:absolute;top:0;left:48px;right:0;border-top:.5px solid var(--sep)}
+.chk label:hover{background:var(--fill-2)}
+.chk input{appearance:none;-webkit-appearance:none;margin:0;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--sep-strong);flex:none;background:var(--surface) center/12px no-repeat;cursor:pointer;transition:background-color .15s,border-color .15s}
+.chk input:checked{background-color:var(--accent);border-color:var(--accent);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.3l2.4 2.3 4.6-5' fill='none' stroke='white' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.chk input:disabled{cursor:default;opacity:.55}
+.chk label.dis{cursor:default}
+.chk label.dis:hover{background:none}
+.hint{font-size:13px;color:var(--muted);background:var(--fill);border-radius:12px;padding:10px 14px;margin:0}
+.hint.acc{background:var(--accent-soft);color:var(--fg)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field > span{font-size:12.5px;font-weight:500;color:var(--muted)}
+.foot{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;border-top:.5px solid var(--sep);padding-top:16px}
+
+.sig{display:flex;flex-direction:column;background:var(--fill);border-radius:12px;padding:0 14px;margin-top:8px}
+.sig .r{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-bottom:.5px solid var(--sep)}
+.sig .r:last-child{border-bottom:0}
+.sig .k{width:22px;height:22px;border-radius:50%;background:var(--fill-2);display:grid;place-items:center;font-size:11.5px;font-weight:600;color:var(--muted);font-family:var(--f-body)}
+
+.docs td,.docs th{text-align:center}
+.docs td:first-child,.docs th:first-child{text-align:left}
+.dc{display:inline-grid;place-items:center;min-width:34px;height:24px;border-radius:999px;font-size:11.5px;font-weight:600;border:0;cursor:default;padding:0 9px}
+.dc.ok{background:var(--ok-soft);color:var(--ok)}
+.dc.pend{background:var(--warn-soft);color:var(--warn)}
+.dc.rep{background:var(--bad-soft);color:var(--bad)}
+button.dc{cursor:pointer;transition:transform .1s}
+button.dc:active{transform:scale(.94)}
+.cot-best{color:var(--ok);font-weight:600;font-size:11.5px;background:var(--ok-soft);border-radius:999px;padding:1px 7px;margin-left:4px}
+.mini{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;gap:10px;align-items:end}
+
+.log{display:flex;flex-direction:column;font-size:13px;max-height:280px;overflow:auto}
+.log div{display:grid;grid-template-columns:46px minmax(0,1fr);gap:12px;padding:8px 0;border-bottom:.5px solid var(--sep)}
+.log div:last-child{border-bottom:0}
+
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.form .full{grid-column:1/-1}
+.radios{display:flex;flex-direction:column;gap:8px}
+.radios label{display:flex;gap:12px;align-items:center;background:var(--fill);border:1.5px solid transparent;border-radius:12px;padding:11px 14px;cursor:pointer;transition:background .15s,border-color .15s}
+.radios label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.radios input{accent-color:var(--accent);margin:0;width:18px;height:18px}
+.err{color:var(--bad);font-size:13px}
+
+.soonpage ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;max-width:70ch;font-size:15px}
+.soonpage ol li::marker{color:var(--faint);font-weight:600}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--fg) 88%,transparent);color:var(--bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:11px 20px;border-radius:999px;font-size:13.5px;font-weight:500;opacity:0;transform:translate(-50%,10px) scale(.98);transition:opacity .25s,transform .35s cubic-bezier(.2,.9,.3,1.2);pointer-events:none;z-index:20;max-width:calc(100% - 32px);text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.18)}
+.toast.on{opacity:1;transform:translate(-50%,0) scale(1)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+
+/* terceiros */
+.glist{display:flex;flex-direction:column;background:var(--fill);border-radius:12px;overflow:hidden}
+.glist .gr{position:relative;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 14px;padding:12px 14px;width:100%;text-align:left;border:0;background:transparent;transition:background .12s}
+.glist .gr + .gr::before{content:"";position:absolute;top:0;left:14px;right:0;border-top:.5px solid var(--sep)}
+.glist button.gr{cursor:pointer}
+.glist button.gr:hover{background:var(--fill-2)}
+.gm{min-width:0;flex:1 1 220px}
+.gm .t{font-weight:500}
+.gm .s{font-size:12.5px;color:var(--muted);margin-top:2px}
+.gc{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end}
+.dt{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.gc input[type=date],.in-sm{background:var(--surface);border:1px solid var(--sep);border-radius:8px;padding:5px 9px;font-size:13px;width:auto}
+.in-sm{width:220px;max-width:100%}
+.form input[type=password],.form input[type=date]{background:var(--fill);border:1px solid transparent;border-radius:10px;padding:9px 12px;width:100%}
+.form input[type=password]:focus,.form input[type=date]:focus{outline:none;background:var(--surface);border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 20%,transparent)}
+.bad-t{color:var(--bad)}
+.avatar{width:34px;height:34px;border-radius:50%;flex:none;display:inline-grid;place-items:center;background:var(--fill-2);color:var(--muted);font-size:12.5px;font-weight:600;overflow:hidden;letter-spacing:0}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.avatar.lg{width:64px;height:64px;font-size:20px}
+.who{display:flex;align-items:center;gap:16px;min-width:0}
+.who.sm{gap:11px;flex:1 1 240px}
+.banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.btn.ok{background:var(--ok-fill);color:#fff}
+.btn.danger{background:var(--bad);color:#fff}
+.kpi .n small{font-size:20px;color:var(--faint);font-weight:600;margin-left:2px;letter-spacing:0}
+.back{text-decoration:none}
+.meta.flat{box-shadow:none;background:var(--fill);padding:12px 16px}
+.radios.row3{flex-direction:row;flex-wrap:wrap}
+.radios.row3 label{flex:1 1 180px}
+.fotobox{flex-direction:row;align-items:center;gap:14px}
+.chkline{flex-direction:row;align-items:center;gap:10px;font-size:14px;cursor:pointer}
+.chkline input{width:18px;height:18px;accent-color:var(--accent);margin:0}
+.narrow{max-width:640px}
+
+@media (max-width:1060px){
+  .det,.grid2{grid-template-columns:minmax(0,1fr)}
+  .side-panel{position:static}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:820px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:12px;padding-block:12px;padding-right:max(16px,env(safe-area-inset-right,0px));padding-left:max(16px,env(safe-area-inset-left,0px));border-right:0;border-bottom:.5px solid var(--sep)}
+  .brand small{display:none}
+  .nav{flex-direction:row;overflow-x:auto;width:100%;gap:4px;scrollbar-width:none}
+  .nav::-webkit-scrollbar{display:none}
+  .nav .grp{display:none}
+  .nav a{white-space:nowrap;background:var(--fill)}
+  .top{position:static}
+  .top,.content{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .content{padding-block:24px 48px}
+  h1{font-size:28px}
+  .par,.form{grid-template-columns:minmax(0,1fr)}
+  .load .row{grid-template-columns:110px minmax(0,1fr) 48px}
+  .mini{grid-template-columns:minmax(0,1fr)}
+  .kpi .n{font-size:34px}
+}
+</style>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand"><span class="appicon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M9.5 14.5l2 2 3.5-4"/></svg></span><span>Central de Contratos<small>Contratação de empreiteiros</small></span></div>
+    <nav class="nav" id="nav"></nav>
+  </aside>
+  <div class="main">
+    <div class="top">
+      <div class="demo"><b>Protótipo</b><span>Dados de exemplo. O que você altera fica salvo só neste navegador.</span><button class="btn sm" data-a="reset">Restaurar exemplo</button></div>
+      <div class="perfil"><label for="perfil">Ver como</label><select id="perfil"></select></div>
+    </div>
+    <main class="content" id="view"></main>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const AREAS={obra:'Obra',sup:'Suprimentos',ctr:'Contratos',dir:'Direção',rh:'RH',tst:'Segurança do trabalho'};
+const PERFIS=[['obra','Coordenador de obra'],['sup','Suprimentos'],['ctr','Contratos'],['dir','Direção'],['rh','RH'],['tst','Segurança do trabalho'],['prest','Empresa terceirizada']];
+const OBRAS=['Residencial Ipê','Edifício Aurora','Condomínio Vale Verde'];
+const TIPOS={unico:'Serviço único, sem medição',contrato:'Serviço para contrato',aditivo:'Aditivo de contrato'};
+const TRILHAS=[['neg','Negociação e solicitação'],['ctr','Contrato'],['doc','Documentação dos funcionários'],['lib','Liberação']];
+const ASSIN=[['Coordenador de obra','obra'],['Suprimentos','sup'],['Fornecedor','ctr'],['Direção','dir'],['RH','rh']];
+const LIMITE=4000; /* abaixo disso a obra pode escolher fornecedor e valor; acima, quem define é Suprimentos */
+const DOCS=[['aso','ASO'],['nr18','NR-18'],['epi','Ficha de EPI'],['os','Ordem de serviço']];
+const ETAPAS=[
+ {id:1,tr:'neg',nome:'Escopo do serviço',area:'obra',resp:'Coordenador de obra',deps:[],tarefas:['Escopo atende a um pacote do planejamento','Valor orçado informado (orçamento da obra)','Tipo de contrato definido']},
+ {id:2,tr:'neg',nome:'Cotação com 3 fornecedores',area:'obra',resp:'Coordenador de obra',deps:[1],tarefas:['Escopo enviado aos 3 fornecedores','Cotações recebidas e assinadas'],cot:'add'},
+ {id:3,tr:'neg',nome:'Equalização e 1ª negociação',area:'obra',resp:'Coordenador de obra',deps:[2],tarefas:['Primeira negociação feita','Planilha de equalização atualizada','Planilha de importação atualizada'],cot:'escolher',pular:true},
+ {id:4,tr:'neg',nome:'Solicitação de serviço no Sienge',area:'obra',resp:'Coordenador de obra',deps:[3],tarefas:['Solicitação lançada no Sienge','Equalização e importação anexadas'],campo:['ss','Nº da solicitação no Sienge']},
+ {id:5,tr:'neg',nome:'Validação e negociação',area:'sup',resp:'Suprimentos',deps:[4],tarefas:['Escopo e necessidades entendidos','Fornecedor validado','Proposta atualizada recebida','Cartão CNPJ recebido','Contrato social recebido','Solicitação atualizada com os valores negociados','Documentos do terceiro anexados'],cot:'escolher',campo:['neg','Valor negociado (R$)']},
+ {id:6,tr:'neg',nome:'Autorização do gerente de suprimentos',area:'sup',resp:'Gerente de suprimentos',deps:[5],tarefas:[],autorizar:true,nota:'Antes, a data de liberação ia para a planilha compartilhada. Aqui ela fica registrada sozinha quando o gerente autoriza.'},
+ {id:7,tr:'ctr',nome:'Contrato no Sienge e minuta',area:'ctr',resp:'Pamela',sla:7,deps:[6],tarefas:['Contrato lançado no Sienge (medição)','Minuta emitida e enviada'],campo:['ct','Código do contrato no Sienge']},
+ {id:8,tr:'ctr',nome:'Aprovação de alçada',area:'obra',resp:'Coordenador de obra',deps:[7],tarefas:['Alçada aprovada no Sienge']},
+ {id:9,tr:'ctr',nome:'Assinaturas do contrato',area:'ctr',resp:'5 assinantes, em ordem',sla:3,deps:[8],tarefas:[],assin:true},
+ {id:10,tr:'doc',nome:'Documentação dos funcionários',area:'rh',resp:'Taiana e Elaine',sla:2,uteis:true,deps:[6],tarefas:['Documentação conferida','Integração agendada'],func:true,nota:'No sistema final, esta etapa usa o portal da empresa (menu Terceiros): a empresa envia os documentos, o RH confere em 2 dias úteis e a integração é marcada sozinha.'},
+ {id:11,tr:'doc',nome:'Integração de segurança',area:'tst',resp:'Elaine',sla:2,uteis:true,deps:[10],tarefas:['Integração realizada','Lista de presença anexada']},
+ {id:12,tr:'lib',nome:'Liberação para a obra',area:'rh',resp:'RH',deps:[9,11],tarefas:['Nomes liberados para a obra']},
+];
+const E=Object.fromEntries(ETAPAS.map(e=>[e.id,e]));
+
+/* datas */
+const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const hoje=()=>iso(new Date());
+const ago=n=>{const d=new Date();d.setDate(d.getDate()-n);return iso(d)};
+const parse=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const calDias=(a,b)=>Math.round((parse(b)-parse(a))/864e5);
+const uteis=(a,b)=>{let n=0;const d=parse(a),f=parse(b);while(d<f){d.setDate(d.getDate()+1);const w=d.getDay();if(w>0&&w<6)n++}return n};
+const fmtD=s=>s?`${s.slice(8,10)}/${s.slice(5,7)}`:'—';
+const brl=v=>v==null||v===''?'—':Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* dados de exemplo */
+function fornecedores(serv){
+  const base={Alvenaria:['Alvenarias Oeste','Construmax Empreitadas','Irmãos Bortolini'],Impermeabilização:['Impermeabiliza Sul','Vedatec Serviços','Hidroprot Engenharia'],Revestimento:['Pedras Chapecó','Mármores Serra','Rochas do Vale'],Instalação:['Portas & Cia Montagens','Marcenaria Kunz','Montadora Alfa'],Concreto:['Concrebrás Estruturas','Forma Certa','Estrutural Oeste'],Pintura:['Cor Total Pinturas','Pintar Bem','Acabamentos Lima'],Instalações:['Eletro Faria','Instala Mais','Rede Viva Elétrica'],Argamassa:['Projeta Reboco','Massa Fina Serviços','Revest Oeste']};
+  const k=Object.keys(base).find(k=>serv.startsWith(k))||'Alvenaria';
+  return base[k];
+}
+function mk(o,done,cur,extra={}){
+  const et={},maxCur=Math.max(0,...Object.values(cur));
+  const step=done.length?Math.max(1,Math.floor((o.idade-maxCur)/done.length)):0;
+  let d=o.idade;
+  ETAPAS.forEach(e=>{
+    if(done.includes(e.id)){const fim=Math.max(d-step,maxCur);et[e.id]={st:'ok',ini:ago(d),fim:ago(fim),chk:e.tarefas.map(()=>true)};d=fim}
+    else if(e.id in cur)et[e.id]={st:'and',ini:ago(cur[e.id]),chk:e.tarefas.map((_,i)=>i<((extra.parcial||{})[e.id]||0))};
+    else et[e.id]={st:'pend',chk:e.tarefas.map(()=>false)};
+  });
+  const fs=fornecedores(o.servico),past=n=>done.includes(n);
+  const ct={id:'ct'+o.n,cod:'CT-2026-'+String(o.n).padStart(3,'0'),obra:o.obra,servico:o.servico,pacote:o.pacote,tipo:o.tipo||'contrato',orcado:o.orcado,criada:ago(o.idade),et,
+    cot:past(1)||cur[2]!=null?fs.slice(0,past(2)?3:2).map((f,i)=>({f,valor:Math.round(o.orcado*[0.97,1.04,1.09][i]/100)*100,prazo:[45,40,50][i]})):[],
+    fornecedor:past(5)||(past(3)&&o.orcado<LIMITE)?fs[0]:'',negociado:past(6)?Math.round(o.orcado*0.94/100)*100:'',
+    sienge:{ss:past(4)?String(2400+o.n):'',ct:past(7)?'CT'+(880+o.n):''},
+    ass:extra.ass||ASSIN.map(()=>past(9)?ago(Math.max(0,maxCur+1)):null),
+    func:(past(6)?['Adair Moraes','Luciano Pereira','Joel Ramos','Vanderlei Costa']:[]).map((nome,i)=>({nome,funcao:['Encarregado','Oficial','Oficial','Servente'][i],docs:Object.fromEntries(DOCS.map(([k],j)=>[k,past(10)?'ok':(extra.docs?extra.docs[i][j]:'pend')]))})),
+    log:[]};
+  ct.log.push({d:ct.criada,txt:'Contratação aberta pela obra'});
+  done.forEach(id=>ct.log.push({d:et[id].fim,txt:`${E[id].nome} concluída`}));
+  return ct;
+}
+function seed(){
+  return {perfil:'obra',seq:36,seqP:20,empSel:'e1',emp:seedEmp(),msgs:seedMsgs(),cts:[
+    mk({n:28,obra:'Edifício Aurora',servico:'Impermeabilização de lajes e reservatórios',pacote:'Impermeabilização',orcado:86000,idade:26},[1,2,3,4,5,6],{7:9,10:3},{docs:[['ok','ok','ok','ok'],['ok','pend','ok','ok'],['rep','ok','pend','ok'],['pend','pend','pend','pend']]}),
+    mk({n:25,obra:'Residencial Ipê',servico:'Revestimento em pedra da fachada',pacote:'Fachada',orcado:142000,idade:34},[1,2,3,4,5,6,7,8,10],{9:4,11:1},{ass:[ago(4),ago(3),null,null,null]}),
+    mk({n:31,obra:'Residencial Ipê',servico:'Alvenaria de vedação, torre B',pacote:'Alvenaria',orcado:118000,idade:15},[1,2,3,4],{5:2},{parcial:{5:2}}),
+    mk({n:30,obra:'Edifício Aurora',servico:'Instalações elétricas, pavimentos 1 a 6',pacote:'Instalações',orcado:97000,idade:30},[1,2,3,4,5,6,7,8,9,10,11],{12:1}),
+    mk({n:29,obra:'Condomínio Vale Verde',servico:'Pintura interna das unidades',pacote:'Pintura',orcado:64000,idade:24},[1,2,3,4,5,6,7,8,10,11],{9:1},{ass:[ago(1),null,null,null,null]}),
+    mk({n:33,obra:'Condomínio Vale Verde',servico:'Instalação de portas internas',pacote:'Esquadrias',orcado:38000,idade:8},[1],{2:5},{parcial:{2:1}}),
+    mk({n:35,obra:'Condomínio Vale Verde',servico:'Revestimento: corte e instalação de soleiras',pacote:'Revestimento',orcado:3200,idade:6},[1,2],{3:1}),
+    mk({n:34,obra:'Residencial Ipê',servico:'Argamassa projetada, reboco externo',pacote:'Revestimento argamassado',orcado:73000,idade:1},[],{1:1},{parcial:{1:2}}),
+    mk({n:20,obra:'Edifício Aurora',servico:'Concreto e formas da superestrutura',pacote:'Estrutura',orcado:410000,idade:48},[1,2,3,4,5,6,7,8,9,10,11,12],{}),
+  ]};
+}
+/* ===== Terceiros: portal da empresa, análise do RH e integração ===== */
+const PRAZO_RH=2, CORTE=18;
+const DD={
+  cnd:{n:'CND federal',val:1,dica:'Com pendências, envie a positiva com efeito de negativa.'},
+  fgts:{n:'FGTS: guia e comprovante de pagamento',mensal:1},
+  inss:{n:'INSS: guia e comprovante de pagamento',mensal:1},
+  contab:{n:'Contabilidade: nome e telefone',texto:1},
+  pcmso:{n:'PCMSO válido e assinado',val:1},
+  pgr:{n:'PGR válido e assinado',val:1},
+  ltcat:{n:'LTCAT válido e assinado',val:1},
+  nr05:{n:'Certificado NR-05 (CIPA)',anos:2,dica:'Exigido porque a empresa tem mais de 5 pessoas na obra.'},
+  aso:{n:'ASO',anos:1},
+  rg:{n:'RG ou CNH',anos:10},
+  ctrab:{n:'Contrato de trabalho ou de experiência assinado'},
+  esocial:{n:'Registro no eSocial'},
+  freg:{n:'Ficha de registro assinada'},
+  os:{n:'Ordem de serviço atualizada e assinada'},
+  epi:{n:'Ficha de EPI atualizada e assinada'},
+  nr06:{n:'Certificado NR-06',anos:2},nr12:{n:'Certificado NR-12',anos:2},nr18:{n:'Certificado NR-18',anos:2},nr35:{n:'Certificado NR-35',anos:2},
+  nr10:{n:'Certificado NR-10',anos:2,dica:'Trabalho com eletricidade.'},
+  ftec:{n:'Formação técnica em eletricidade'},
+};
+const TIPOP={func:'Funcionário',socio_d:'Sócio, acesso diário',socio_e:'Sócio, acesso esporádico'};
+const BASEP=['aso','rg','ctrab','esocial','freg','os','epi','nr06','nr12','nr18','nr35'];
+const SOCIOP=['aso','rg','epi','nr06','nr12','nr18','nr35'];
+const BASEE=['cnd','fgts','inss','contab','pcmso','pgr','ltcat'];
+const reqP=p=>p.tipo==='socio_e'?[]:(p.tipo==='socio_d'?SOCIOP:BASEP).concat(p.eletr&&p.tipo==='func'?['nr10','ftec']:[]);
+const naObra=emp=>emp.pessoas.filter(p=>p.tipo!=='socio_e').length;
+const reqE=emp=>BASEE.concat(naObra(emp)>5?['nr05']:[]);
+const getD=(o,k)=>o.docs[k]||(o.docs[k]={st:'falta'});
+const addAnos=(s,n)=>{const d=parse(s);d.setFullYear(d.getFullYear()+n);return iso(d)};
+const vencDoc=(k,d)=>!d.data?null:DD[k].anos?addAnos(d.data,DD[k].anos):DD[k].val?d.data:null;
+const precisaData=k=>!!(DD[k].anos||DD[k].val);
+const pronto=(k,d)=>(DD[k].texto?!!(d.txt||'').trim():!!d.arq)&&(!precisaData(k)||(!!d.data&&vencDoc(k,d)>=hoje()));
+const fmtA=s=>s?`${s.slice(8,10)}/${s.slice(5,7)}/${s.slice(0,4)}`:'—';
+const competencia=()=>{const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-1);return `${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`};
+function proxUtil(base,n){const d=new Date(base);while(n>0){d.setDate(d.getDate()+1);const w=d.getDay();if(w>0&&w<6)n--}return iso(d)}
+const dataIntegracao=()=>{const a=new Date();return proxUtil(a,a.getHours()<CORTE?1:2)};
+const DIAS=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+const diaLongo=s=>`${DIAS[parse(s).getDay()].toLowerCase()}, ${fmtD(s)}`;
+const todasP=()=>S.emp.flatMap(e=>e.pessoas.map(p=>({e,p})));
+const acharP=id=>todasP().find(x=>x.p.id===id);
+const acharE=id=>S.emp.find(e=>e.id===id);
+const empSel=()=>acharE(S.empSel)||S.emp[0];
+const iniciais=n=>n.split(' ').filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase();
+const avatar=(p,lg)=>`<span class="avatar ${lg?'lg':''}">${p.foto?`<img src="${p.foto}" alt="">`:esc(iniciais(p.nome))}</span>`;
+const mascCPF=c=>{const d=(c||'').replace(/\D/g,'');return d?`***.${d.slice(3,6)}.${d.slice(6,9)}-**`:'—'};
+const avisar=(emp,txt)=>S.msgs.push({d:hoje(),emp:emp.id,txt});
+const nomePerfil=k=>PERFIS.find(p=>p[0]===k)[1];
+const bannerPerfil=(k,txt)=>S.perfil===k?'':`<div class="hint acc banner"><span>${txt} Você está vendo como ${esc(perfilNome())}.</span><button class="btn sm pri" data-perfil="${k}">Ver como ${esc(nomePerfil(k))}</button></div>`;
+const SP={rascunho:['neutral','Cadastro incompleto'],analise:['info','Em análise do RH'],pendente:['bad','Documentos pendentes'],aprovado:['warn','Aprovado, aguardando a empresa'],agendado:['info','Integração'],liberado:['ok','Liberado para a obra'],visita:['info','Visita solicitada'],visita_ok:['ok','Visita aprovada'],convidada:['neutral','Convite enviado'],aprovada:['ok','Documentos aprovados']};
+const stChip=o=>{const [c,t]=SP[o.status];return `<span class="chip ${c}">${t}${o.status==='agendado'?' '+fmtD(o.integ):o.status.startsWith('visita')?' '+fmtD(o.visita):''}</span>`};
+const DS={falta:['neutral','Falta enviar'],anexado:['info','Pronto para enviar'],enviado:['info','Em análise'],ok:['ok','Aprovado'],rep:['bad','Reprovado']};
+function prazoRH(o){const r=PRAZO_RH-uteis(o.envio,hoje());return r<0?{cls:'bad',txt:`Atrasada ${-r} d úteis`,rank:3}:r===0?{cls:'warn',txt:'Vence hoje',rank:2}:{cls:'ok',txt:`${r} d úteis restantes`,rank:1}}
+const podeEnviar=(o,keys)=>keys.every(k=>['ok','enviado','anexado'].includes(getD(o,k).st))&&keys.some(k=>getD(o,k).st==='anexado');
+function atualizaDoc(k,d){if(pronto(k,d)){d.st='anexado';d.motivo=''}else if(d.st==='anexado')d.st='falta'}
+function enviar(o,keys){keys.forEach(k=>{const d=getD(o,k);if(d.st==='anexado')d.st='enviado'});o.status='analise';o.envio=hoje();toast(`Enviado para o RH. Prazo de análise: ${PRAZO_RH} dias úteis.`)}
+function agendar(emp,p){p.status='agendado';p.integ=dataIntegracao();avisar(emp,`${p.nome} aprovado para entrar na obra ${emp.obra}. Integração de segurança na ${diaLongo(p.integ)}.`)}
+
+function docsSeed(keys,st,ov={}){const o={};keys.forEach(k=>{const D=DD[k];o[k]=st==='falta'?{st:'falta'}:{st,arq:D.texto?'':k.toUpperCase()+'.pdf',txt:D.texto?'Contabilidade Exata · (49) 3322-1100':'',data:D.anos?ago(120):(D.val?ago(-200):'')}});return Object.assign(o,ov)}
+function seedEmp(){
+  const P=(id,nome,cpf,funcao,tipo,status,docs,extra={})=>({id,nome,cpf,tel:`(49) 9${cpf.slice(0,4)}-${cpf.slice(4,8)}`,funcao,tipo,eletr:false,foto:'',status,docs,...extra});
+  return [
+    {id:'e1',razao:'Impermeabiliza Sul Ltda',cnpj:'12.345.678/0001-90',email:'contato@impermeabilizasul.com.br',tel:'(49) 99812-3344',obra:'Edifício Aurora',status:'aprovada',docs:docsSeed(BASEE,'ok'),pessoas:[
+      P('p1','Adair Moraes','04512378911','Encarregado','func','liberado',docsSeed(BASEP,'ok'),{lib:ago(5),integ:ago(5)}),
+      P('p2','Luciano Pereira','11223344556','Pedreiro','func','analise',docsSeed(BASEP,'enviado'),{envio:ago(1)}),
+      P('p3','Joel Ramos','22334455667','Pedreiro','func','pendente',docsSeed(BASEP,'ok',{nr35:{st:'rep',arq:'',data:ago(760),motivo:'Certificado vencido em 10/2026'}})),
+      P('p4','Vanderlei Costa','33445566778','Servente','func','rascunho',Object.assign(docsSeed(BASEP.slice(5),'falta'),docsSeed(BASEP.slice(0,5),'anexado'))),
+      P('p5','Marcos Teixeira','44556677889','Sócio','socio_d','agendado',docsSeed(SOCIOP,'ok'),{integ:proxUtil(new Date(),1)}),
+    ]},
+    {id:'e2',razao:'Eletro Faria Instalações Ltda',cnpj:'23.456.789/0001-01',email:'adm@eletrofaria.com.br',tel:'(49) 99901-2211',obra:'Edifício Aurora',status:'analise',envio:ago(3),docs:docsSeed(BASEE,'enviado'),pessoas:[
+      P('p6','Diego Faria','55667788990','Eletricista','func','analise',docsSeed(BASEP.concat(['nr10','ftec']),'enviado'),{eletr:true,envio:hoje()}),
+      P('p7','Rogério Faria','66778899001','Sócio','socio_e','visita',{},{envio:hoje(),visita:proxUtil(new Date(),2),docFoto:'CNH_Rogerio.jpg'}),
+    ]},
+    {id:'e3',razao:'Pedras Chapecó Ltda',cnpj:'34.567.890/0001-12',email:'comercial@pedraschapeco.com.br',tel:'(49) 99733-4455',obra:'Residencial Ipê',status:'convidada',docs:{},pessoas:[]},
+  ];
+}
+const seedMsgs=()=>[
+  {d:ago(6),emp:'e1',txt:'Adair Moraes aprovado para entrar na obra Edifício Aurora. Integração de segurança no dia seguinte.'},
+  {d:ago(5),emp:'e1',txt:'Adair Moraes fez a integração e está liberado para a obra Edifício Aurora.'},
+  {d:ago(2),emp:'e1',txt:'Documentos pendentes de Joel Ramos: Certificado NR-35 (Certificado vencido em 10/2026).'},
+  {d:ago(0),emp:'e1',txt:`Marcos Teixeira aprovado para entrar na obra Edifício Aurora. Integração de segurança na ${diaLongo(proxUtil(new Date(),1))}.`},
+  {d:ago(9),emp:'e3',txt:'Convite enviado para comercial@pedraschapeco.com.br.'},
+];
+
+function docList(o,ref,keys,pode){
+  return `<div class="glist">${keys.map(k=>{
+    const D=DD[k],d=getD(o,k),v=vencDoc(k,d),ed=pode&&['falta','anexado','rep'].includes(d.st);
+    const sub=[D.mensal?`Competência ${competencia()} · enviar todo mês`:'',v?`Válido até ${fmtA(v)}`:'',d.st==='rep'?`<span class="bad-t">Motivo: ${esc(d.motivo)}</span>`:'',ed&&D.dica?D.dica:'',d.arq?`<span class="mono">${esc(d.arq)}</span>`:'',D.texto&&d.txt&&!ed?esc(d.txt):''].filter(Boolean).join(' · ');
+    const dias=v?calDias(hoje(),v):null;
+    const logo=v&&d.st==='ok'&&dias<=30?`<span class="chip warn">Vence em ${dias} d</span>`:'';
+    let ctl='';
+    if(ed){
+      ctl=D.texto?`<input type="text" class="in-sm" data-tx="${ref}|${k}" value="${esc(d.txt)}" placeholder="Nome e telefone" aria-label="${esc(D.n)}">`
+        :`<label class="btn sm">${d.arq?'Trocar':'Anexar'}<input type="file" hidden data-up="${ref}|${k}"></label>`;
+      if(precisaData(k))ctl+=`<label class="dt"><span>${D.anos?'Emissão':'Válido até'}</span><input type="date" data-dt="${ref}|${k}" value="${d.data||''}"></label>`;
+    }
+    return `<div class="gr"><div class="gm"><div class="t">${esc(D.n)}</div>${sub?`<div class="s">${sub}</div>`:''}</div><div class="gc">${ctl}${logo}<span class="chip ${DS[d.st][0]}">${DS[d.st][1]}</span></div></div>`;
+  }).join('')}</div>`;
+}
+
+function portal(){
+  const emp=empSel(),pode=S.perfil==='prest';
+  let h=`<div class="head"><div><div class="area">Portal da empresa</div><h1>${esc(emp.razao)}</h1><p class="sub">CNPJ <span class="mono">${esc(emp.cnpj)}</span> · ${esc(emp.obra)}</p></div>
+    <label class="perfil"><span class="muted">Empresa</span><select id="empSel">${S.emp.map(e=>`<option value="${e.id}" ${e.id===emp.id?'selected':''}>${esc(e.razao)}</option>`).join('')}</select></label></div>
+    ${bannerPerfil('prest','Esta é a tela que a empresa terceirizada usa.')}`;
+  if(emp.status==='convidada'){
+    V.innerHTML=h+`<form class="panel narrow" id="fAcesso" novalidate><div><h2>Primeiro acesso</h2><p class="sub">A empresa recebeu o convite por e-mail. Basta confirmar o telefone e criar uma senha. O restante do cadastro pode ser feito depois, no ritmo dela.</p></div>
+      <div class="form"><label class="field full"><span>E-mail</span><input type="text" id="aEmail" value="${esc(emp.email)}" disabled></label>
+      <label class="field full"><span>Telefone (WhatsApp)</span><input type="text" id="aTel" value="${esc(emp.tel)}" inputmode="tel"></label>
+      <label class="field"><span>Senha</span><input type="password" id="aS1" autocomplete="new-password"></label>
+      <label class="field"><span>Confirmar senha</span><input type="password" id="aS2" autocomplete="new-password"></label></div>
+      <div class="foot"><span class="err" id="aErr"></span><button class="btn pri" type="submit" ${pode?'':'disabled'}>Criar acesso</button></div></form>`;
+    return;
+  }
+  const keys=reqE(emp),okE=keys.filter(k=>getD(emp,k).st==='ok').length,ed=pode&&['rascunho','pendente'].includes(emp.status);
+  const c=(...st)=>emp.pessoas.filter(p=>st.includes(p.status)).length;
+  const falta=keys.filter(k=>['falta','rep'].includes(getD(emp,k).st)).length;
+  const msgs=S.msgs.filter(m=>m.emp===emp.id).slice().reverse();
+  h+=`<div class="kpis">
+    <div class="kpi"><span class="n">${okE}<small>/${keys.length}</small></span><span class="l">Documentos da empresa aprovados</span></div>
+    <div class="kpi"><span class="n">${c('liberado')}</span><span class="l">Liberados para a obra</span></div>
+    <div class="kpi"><span class="n">${c('analise','aprovado','agendado')}</span><span class="l">Em análise ou integração</span></div>
+    <div class="kpi ${c('pendente')?'alert':''}"><span class="n">${c('pendente','rascunho')}</span><span class="l">Precisam de ação da empresa</span></div></div>
+  <div class="grid2">
+    <section class="panel"><div class="head"><div><h2>Documentos da empresa</h2><p class="muted" style="margin:2px 0 0;font-size:13px">Enquanto não forem aprovados, ninguém da equipe é liberado.</p></div>${stChip(emp)}</div>
+      ${docList(emp,'e:'+emp.id,keys,ed)}
+      ${ed?`<div class="foot"><span class="muted" style="font-size:12.5px">${falta?`Faltam ${falta} documento${falta>1?'s':''}.`:'Tudo anexado.'}</span><button class="btn pri" data-t="enviarE" ${podeEnviar(emp,keys)?'':'disabled'}>Enviar para análise</button></div>`:''}
+    </section>
+    <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+      <section class="panel"><div class="head"><h2>Equipe</h2><a class="btn sm pri" href="#novo-func">+ Adicionar pessoa</a></div>
+        ${emp.pessoas.length?`<div class="glist">${emp.pessoas.map(p=>`<button class="gr" data-go="pes-${p.id}"><span class="who sm">${avatar(p)}<span class="gm"><span class="t" style="display:block">${esc(p.nome)}</span><span class="s" style="display:block">${esc(p.funcao)} · ${TIPOP[p.tipo]}</span></span></span>${stChip(p)}</button>`).join('')}</div>`:'<p class="muted" style="margin:0">Nenhuma pessoa cadastrada ainda.</p>'}
+      </section>
+      <section class="panel"><div class="head"><h2>Avisos recebidos</h2><span class="muted" style="font-size:12.5px">por e-mail</span></div>
+        ${msgs.length?`<div class="log">${msgs.map(m=>`<div><span class="mono muted">${fmtD(m.d)}</span><span>${esc(m.txt)}</span></div>`).join('')}</div>`:'<p class="muted" style="margin:0">Nenhum aviso ainda.</p>'}
+      </section>
+    </div>
+  </div>`;
+  V.innerHTML=h;
+}
+
+function pessoa(id){
+  const x=acharP(id);if(!x){location.hash='portal';return}
+  const {e:emp,p}=x,pode=S.perfil==='prest',ed=pode&&['rascunho','pendente'].includes(p.status),keys=reqP(p);
+  let h=`<a href="#portal" class="muted back">← ${esc(emp.razao)}</a>
+  <div class="head"><div class="who">${avatar(p,1)}<div><h1>${esc(p.nome)}</h1><p class="sub">${esc(p.funcao)} · ${TIPOP[p.tipo]}${p.eletr?' · trabalha com eletricidade':''}</p></div></div>${stChip(p)}</div>
+  <div class="meta"><div><span>CPF</span>${mascCPF(p.cpf)}</div><div><span>Telefone</span>${esc(p.tel)||'—'}</div><div><span>Obra</span>${esc(emp.obra)}</div>${p.envio?`<div><span>Enviado ao RH</span>${fmtD(p.envio)}</div>`:''}${p.integ?`<div><span>Integração</span>${fmtD(p.integ)}</div>`:''}</div>
+  ${bannerPerfil('prest','A empresa anexa os documentos por aqui.')}`;
+  if(p.tipo==='socio_e'){
+    V.innerHTML=h+`<section class="panel"><h2>Visita esporádica</h2><p class="sub" style="margin:0">Sócio que vai à obra de vez em quando não envia a documentação completa. Ele pede a visita com 1 dia de antecedência e anexa um documento com foto.</p>
+      <div class="meta flat"><div><span>Data da visita</span>${fmtA(p.visita)}</div><div><span>Documento com foto</span><span class="mono">${esc(p.docFoto)}</span></div></div></section>`;
+    return;
+  }
+  const n=keys.filter(k=>['falta','rep'].includes(getD(p,k).st)).length;
+  V.innerHTML=h+`<section class="panel"><div class="head"><h2>Documentos</h2><span class="muted" style="font-size:13px">${keys.length} exigidos para ${p.tipo==='func'?'esta função':'sócio com acesso diário'}</span></div>
+    ${emp.status!=='aprovada'?'<p class="hint">A liberação também depende dos documentos da empresa, que ainda não foram aprovados.</p>':''}
+    ${docList(p,'p:'+p.id,keys,ed)}
+    ${ed?`<div class="foot"><span class="muted" style="font-size:12.5px">${n?`Faltam ${n} documento${n>1?'s':''}. O envio libera quando tudo estiver anexado.`:`Tudo anexado. O RH tem ${PRAZO_RH} dias úteis para conferir.`}</span><button class="btn pri" data-t="enviarP" data-id="${p.id}" ${podeEnviar(p,keys)?'':'disabled'}>Enviar para análise</button></div>`:''}
+  </section>`;
+}
+
+let fotoTmp='';
+function novoFunc(){
+  const emp=empSel();fotoTmp='';
+  V.innerHTML=`<a href="#portal" class="muted back">← ${esc(emp.razao)}</a>
+  <div class="head"><div><h1>Adicionar pessoa</h1><p class="sub">Só o básico agora. Ao salvar, a lista de documentos abre de acordo com o tipo e a função.</p></div></div>
+  ${bannerPerfil('prest','Quem cadastra a equipe é a empresa.')}
+  <form class="panel" id="fFunc" novalidate><div class="form">
+    <div class="field full"><span>Tipo</span><div class="radios row3">${Object.entries(TIPOP).map(([k,t],i)=>`<label><input type="radio" name="fTipo" id="fTipo${i}" value="${k}" ${i===0?'checked':''}><span>${t}</span></label>`).join('')}</div></div>
+    <div class="field full fotobox"><span class="avatar lg" id="fPrev">Foto</span><label class="btn sm">Escolher foto<input type="file" accept="image/*" id="fFoto" hidden></label></div>
+    <label class="field"><span>Nome completo</span><input type="text" id="fNome"></label>
+    <label class="field"><span>CPF</span><input type="text" id="fCpf" inputmode="numeric" placeholder="000.000.000-00"></label>
+    <label class="field"><span>Telefone</span><input type="text" id="fTel" inputmode="tel" placeholder="(49) 90000-0000"></label>
+    <label class="field soE"><span>Função</span><input type="text" id="fFun" placeholder="Ex.: Pedreiro"></label>
+    <label class="field full chkline soF"><input type="checkbox" id="fEle"><span>Trabalha com eletricidade (pede NR-10 e formação técnica)</span></label>
+    <label class="field soV" hidden><span>Data da visita (a partir de amanhã)</span><input type="date" id="fVis" min="${ago(-1)}"></label>
+    <label class="field soV" hidden><span>Documento com foto</span><input type="file" id="fDocF"></label>
+  </div><div class="foot"><span class="err" id="fErr"></span><button class="btn pri" type="submit" ${S.perfil==='prest'?'':'disabled'}>Salvar</button></div></form>`;
+}
+function lerFoto(f){const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas'),s=128,m=Math.min(img.width,img.height);c.width=c.height=s;c.getContext('2d').drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,s,s);fotoTmp=c.toDataURL('image/jpeg',.82);const pv=document.getElementById('fPrev');if(pv)pv.innerHTML=`<img src="${fotoTmp}" alt="">`};img.src=r.result};r.readAsDataURL(f)}
+
+function analise(){
+  const itens=[...S.emp.filter(e=>e.status==='analise').map(e=>({id:e.id,nome:e.razao,emp:e,tipo:'Documentos da empresa',o:e})),
+    ...todasP().filter(x=>['analise','visita'].includes(x.p.status)).map(x=>({id:x.p.id,nome:x.p.nome,emp:x.e,tipo:x.p.status==='visita'?'Pedido de visita':TIPOP[x.p.tipo],o:x.p}))];
+  itens.forEach(i=>i.pz=prazoRH(i.o));
+  itens.sort((a,b)=>b.pz.rank-a.pz.rank||a.o.envio.localeCompare(b.o.envio));
+  V.innerHTML=`<div class="head"><div><h1>Análise de documentos</h1><p class="sub">Tudo o que as empresas enviaram. O RH tem ${PRAZO_RH} dias úteis para conferir cada envio.</p></div></div>
+  ${bannerPerfil('rh','Esta é a fila do RH.')}
+  <section class="panel">${itens.length?`<div class="tw"><table><thead><tr><th>Enviado por</th><th>O que</th><th>Enviado em</th><th>Prazo</th></tr></thead><tbody>${itens.map(i=>`<tr class="link" data-go="rev-${i.id}"><td><div class="who sm">${i.o.razao?`<span class="avatar">${esc(iniciais(i.nome))}</span>`:avatar(i.o)}<div><div class="t">${esc(i.nome)}</div><div class="s">${i.o.razao?esc(i.emp.obra):esc(i.emp.razao)}</div></div></div></td><td>${i.tipo}</td><td class="s">${fmtD(i.o.envio)}</td><td>${chip(i.pz)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin:0">Nenhum envio esperando análise.</p>'}</section>
+  <p class="hint">Aprovado até as ${CORTE}h entra na integração do próximo dia útil. Depois disso, na do dia útil seguinte.</p>`;
+}
+
+let rejK=null;
+function revisao(id){
+  const isE=id.startsWith('e'),x=isE?null:acharP(id),emp=isE?acharE(id):x&&x.e,o=isE?emp:x&&x.p;
+  if(!o){location.hash='analise';return}
+  const pode=S.perfil==='rh',aberta=o.status==='analise';
+  let h=`<a href="#analise" class="muted back">← Análise de documentos</a>
+  <div class="head"><div class="who">${isE?`<span class="avatar lg">${esc(iniciais(o.razao))}</span>`:avatar(o,1)}<div><div class="area">${isE?'Documentos da empresa':TIPOP[o.tipo]}</div><h1>${esc(isE?o.razao:o.nome)}</h1><p class="sub">${isE?esc(o.cnpj):esc(o.funcao)+' · '+esc(emp.razao)} · ${esc(emp.obra)}</p></div></div>${aberta||o.status==='visita'?chip(prazoRH(o)):stChip(o)}</div>
+  ${bannerPerfil('rh','Quem confere os documentos é o RH.')}`;
+  if(o.status==='visita'||o.status==='visita_ok'){
+    V.innerHTML=h+`<section class="panel"><h2>Pedido de visita</h2><div class="meta flat"><div><span>Data</span>${fmtA(o.visita)}</div><div><span>Documento com foto</span><span class="mono">${esc(o.docFoto)}</span></div></div>
+      ${o.status==='visita'?`<div class="foot"><span></span><button class="btn pri" data-t="aprovVis" data-id="${o.id}" ${pode?'':'disabled'}>Aprovar visita</button></div>`:''}</section>`;
+    return;
+  }
+  const keys=isE?reqE(o):reqP(o),pend=keys.filter(k=>getD(o,k).st==='enviado').length;
+  const rows=keys.map(k=>{
+    const d=getD(o,k),v=vencDoc(k,d),D=DD[k];
+    let act=`<span class="chip ${DS[d.st][0]}">${DS[d.st][1]}</span>`;
+    if(d.st==='enviado'&&pode&&aberta)act=rejK===k
+      ?`<input type="text" class="in-sm" id="motivo" placeholder="Motivo da reprovação" aria-label="Motivo da reprovação"><button class="btn sm" data-t="cancRej">Cancelar</button><button class="btn sm danger" data-t="rej" data-k="${k}">Reprovar</button>`
+      :`<button class="btn sm" data-t="rejAbrir" data-k="${k}">Reprovar</button><button class="btn sm ok" data-t="aprov" data-k="${k}">Aprovar</button>`;
+    const sub=[D.texto?esc(d.txt):`<span class="mono">${esc(d.arq||'sem arquivo')}</span>`,v?`válido até ${fmtA(v)}`:'',D.mensal?`competência ${competencia()}`:'',d.st==='rep'?`<span class="bad-t">${esc(d.motivo)}</span>`:''].filter(Boolean).join(' · ');
+    return `<div class="gr"><div class="gm"><div class="t">${esc(D.n)}</div><div class="s">${sub}</div></div><div class="gc">${act}</div></div>`;
+  }).join('');
+  V.innerHTML=h+`<section class="panel"><div class="head"><h2>Documentos</h2>${pode&&aberta&&pend?'<button class="btn sm" data-t="aprovTodos">Aprovar todos os restantes</button>':''}</div>
+    <div class="glist">${rows}</div>
+    ${aberta?`<div class="foot"><span class="muted" style="font-size:12.5px">${pend?`Faltam ${pend} para conferir.`:'Tudo conferido. Ao concluir, a empresa recebe o resultado por e-mail.'}</span><button class="btn pri" data-t="concluirRev" ${pode&&!pend?'':'disabled'}>Concluir análise</button></div>`:''}
+  </section>`;
+}
+function concluirRev(id){
+  const isE=id.startsWith('e'),x=isE?null:acharP(id),emp=isE?acharE(id):x.e,o=isE?emp:x.p,keys=isE?reqE(o):reqP(o);
+  const reps=keys.filter(k=>getD(o,k).st==='rep'),lista=reps.map(k=>`${DD[k].n} (${getD(o,k).motivo})`).join('; ');
+  if(isE){
+    if(reps.length){o.status='pendente';avisar(emp,`Documentos da empresa com pendência: ${lista}.`)}
+    else{o.status='aprovada';avisar(emp,'Documentos da empresa aprovados.');emp.pessoas.filter(p=>p.status==='aprovado').forEach(p=>agendar(emp,p))}
+  }else{
+    if(reps.length){o.status='pendente';avisar(emp,`Documentos pendentes de ${o.nome}: ${lista}.`)}
+    else if(emp.status==='aprovada')agendar(emp,o);
+    else{o.status='aprovado';avisar(emp,`${o.nome} aprovado. A liberação aguarda a aprovação dos documentos da empresa.`)}
+  }
+  save();toast('Análise concluída. A empresa foi avisada por e-mail.');location.hash='analise';
+}
+
+function integracao(){
+  const ag=todasP().filter(x=>x.p.status==='agendado').sort((a,b)=>a.p.integ.localeCompare(b.p.integ));
+  const dias=[...new Set(ag.map(x=>x.p.integ))];
+  const lib=todasP().filter(x=>x.p.status==='liberado').sort((a,b)=>(b.p.lib||'').localeCompare(a.p.lib||'')).slice(0,6);
+  const pode=S.perfil==='tst';
+  const linha=({e,p},ctl)=>`<div class="gr"><div class="who sm">${avatar(p)}<div class="gm"><div class="t">${esc(p.nome)}</div><div class="s">${esc(p.funcao)} · ${esc(e.razao)} · ${esc(e.obra)}</div></div></div><div class="gc">${ctl}</div></div>`;
+  V.innerHTML=`<div class="head"><div><h1>Integração de segurança</h1><p class="sub">A lista se monta sozinha: quem o RH aprova até as ${CORTE}h entra na integração do próximo dia útil.</p></div></div>
+  ${bannerPerfil('tst','Quem conduz a integração é a segurança do trabalho.')}
+  ${dias.length?dias.map(d=>{const g=ag.filter(x=>x.p.integ===d);return`<section class="panel"><div class="head"><h2 style="text-transform:capitalize">${diaLongo(d)}</h2><span class="muted">${g.length} pessoa${g.length>1?'s':''}</span></div><div class="glist">${g.map(x=>linha(x,`<button class="btn sm" data-t="faltou" data-id="${x.p.id}" ${pode?'':'disabled'}>Não compareceu</button><button class="btn sm ok" data-t="presente" data-id="${x.p.id}" ${pode?'':'disabled'}>Presente</button>`)).join('')}</div></section>`}).join(''):'<section class="panel"><p class="muted" style="margin:0">Ninguém agendado.</p></section>'}
+  <section class="panel"><h2>Liberados recentemente</h2>${lib.length?`<div class="glist">${lib.map(x=>linha(x,`<span class="chip ok">Liberado ${fmtD(x.p.lib)}</span>`)).join('')}</div>`:'<p class="muted" style="margin:0">Ninguém liberado ainda.</p>'}</section>`;
+}
+
+function empresas(){
+  const pode=['sup','ctr'].includes(S.perfil);
+  V.innerHTML=`<div class="head"><div><h1>Empresas terceirizadas</h1><p class="sub">Suprimentos ou Contratos convida a empresa. Ela recebe um link, cria a senha e completa o cadastro no portal.</p></div></div>
+  <div class="grid2">
+    <section class="panel"><div class="tw"><table><thead><tr><th>Empresa</th><th>Obra</th><th>Documentos</th><th>Equipe liberada</th></tr></thead><tbody>${S.emp.map(e=>`<tr class="link" data-emp="${e.id}"><td><div class="t">${esc(e.razao)}</div><div class="s mono">${esc(e.cnpj)}</div></td><td>${esc(e.obra)}</td><td>${stChip(e)}</td><td class="s">${e.pessoas.filter(p=>p.status==='liberado').length} de ${naObra(e)}</td></tr>`).join('')}</tbody></table></div></section>
+    <form class="panel" id="fConv" novalidate><h2>Convidar empresa</h2>
+      ${pode?'':'<p class="hint">Só Suprimentos ou Contratos convidam empresas. Troque o perfil em “Ver como”.</p>'}
+      <label class="field"><span>Razão social</span><input type="text" id="cRaz"></label>
+      <label class="field"><span>CNPJ</span><input type="text" id="cCnpj" inputmode="numeric" placeholder="00.000.000/0000-00"></label>
+      <label class="field"><span>E-mail do responsável</span><input type="text" id="cEmail" inputmode="email"></label>
+      <label class="field"><span>Telefone</span><input type="text" id="cTel" inputmode="tel"></label>
+      <label class="field"><span>Obra</span><select id="cObra" style="width:100%">${OBRAS.map(o=>`<option>${o}</option>`).join('')}</select></label>
+      <div class="foot"><span class="err" id="cErr"></span><button class="btn pri" type="submit" ${pode?'':'disabled'}>Enviar convite</button></div>
+    </form>
+  </div>`;
+}
+
+addEventListener('hashchange',()=>{rejK=null});
+document.addEventListener('click',ev=>{
+  const pf=ev.target.closest('[data-perfil]');
+  if(pf){S.perfil=pf.dataset.perfil;save();render();toast(`Vendo como ${perfilNome()}.`);return}
+  const em=ev.target.closest('[data-emp]');
+  if(em){S.empSel=em.dataset.emp;save();location.hash='portal';return}
+  const b=ev.target.closest('[data-t]');if(!b)return;
+  const t=b.dataset.t,r=rota(),rid=r.startsWith('rev-')?r.slice(4):'';
+  const alvo=()=>rid.startsWith('e')?acharE(rid):acharP(rid).p;
+  const pes=()=>acharP(b.dataset.id);
+  if(t==='enviarE'){const e=empSel();enviar(e,reqE(e))}
+  else if(t==='enviarP'){const p=pes().p;enviar(p,reqP(p))}
+  else if(t==='rejAbrir'){rejK=b.dataset.k;render();document.getElementById('motivo')?.focus();return}
+  else if(t==='cancRej')rejK=null;
+  else if(t==='rej'){const m=document.getElementById('motivo').value.trim();if(!m){toast('Escreva o motivo para a empresa saber o que corrigir.');return}const d=getD(alvo(),b.dataset.k);d.st='rep';d.motivo=m;d.arq='';rejK=null}
+  else if(t==='aprov')getD(alvo(),b.dataset.k).st='ok';
+  else if(t==='aprovTodos')Object.values(alvo().docs).forEach(d=>{if(d.st==='enviado')d.st='ok'});
+  else if(t==='concluirRev'){concluirRev(rid);return}
+  else if(t==='aprovVis'){const x=pes();x.p.status='visita_ok';avisar(x.e,`Visita de ${x.p.nome} aprovada para ${fmtA(x.p.visita)}.`);save();toast('Visita aprovada. A empresa foi avisada.');location.hash='analise';return}
+  else if(t==='presente'){const x=pes();x.p.status='liberado';x.p.lib=hoje();avisar(x.e,`${x.p.nome} fez a integração e está liberado para a obra ${x.e.obra}.`);toast(`${x.p.nome} liberado para a obra.`)}
+  else if(t==='faltou'){const x=pes(),base=x.p.integ>hoje()?parse(x.p.integ):new Date();x.p.integ=proxUtil(base,1);avisar(x.e,`${x.p.nome} não compareceu à integração. Nova data: ${diaLongo(x.p.integ)}.`);toast('Integração remarcada para o próximo dia útil.')}
+  save();render();
+});
+document.addEventListener('change',ev=>{
+  const t=ev.target;
+  if(t.id==='empSel'){S.empSel=t.value;save();render();return}
+  if(t.name==='fTipo'){const v=t.value;document.querySelectorAll('.soE').forEach(x=>x.hidden=v==='socio_e');document.querySelectorAll('.soV').forEach(x=>x.hidden=v!=='socio_e');document.querySelectorAll('.soF').forEach(x=>x.hidden=v!=='func');return}
+  if(t.id==='fFoto'&&t.files[0]){lerFoto(t.files[0]);return}
+  const ref=t.dataset.up||t.dataset.dt||t.dataset.tx;if(!ref)return;
+  const [r,k]=ref.split('|'),o=r[0]==='e'?acharE(r.slice(2)):acharP(r.slice(2)).p,d=getD(o,k);
+  if(t.dataset.up&&t.files[0])d.arq=t.files[0].name;
+  if(t.dataset.dt)d.data=t.value;
+  if(t.dataset.tx)d.txt=t.value;
+  atualizaDoc(k,d);
+  if(t.dataset.dt&&vencDoc(k,d)&&vencDoc(k,d)<hoje())toast('Esse documento já venceu. Envie um atualizado.');
+  save();render();
+});
+document.addEventListener('submit',ev=>{
+  const f=ev.target,v=id=>(document.getElementById(id)?.value||'').trim();
+  if(f.id==='fAcesso'){ev.preventDefault();const e=empSel();
+    if(v('aS1').length<6){document.getElementById('aErr').textContent='A senha precisa ter pelo menos 6 caracteres.';return}
+    if(v('aS1')!==v('aS2')){document.getElementById('aErr').textContent='As senhas não conferem.';return}
+    e.tel=v('aTel');e.status='rascunho';avisar(e,'Acesso criado. Complete o cadastro da empresa e da equipe pelo portal.');save();render();toast('Acesso criado. Agora é só completar o cadastro.')}
+  else if(f.id==='fConv'){ev.preventDefault();
+    const falta=[!v('cRaz')&&'razão social',v('cCnpj').replace(/\D/g,'').length!==14&&'CNPJ com 14 dígitos',!/^\S+@\S+\.\S+$/.test(v('cEmail'))&&'e-mail válido'].filter(Boolean);
+    if(falta.length){document.getElementById('cErr').textContent=`Falta: ${falta.join(', ')}.`;return}
+    const e={id:'e'+S.seqP++,razao:v('cRaz'),cnpj:v('cCnpj'),email:v('cEmail'),tel:v('cTel'),obra:v('cObra'),status:'convidada',docs:{},pessoas:[]};
+    S.emp.push(e);avisar(e,`Convite enviado para ${e.email}.`);S.empSel=e.id;save();render();toast(`Convite enviado para ${e.email}.`)}
+  else if(f.id==='fFunc'){ev.preventDefault();
+    const tipo=document.querySelector('input[name=fTipo]:checked').value,cpf=v('fCpf').replace(/\D/g,'');
+    const falta=[!v('fNome')&&'nome',cpf.length!==11&&'CPF com 11 dígitos',tipo!=='socio_e'&&!v('fFun')&&tipo==='func'&&'função',tipo==='socio_e'&&!(v('fVis')>=ago(-1))&&'data da visita a partir de amanhã',tipo==='socio_e'&&!document.getElementById('fDocF').files[0]&&'documento com foto'].filter(Boolean);
+    if(falta.length){document.getElementById('fErr').textContent=`Falta: ${falta.join(', ')}.`;return}
+    const e=empSel(),p={id:'p'+S.seqP++,nome:v('fNome'),cpf,tel:v('fTel'),foto:fotoTmp,funcao:tipo==='func'?v('fFun'):'Sócio',tipo,eletr:tipo==='func'&&document.getElementById('fEle').checked,status:tipo==='socio_e'?'visita':'rascunho',docs:{}};
+    if(tipo==='socio_e'){p.envio=hoje();p.visita=v('fVis');p.docFoto=document.getElementById('fDocF').files[0].name}
+    e.pessoas.push(p);fotoTmp='';save();
+    if(tipo==='socio_e'){toast('Pedido de visita enviado ao RH.');location.hash='portal'}
+    else{toast('Pessoa cadastrada. Agora anexe os documentos.');location.hash='pes-'+p.id}}
+});
+
+const KEY='central-contratos-v3';
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!S||!S.cts)S=seed();
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+let selEtapa=null;
+
+/* regras */
+const atuais=ct=>ETAPAS.filter(e=>ct.et[e.id].st==='and');
+const concluida=ct=>ct.et[12].st==='ok';
+const feitas=ct=>ETAPAS.filter(e=>ct.et[e.id].st==='ok').length;
+function prazo(ct,e){
+  const s=ct.et[e.id];if(s.st!=='and')return null;
+  const usado=e.uteis?uteis(s.ini,hoje()):calDias(s.ini,hoje());
+  const un=e.uteis?'d úteis':'d';
+  if(!e.sla)return{cls:'neutral',txt:`${usado} ${un} · prazo a definir`,rank:0,usado};
+  const r=e.sla-usado;
+  if(r<0)return{cls:'bad',txt:`Atrasada ${-r} ${un}`,rank:3,usado};
+  if(r<=1)return{cls:'warn',txt:r===0?'Vence hoje':`Vence em 1 ${e.uteis?'dia útil':'dia'}`,rank:2,usado};
+  return{cls:'ok',txt:`${r} ${un} restantes`,rank:1,usado};
+}
+const pior=ct=>atuais(ct).map(e=>prazo(ct,e)).sort((a,b)=>b.rank-a.rank)[0];
+const chip=p=>p?`<span class="chip ${p.cls}">${esc(p.txt)}</span>`:'';
+const podeAgir=e=>S.perfil===e.area;
+function liberar(ct){
+  ETAPAS.forEach(e=>{const s=ct.et[e.id];if(s.st==='pend'&&e.deps.every(d=>ct.et[d].st==='ok')){s.st='and';s.ini=hoje()}});
+}
+function prontaParaConcluir(ct,e){
+  const s=ct.et[e.id];
+  if(!s.chk.every(Boolean))return'Marque todos os itens da etapa.';
+  if(e.campo&&!String(e.campo[0]==='neg'?ct.negociado:ct.sienge[e.campo[0]]).trim())return`Preencha o campo “${e.campo[1]}”.`;
+  if(e.id===2&&ct.cot.length<3)return'Registre as 3 cotações.';
+  if(e.id===5&&!ct.fornecedor)return'Escolha o fornecedor.';
+  if(e.func&&(!ct.func.length||ct.func.some(f=>Object.values(f.docs).some(v=>v!=='ok'))))return'Todos os documentos dos funcionários precisam estar aprovados.';
+  return'';
+}
+function concluir(ct,e){
+  const s=ct.et[e.id];s.st='ok';s.fim=hoje();
+  ct.log.push({d:hoje(),txt:`${e.nome} concluída por ${perfilNome()}`});
+  liberar(ct);
+  const novas=atuais(ct).filter(x=>ct.et[x.id].ini===hoje()&&e.id!==x.id).map(x=>x.nome);
+  if(concluida(ct))toast('Contratação concluída. Equipe liberada para a obra.');
+  else toast(novas.length?`Etapa concluída. Agora: ${novas.join(' e ')}.`:'Etapa concluída.');
+}
+const perfilNome=()=>PERFIS.find(p=>p[0]===S.perfil)[1];
+
+/* telas */
+const V=document.getElementById('view');
+const ICO={
+  painel:'<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>',
+  contratacoes:'<path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
+  nova:'<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>',
+  medicoes:'<rect x="2.5" y="8" width="19" height="8" rx="1.5"/><path d="M6.5 8v3M10.5 8v4M14.5 8v3M18.5 8v4"/>',
+  terceiros:'<circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/>',
+  portal:'<path d="M4 20V8l8-4 8 4v12"/><path d="M9 20v-5h6v5M8 10.5h.01M12 10.5h.01M16 10.5h.01"/>',
+  analise:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5V3h6v1.5M8.5 11l1.5 1.5 3-3M8.5 16.5h7"/>',
+  integracao:'<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M8.5 14.5l2 2 4-4"/>',
+  empresas:'<rect x="3.5" y="7.5" width="17" height="12" rx="2"/><path d="M9 7.5V5.5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3.5 12.5h17"/>',
+  portaria:'<rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1.2"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1.2"/><path d="M14 14h3v3h-3zM20.5 14v.01M14 20.5h.01M17 20.5h3.5V17"/>'};
+function nav(){
+  const h=rota();
+  const it=[['painel','Painel'],['contratacoes','Contratações'],['nova','Nova contratação']];
+  const terc=[['portal','Portal da empresa'],['analise','Análise do RH'],['integracao','Integração'],['empresas','Empresas']];
+  const soon=[['portaria','Portaria']];
+  const on=k=>h===k||(k==='contratacoes'&&h.startsWith('ct'))||(k==='portal'&&(h.startsWith('pes-')||h==='novo-func'))||(k==='analise'&&h.startsWith('rev-'))?'on':'';
+  const ic=k=>`<span class="ni"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICO[k]}</svg></span>`;
+  document.getElementById('nav').innerHTML=it.map(([k,t])=>`<a href="#${k}" class="${on(k)}">${ic(k)}${t}</a>`).join('')
+   +`<div class="grp">Terceiros</div>`+terc.map(([k,t])=>`<a href="#${k}" class="${on(k)}">${ic(k)}${t}</a>`).join('')
+   +`<div class="grp">Próximas fases</div>`+soon.map(([k,t])=>`<a href="#${k}" class="soon ${on(k)}">${ic(k)}${t}<span class="tag">em breve</span></a>`).join('');
+}
+const rota=()=>location.hash.slice(1)||'painel';
+
+function painel(){
+  const and=S.cts.filter(c=>!concluida(c));
+  const atras=and.filter(c=>atuais(c).some(e=>prazo(c,e).cls==='bad'));
+  const assin=and.filter(c=>c.et[9].st==='and');
+  const lib=S.cts.filter(concluida);
+  const linhas=[];
+  and.forEach(c=>atuais(c).forEach(e=>linhas.push({c,e,p:prazo(c,e)})));
+  linhas.sort((a,b)=>b.p.rank-a.p.rank||b.p.usado-a.p.usado);
+  const minhas=linhas.filter(l=>l.e.area===S.perfil);
+  const carga=Object.keys(AREAS).map(a=>({a,n:linhas.filter(l=>l.e.area===a).length,b:linhas.filter(l=>l.e.area===a&&l.p.cls==='bad').length}));
+  const max=Math.max(1,...carga.map(x=>x.n));
+  const row=l=>`<tr class="link" data-go="${l.c.id}" data-et="${l.e.id}"><td><div class="t">${esc(l.c.servico)}</div><div class="s">${esc(l.c.obra)} · <span class="mono">${l.c.cod}</span></div></td><td><div class="t">${esc(l.e.nome)}</div><div class="s">${AREAS[l.e.area]} · ${esc(l.e.resp)}</div></td><td class="s">${fmtD(l.c.et[l.e.id].ini)}</td><td>${chip(l.p)}</td></tr>`;
+  V.innerHTML=`
+  <div class="head"><div><h1>Painel de contratações</h1><p class="sub">Onde cada contratação está parada, com quem e há quanto tempo.</p></div><a class="btn pri" href="#nova">+ Nova contratação</a></div>
+  <div class="kpis">
+    <div class="kpi"><span class="n">${and.length}</span><span class="l">Em andamento</span></div>
+    <div class="kpi ${atras.length?'alert':''}"><span class="n">${atras.length}</span><span class="l">Com etapa atrasada</span></div>
+    <div class="kpi"><span class="n">${assin.length}</span><span class="l">Aguardando assinatura</span></div>
+    <div class="kpi"><span class="n">${lib.length}</span><span class="l">Liberadas para a obra</span></div>
+  </div>
+  <div class="grid2">
+    <section class="panel"><div class="head"><h2>Etapas em aberto</h2><span class="muted">${linhas.length} etapas</span></div>
+      <div class="tw"><table><thead><tr><th>Contratação</th><th>Etapa e responsável</th><th>Desde</th><th>Prazo</th></tr></thead><tbody>${linhas.map(row).join('')}</tbody></table></div></section>
+    <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+      <section class="panel"><div class="head"><h2>Minhas pendências</h2><span class="muted">${esc(perfilNome())}</span></div>
+        ${minhas.length?minhas.map(l=>`<button class="st and" data-go="${l.c.id}" data-et="${l.e.id}"><span class="dot">${l.e.id}</span><span><span class="nm">${esc(l.e.nome)}</span><span class="ln"><span>${esc(l.c.servico)}</span>${chip(l.p)}</span></span></button>`).join(''):`<p class="muted" style="margin:0">Nada pendente para ${esc(perfilNome())}. Troque o perfil em “Ver como” para ver as pendências de outra área.</p>`}
+      </section>
+      <section class="panel"><h2>Carga por área</h2><div class="load">${carga.map(x=>`<div class="row"><span>${AREAS[x.a]}</span><div class="bar"><i style="width:${x.n/max*100}%"></i></div><span class="v">${x.n}${x.b?` <em title="atrasadas">(${x.b})</em>`:''}</span></div>`).join('')}</div><p class="muted" style="margin:0;font-size:12.5px">Entre parênteses: etapas atrasadas.</p></section>
+    </div>
+  </div>`;
+}
+
+function lista(){
+  const fo=S.fObra||'',fs=S.fSit||'';
+  let cs=S.cts.slice().sort((a,b)=>b.criada.localeCompare(a.criada));
+  if(fo)cs=cs.filter(c=>c.obra===fo);
+  if(fs==='and')cs=cs.filter(c=>!concluida(c));
+  if(fs==='atr')cs=cs.filter(c=>!concluida(c)&&pior(c)?.cls==='bad');
+  if(fs==='lib')cs=cs.filter(concluida);
+  V.innerHTML=`
+  <div class="head"><div><h1>Contratações</h1><p class="sub">Todas as contratações de empreiteiros, da solicitação da obra até a liberação da equipe.</p></div><a class="btn pri" href="#nova">+ Nova contratação</a></div>
+  <div class="filters">
+    <select id="fObra" aria-label="Filtrar por obra"><option value="">Todas as obras</option>${OBRAS.map(o=>`<option ${o===fo?'selected':''}>${o}</option>`).join('')}</select>
+    <select id="fSit" aria-label="Filtrar por situação">${[['','Todas as situações'],['and','Em andamento'],['atr','Com etapa atrasada'],['lib','Liberadas para a obra']].map(([v,t])=>`<option value="${v}" ${v===fs?'selected':''}>${t}</option>`).join('')}</select>
+  </div>
+  <section class="panel"><div class="tw"><table><thead><tr><th>Código</th><th>Serviço</th><th>Obra</th><th>Fornecedor</th><th>Etapa atual</th><th>Progresso</th><th>Prazo</th></tr></thead><tbody>
+  ${cs.map(c=>{const at=atuais(c);return`<tr class="link" data-go="${c.id}"><td class="mono">${c.cod}</td><td><div class="t">${esc(c.servico)}</div><div class="s">${TIPOS[c.tipo]}</div></td><td>${esc(c.obra)}</td><td>${esc(c.fornecedor)||'<span class="muted">a definir</span>'}</td><td>${concluida(c)?'<span class="chip ok">Liberada para a obra</span>':at.map(e=>`<div>${esc(e.nome)}</div>`).join('')}</td><td><div class="bar"><i style="width:${feitas(c)/12*100}%"></i></div><div class="s mono">${feitas(c)}/12</div></td><td>${concluida(c)?'':chip(pior(c))}</td></tr>`}).join('')||'<tr><td colspan="7" class="muted">Nenhuma contratação com esses filtros.</td></tr>'}
+  </tbody></table></div></section>`;
+}
+
+function nova(){
+  V.innerHTML=`
+  <div class="head"><div><h1>Nova contratação</h1><p class="sub">A obra abre a contratação. Sem estas informações o processo não segue, como já define a regra da solicitação de serviço.</p></div></div>
+  <form class="panel" id="fNova" novalidate>
+    <div class="form">
+      <label class="field"><span>Obra</span><select id="nObra" style="width:100%"><option value="">Selecione</option>${OBRAS.map(o=>`<option>${o}</option>`).join('')}</select></label>
+      <label class="field"><span>Pacote do planejamento</span><input type="text" id="nPacote" placeholder="Ex.: Alvenaria"></label>
+      <label class="field full"><span>Serviço / escopo</span><input type="text" id="nServ" placeholder="Ex.: Alvenaria de vedação, torre A"></label>
+      <label class="field"><span>Valor orçado para o serviço ou etapa (R$)</span><input type="number" id="nValor" min="0" step="100" placeholder="Valor do orçamento da obra"></label>
+      <div class="field"><span>Tipo de contrato</span><div class="radios">${Object.entries(TIPOS).map(([k,t],i)=>`<label><input type="radio" name="nTipo" id="nTipo${i}" value="${k}"><span>${i+1}. ${t}</span></label>`).join('')}</div></div>
+      <label class="field"><span>Planilha de importação de contrato (Sienge)</span><input type="file" id="nImp"></label>
+      <label class="field"><span>Planilha de solicitação de contrato (modelo RH)</span><input type="file" id="nRh"></label>
+    </div>
+    <div class="foot"><span class="err" id="nErr"></span><button class="btn pri" type="submit">Abrir contratação</button></div>
+  </form>`;
+}
+
+function emBreve(k){
+  const P={
+   terceiros:['Documentos de terceiros','Portal onde o próprio empreiteiro envia os documentos da empresa e dos funcionários.',['Matriz de documentos por tipo de serviço e função (ASO, NRs, EPI, ordem de serviço)','Envio pelo prestador, sem e-mail','Aprovação ou reprovação com o motivo','Aviso antes de cada vencimento e bloqueio automático quando vence']],
+   portaria:['Portaria e QR code','Consulta rápida de quem pode entrar na obra.',['Busca por nome ou CPF','Crachá com QR code que mostra a situação do dia','Bloqueio automático quando um documento vence']]}[k];
+  V.innerHTML=`<div class="head"><div><h1>${P[0]}</h1><p class="sub">${P[1]}</p></div></div><section class="panel soonpage"><h2>O que vai ter</h2><ol>${P[2].map(x=>`<li>${x}</li>`).join('')}</ol></section>`;
+}
+
+function detalhe(ct){
+  if(!selEtapa||!E[selEtapa])selEtapa=(atuais(ct).find(e=>e.area===S.perfil)||atuais(ct)[0]||E[12]).id;
+  const stBtn=e=>{const s=ct.et[e.id],p=prazo(ct,e);return`<button class="st ${s.st} ${selEtapa===e.id?'sel':''}" data-sel="${e.id}"><span class="dot">${s.st==='ok'?'✓':e.id}</span><span><span class="nm">${esc(e.nome)}</span><span class="ln"><span class="area">${AREAS[e.area]}</span><span>${esc(e.resp)}</span>${s.st==='ok'?`<span>${e.id===3&&ct.pulou3?'pulada':e.autorizar?'autorizada':'concluída'} ${fmtD(s.fim)}</span>`:''}${chip(p)}</span></span></button>`};
+  const trilha=(k,t,nota='')=>`<div class="track"><div class="th"><h3>${t}</h3><span class="muted" style="font-size:12px">${nota}</span></div>${ETAPAS.filter(e=>e.tr===k).map(stBtn).join('')}</div>`;
+  const st=concluida(ct)?'<span class="chip ok">Liberada para a obra</span>':chip(pior(ct));
+  V.innerHTML=`
+  <a href="#contratacoes" class="muted" style="text-decoration:none">← Contratações</a>
+  <div class="head"><div><div class="mono muted">${ct.cod}</div><h1>${esc(ct.servico)}</h1></div>${st}</div>
+  <div class="meta">
+    <div><span>Obra</span>${esc(ct.obra)}</div><div><span>Tipo</span>${TIPOS[ct.tipo]}</div><div><span>Fornecedor</span>${esc(ct.fornecedor)||'a definir'}</div>
+    <div><span>Orçado</span>${brl(ct.orcado)}</div><div><span>Negociado</span>${brl(ct.negociado)}</div><div><span>Aberta em</span>${fmtD(ct.criada)}</div>
+    <div><span>Sienge</span><span class="mono" style="font-size:12.5px;text-transform:none;letter-spacing:0;color:var(--fg)">${ct.sienge.ss?'SS '+esc(ct.sienge.ss):'—'}${ct.sienge.ct?' · '+esc(ct.sienge.ct):''}</span></div>
+  </div>
+  <div class="det">
+    <section class="panel">
+      ${trilha('neg','Negociação e solicitação')}
+      <div class="par-note">depois da liberação de suprimentos, duas frentes em paralelo</div>
+      <div class="par">${trilha('ctr','Contrato')}${trilha('doc','Documentação')}</div>
+      ${trilha('lib','Liberação','depois do contrato assinado e da integração')}
+    </section>
+    <div class="side-panel">${painelEtapa(ct,E[selEtapa])}
+      <section class="panel"><h2>Histórico</h2><div class="log">${ct.log.map((l,i)=>({...l,i})).sort((a,b)=>b.d.localeCompare(a.d)||b.i-a.i).map(l=>`<div><span class="mono muted">${fmtD(l.d)}</span><span>${esc(l.txt)}</span></div>`).join('')}</div></section>
+    </div>
+  </div>`;
+}
+
+function painelEtapa(ct,e){
+  const s=ct.et[e.id],p=prazo(ct,e),pode=podeAgir(e)&&s.st==='and';
+  const sla=e.sla?`Prazo: ${e.sla} ${e.uteis?'dias úteis':'dias'}`:'Prazo ainda não definido no fluxo';
+  let h=`<section class="panel"><div><div class="area">Etapa ${e.id} · ${AREAS[e.area]}</div><h2 style="margin-top:4px">${esc(e.nome)}</h2><div class="ln muted" style="display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:6px;font-size:13px"><span>Responsável: ${esc(e.resp)}</span><span>${sla}</span>${s.ini?`<span>Início ${fmtD(s.ini)}</span>`:''}${chip(p)}</div></div>`;
+  if(s.st==='pend'){
+    const falta=e.deps.filter(d=>ct.et[d].st!=='ok').map(d=>E[d].nome);
+    return h+`<p class="hint">Começa quando concluir: ${falta.map(esc).join(' e ')}.</p></section>`;
+  }
+  if(e.id===5&&ct.pulou3)h+=`<p class="hint acc">A obra não negociou. A equalização e a negociação ficam com Suprimentos.</p>`;
+  if(e.tarefas.length)h+=`<div class="chk">${e.tarefas.map((t,i)=>`<label class="${pode?'':'dis'}"><input type="checkbox" data-chk="${i}" ${s.chk[i]?'checked':''} ${pode?'':'disabled'}><span>${esc(t)}</span></label>`).join('')}</div>`;
+  if(e.campo){const k=e.campo[0],v=k==='neg'?ct.negociado:ct.sienge[k];h+=`<label class="field"><span>${e.campo[1]}</span><input type="${k==='neg'?'number':'text'}" id="campo" data-campo="${k}" value="${esc(v)}" ${pode?'':'disabled'}></label>`}
+  if(e.cot)h+=cotacoes(ct,e,pode);
+  if(e.assin)h+=assinaturas(ct,s);
+  if(e.func||e.id===11)h+=funcionarios(ct,e.func&&pode);
+  if(e.nota)h+=`<p class="hint acc">${e.nota}</p>`;
+  if(s.st==='and'&&!e.assin){
+    const falta=prontaParaConcluir(ct,e);
+    h+=`<div class="foot"><span class="muted" style="font-size:12.5px">${pode?esc(falta):`Etapa de ${AREAS[e.area]}. Troque o perfil em “Ver como” para agir.`}</span><span style="display:flex;flex-wrap:wrap;gap:8px">${e.pular&&pode?'<button class="btn" data-a="pular">Pular: deixar para Suprimentos</button>':''}<button class="btn pri" data-a="concluir" ${pode&&!falta?'':'disabled'}>${e.autorizar?'Autorizar':'Concluir etapa'}</button></span></div>`;
+  }
+  return h+'</section>';
+}
+
+function cotacoes(ct,e,pode){
+  const min=Math.min(...ct.cot.map(c=>c.valor));
+  const menor=ct.orcado<LIMITE;
+  const podeEsc=pode&&e.cot==='escolher'&&(e.id===5?(!menor||!ct.fornecedor):menor);
+  let h=`<div><h3 style="margin-bottom:6px">Cotações (${ct.cot.length}/3)</h3><div class="tw"><table><thead><tr><th>Fornecedor</th><th>Valor</th><th>Prazo</th><th></th></tr></thead><tbody>${ct.cot.map((c,i)=>`<tr><td>${esc(c.f)}${c.valor===min&&ct.cot.length>1?' <span class="cot-best">menor valor</span>':''}</td><td class="mono">${brl(c.valor)}</td><td class="mono">${c.prazo} d</td><td style="text-align:right">${ct.fornecedor===c.f?'<span class="chip info">Escolhido</span>':(podeEsc?`<button class="btn sm" data-escolher="${i}">Escolher</button>`:'')}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">Nenhuma cotação registrada.</td></tr>'}</tbody></table></div></div>`;
+  if(e.id===3)h+=`<p class="hint">${menor?`Solicitação abaixo de ${brl(LIMITE)}: a obra pode escolher o fornecedor e o valor.`:`Acima de ${brl(LIMITE)}, quem define o fornecedor e o valor é Suprimentos, na etapa 5.`}</p>`;
+  if(e.id===5&&menor&&ct.fornecedor)h+=`<p class="hint">Fornecedor escolhido pela obra (solicitação abaixo de ${brl(LIMITE)}).</p>`;
+  if(e.cot==='add'&&pode&&ct.cot.length<3)h+=`<div class="mini"><label class="field"><span>Fornecedor</span><input type="text" id="cF"></label><label class="field"><span>Valor (R$)</span><input type="number" id="cV" min="0" step="100"></label><button class="btn" data-a="addcot">Registrar</button></div>`;
+  return h;
+}
+function assinaturas(ct,s){
+  const prox=ct.ass.findIndex(a=>!a);
+  return `<div><h3>Ordem de assinatura</h3><div class="sig">${ASSIN.map(([n,a],i)=>{
+    const st=ct.ass[i]?`<span class="chip ok">Assinado ${fmtD(ct.ass[i])}</span>`:i===prox?(S.perfil===a&&s.st==='and'?`<button class="btn sm pri" data-ass="${i}">${a==='ctr'?'Registrar assinatura':'Assinar'}</button>`:'<span class="chip warn">Aguardando</span>'):'<span class="chip neutral">Na fila</span>';
+    return`<div class="r"><span class="k">${i+1}</span><span>${n}${a==='ctr'?' <span class="muted" style="font-size:12px">(registrado por Contratos)</span>':''}</span>${st}</div>`}).join('')}</div>
+    ${s.st==='and'&&prox>=0?`<p class="hint">Quem assina agora: ${ASSIN[prox][0]}. Troque o perfil em “Ver como” para assinar como essa área.</p>`:''}</div>`;
+}
+function funcionarios(ct,edit){
+  const lbl={ok:'OK',pend:'Pend.',rep:'Reprov.'};
+  let h=`<div><h3 style="margin-bottom:6px">Funcionários enviados pelo prestador</h3>${ct.func.length?`<div class="tw"><table class="docs"><thead><tr><th>Nome</th>${DOCS.map(d=>`<th>${d[1]}</th>`).join('')}</tr></thead><tbody>${ct.func.map((f,i)=>`<tr><td><div class="t">${esc(f.nome)}</div><div class="s">${esc(f.funcao)}</div></td>${DOCS.map(([k])=>edit?`<td><button class="dc ${f.docs[k]}" data-doc="${i}:${k}" title="Clique para mudar">${lbl[f.docs[k]]}</button></td>`:`<td><span class="dc ${f.docs[k]}">${lbl[f.docs[k]]}</span></td>`).join('')}</tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin:0">Nenhum funcionário enviado ainda.</p>'}</div>`;
+  if(edit)h+=`<p class="hint">Clique em um documento para alternar entre pendente, aprovado e reprovado. Na versão real, o prestador envia os arquivos pelo portal dele.</p><button class="btn sm" data-a="addfunc">+ Simular envio de funcionário</button>`;
+  return h;
+}
+
+/* render e eventos */
+function render(){
+  nav();
+  const r=rota();
+  document.getElementById('perfil').innerHTML=PERFIS.map(([k,t])=>`<option value="${k}" ${k===S.perfil?'selected':''}>${t}</option>`).join('');
+  if(r==='painel')painel();
+  else if(r==='contratacoes')lista();
+  else if(r==='nova')nova();
+  else if(['terceiros','portaria'].includes(r))emBreve(r);
+  else if(r==='portal')portal();
+  else if(r==='novo-func')novoFunc();
+  else if(r==='analise')analise();
+  else if(r==='integracao')integracao();
+  else if(r==='empresas')empresas();
+  else if(r.startsWith('pes-'))pessoa(r.slice(4));
+  else if(r.startsWith('rev-'))revisao(r.slice(4));
+  else{const ct=S.cts.find(c=>c.id===r);if(ct)detalhe(ct);else{location.hash='painel';return}}
+}
+const ctAtual=()=>S.cts.find(c=>c.id===rota());
+let tt;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),3200)}
+
+let proxEt=null;
+addEventListener('hashchange',()=>{selEtapa=proxEt;proxEt=null;render();scrollTo(0,0)});
+document.addEventListener('click',ev=>{
+  const g=ev.target.closest('[data-go]');
+  if(g){proxEt=g.dataset.et?+g.dataset.et:null;const id=g.dataset.go;if(location.hash==='#'+id){selEtapa=proxEt;proxEt=null;render()}else location.hash=id;return}
+  const ct=ctAtual();
+  const sel=ev.target.closest('[data-sel]');
+  if(sel){selEtapa=+sel.dataset.sel;render();return}
+  const b=ev.target.closest('[data-a],[data-escolher],[data-ass],[data-doc]');if(!b)return;
+  const a=b.dataset.a;
+  if(a==='reset'){S=seed();selEtapa=null;save();render();toast('Dados de exemplo restaurados.');return}
+  if(!ct)return;
+  const e=E[selEtapa];
+  if(a==='concluir'){concluir(ct,e);selEtapa=(atuais(ct).find(x=>x.area===S.perfil)||atuais(ct)[0]||E[12]).id}
+  else if(a==='pular'){ct.pulou3=true;const s=ct.et[3];s.st='ok';s.fim=hoje();ct.log.push({d:hoje(),txt:'Obra pulou a equalização e a negociação, que ficam com Suprimentos'});liberar(ct);toast('Etapa pulada. A negociação fica com Suprimentos.');selEtapa=4}
+  else if(a==='addcot'){const f=document.getElementById('cF').value.trim(),v=+document.getElementById('cV').value;if(!f||!v){toast('Informe fornecedor e valor.');return}ct.cot.push({f,valor:v,prazo:45});ct.log.push({d:hoje(),txt:`Cotação de ${f} registrada`})}
+  else if(b.dataset.escolher!=null){const c=ct.cot[+b.dataset.escolher];ct.fornecedor=c.f;ct.log.push({d:hoje(),txt:`Fornecedor escolhido: ${c.f}`})}
+  else if(b.dataset.ass!=null){const i=+b.dataset.ass;ct.ass[i]=hoje();ct.log.push({d:hoje(),txt:`Contrato assinado por ${ASSIN[i][0]}`});if(ct.ass.every(Boolean))concluir(ct,E[9]);else toast(`Assinado. Próximo: ${ASSIN[i+1][0]}.`)}
+  else if(b.dataset.doc){const [i,k]=b.dataset.doc.split(':'),f=ct.func[+i],ord=['pend','ok','rep'];f.docs[k]=ord[(ord.indexOf(f.docs[k])+1)%3];if(f.docs[k]==='rep')ct.log.push({d:hoje(),txt:`${DOCS.find(d=>d[0]===k)[1]} de ${f.nome} reprovado`})}
+  else if(a==='addfunc'){const n=['Gilmar Souza','Rafael Antunes','Everton Lima','Sidnei Rocha'][ct.func.length%4];ct.func.push({nome:n,funcao:'Oficial',docs:Object.fromEntries(DOCS.map(([k])=>[k,'pend']))});ct.log.push({d:hoje(),txt:`Prestador enviou documentos de ${n}`})}
+  save();render();
+});
+document.addEventListener('change',ev=>{
+  const t=ev.target;
+  if(t.id==='perfil'){S.perfil=t.value;selEtapa=null;save();render();toast(`Vendo como ${perfilNome()}.`);return}
+  if(t.id==='fObra'||t.id==='fSit'){S[t.id]=t.value;save();render();return}
+  const ct=ctAtual();if(!ct)return;
+  if(t.dataset.chk!=null){ct.et[selEtapa].chk[+t.dataset.chk]=t.checked;save();render()}
+  else if(t.dataset.campo){const k=t.dataset.campo;if(k==='neg')ct.negociado=t.value?+t.value:'';else ct.sienge[k]=t.value.trim();save();render()}
+});
+document.addEventListener('submit',ev=>{
+  if(ev.target.id!=='fNova')return;ev.preventDefault();
+  const v=id=>document.getElementById(id).value.trim();
+  const tipo=document.querySelector('input[name=nTipo]:checked')?.value;
+  const falta=[!v('nObra')&&'obra',!v('nServ')&&'serviço',!+v('nValor')&&'valor orçado',!tipo&&'tipo de contrato'].filter(Boolean);
+  if(falta.length){document.getElementById('nErr').textContent=`Falta preencher: ${falta.join(', ')}.`;return}
+  const n=S.seq++;
+  const ct=mk({n,obra:v('nObra'),servico:v('nServ'),pacote:v('nPacote'),orcado:+v('nValor'),tipo,idade:0},[],{1:0},{parcial:{1:0}});
+  ct.et[1].chk=[!!v('nPacote'),true,true];ct.cot=[];
+  S.cts.push(ct);save();location.hash=ct.id;toast(`${ct.cod} aberta. Próximo passo: concluir o escopo.`);
+});
+render();
+</script>
