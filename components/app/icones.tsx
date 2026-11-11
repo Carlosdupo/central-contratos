@@ -50,6 +50,13 @@ export const IconeIntegracao = () => (
   </Icone>
 );
 
+export const IconeContratos = () => (
+  <Icone>
+    <path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" />
+    <path d="M14 3v5h5M9 13h6M9 17h6" />
+  </Icone>
+);
+
 export const IconeApp = () => (
   <span className="grid size-9 shrink-0 place-items-center rounded-[9px] bg-gradient-to-br from-[#3d9bff] to-[#0062d6] text-white shadow-[inset_0_0_0_.5px_rgba(0,0,0,.15),0_2px_6px_rgba(0,98,214,.3)]">
     <Icone tamanho={20}>

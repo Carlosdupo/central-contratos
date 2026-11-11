@@ -2,14 +2,19 @@ import { exigirInterno } from "@/modules/acesso/sessao";
 import { sair } from "@/modules/acesso/acoes";
 import { ROTULO_PAPEL } from "@/modules/acesso/papeis";
 import { BarraLateral, type GrupoMenu } from "@/components/app/barra-lateral";
-import { IconeAdmin, IconeAnalise, IconeBusca, IconeEmpresas, IconeIntegracao, IconePainel } from "@/components/app/icones";
+import { IconeAdmin, IconeAnalise, IconeBusca, IconeContratos, IconeEmpresas, IconeIntegracao, IconePainel } from "@/components/app/icones";
 
-// Área interna. Os módulos entram no menu conforme cada fase fica pronta (F1 em diante).
+// Área interna. Itens do menu conforme os papéis do usuário.
 export default async function LayoutInterno({ children }: LayoutProps<"/">) {
   const usuario = await exigirInterno();
 
   const grupos: GrupoMenu[] = [
-    { itens: [{ href: "/painel", rotulo: "Painel", icone: <IconePainel /> }] },
+    {
+      itens: [
+        { href: "/painel", rotulo: "Painel", icone: <IconePainel /> },
+        { href: "/contratacoes", rotulo: "Contratações", icone: <IconeContratos /> },
+      ],
+    },
     {
       titulo: "Terceiros",
       itens: [

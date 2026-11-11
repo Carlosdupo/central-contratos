@@ -13,6 +13,25 @@ export const metadata: Metadata = { title: "Integração de segurança" };
 const DIAS = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 const diaPorExtenso = (d: string) => `${DIAS[new Date(`${d}T12:00:00Z`).getUTCDay()]}, ${formatarData(d)}`;
 
+type LinhaAlocacao = {
+  id: string;
+  obras: { nome: string } | null;
+  vinculos: { funcao: string; empresas_terceiras: { razao_social: string } | null; pessoas: { nome: string; foto_path: string | null } | null } | null;
+};
+
+function Pessoa({ a, fotos }: { a: LinhaAlocacao; fotos: Map<string, string> }) {
+  const p = a.vinculos?.pessoas;
+  return (
+    <span className="flex min-w-0 flex-1 items-center gap-3">
+      <Avatar nome={p?.nome ?? "?"} url={p?.foto_path ? fotos.get(p.foto_path) : null} />
+      <span className="min-w-0">
+        <span className="block font-medium">{p?.nome}</span>
+        <span className="block text-[12.5px] text-muted-foreground">{a.vinculos?.funcao} · {a.vinculos?.empresas_terceiras?.razao_social} · {a.obras?.nome}</span>
+      </span>
+    </span>
+  );
+}
+
 export default async function PaginaIntegracao() {
   await exigirPapel("sst");
   const supabase = await criarClienteServidor();
@@ -27,15 +46,6 @@ export default async function PaginaIntegracao() {
   const hoje = agoraNoFuso().data;
   const dias = [...new Set((agendadas ?? []).map((a) => a.integracao_data ?? ""))];
 
-  const Pessoa = ({ a }: { a: (typeof todas)[number] }) => (
-    <span className="flex min-w-0 flex-1 items-center gap-3">
-      <Avatar nome={a.vinculos?.pessoas?.nome ?? "?"} url={a.vinculos?.pessoas?.foto_path ? fotos.get(a.vinculos.pessoas.foto_path) : null} />
-      <span className="min-w-0">
-        <span className="block font-medium">{a.vinculos?.pessoas?.nome}</span>
-        <span className="block text-[12.5px] text-muted-foreground">{a.vinculos?.funcao} · {a.vinculos?.empresas_terceiras?.razao_social} · {a.obras?.nome}</span>
-      </span>
-    </span>
-  );
 
   return (
     <>
@@ -58,7 +68,7 @@ export default async function PaginaIntegracao() {
             <div className="lista-agrupada">
               {grupo.map((a) => (
                 <div key={a.id} className="flex flex-wrap items-center gap-3 px-3.5 py-2.5">
-                  <Pessoa a={a} />
+                  <Pessoa a={a} fotos={fotos} />
                   <span className="flex flex-wrap items-center gap-2">
                     <Formulario acao={registrarIntegracao.bind(null, a.id, false)} textoBotao="Não compareceu" variante="neutro" className="flex" />
                     <Formulario acao={registrarIntegracao.bind(null, a.id, true)} textoBotao="Presente" className="flex" />
@@ -78,7 +88,7 @@ export default async function PaginaIntegracao() {
           <div className="lista-agrupada">
             {(liberadas ?? []).map((a) => (
               <div key={a.id} className="flex flex-wrap items-center gap-3 px-3.5 py-2.5">
-                <Pessoa a={a} />
+                <Pessoa a={a} fotos={fotos} />
                 <span className="selo selo-ok">Liberado {a.liberado_em ? formatarData(agoraNoFuso(new Date(a.liberado_em)).data) : ""}</span>
               </div>
             ))}

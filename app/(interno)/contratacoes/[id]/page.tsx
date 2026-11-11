@@ -1,0 +1,252 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { z } from "zod";
+import { exigirInterno } from "@/modules/acesso/sessao";
+import { temAlgumPapel, type Papel } from "@/modules/acesso/papeis";
+import { detalheDaContratacao } from "@/modules/contratacoes/consultas";
+import { TIPO_CONTRATACAO, TRILHAS, formatarReais } from "@/modules/contratacoes/rotulos";
+import {
+  assinarContrato, cancelarContratacao, concluirEtapa, escolherFornecedor, pularNegociacao, reabrirEtapa, registrarCotacao, salvarCampoEtapa,
+} from "@/modules/contratacoes/acoes";
+import { equipeDaEmpresa } from "@/modules/terceiros/consultas";
+import { linksDasFotos } from "@/modules/terceiros/fotos";
+import { formatarCnpj } from "@/lib/documentos-br";
+import { formatarData } from "@/lib/datas";
+import { SeloPrazo } from "@/components/app/selo-prazo";
+import { ItemChecklist } from "@/components/app/item-checklist";
+import { CampoTexto, Formulario } from "@/components/app/formulario";
+import { ListaEquipe } from "@/components/app/lista-equipe";
+
+export const metadata: Metadata = { title: "Contratação" };
+
+const CAMPO: Record<number, { rotulo: string; chave: "sienge_solicitacao" | "valor_negociado" | "sienge_contrato" }> = {
+  4: { rotulo: "Nº da solicitação no Sienge", chave: "sienge_solicitacao" },
+  5: { rotulo: "Valor negociado (R$)", chave: "valor_negociado" },
+  7: { rotulo: "Código do contrato no Sienge", chave: "sienge_contrato" },
+};
+
+export default async function PaginaContratacao({ params, searchParams }: PageProps<"/contratacoes/[id]">) {
+  const usuario = await exigirInterno();
+  const { id } = await params;
+  const { etapa: etapaParam } = await searchParams;
+  if (!z.uuid().safeParse(id).success) notFound();
+  const d = await detalheDaContratacao(id);
+  if (!d) notFound();
+  const { c, etapas, cotacoes, assinantes } = d;
+
+  // Mesmas regras de app.pode_agir_como (o banco confere de novo). Coordenador: a RLS já limita às obras dele.
+  const podeComo = (papel: Papel | null) =>
+    !!papel && (papel === "suprimentos" ? temAlgumPapel(usuario.papeis, ["suprimentos", "gerente_suprimentos"]) : usuario.papeis.includes(papel));
+  const emAndamento = etapas.filter((e) => e.situacao === "em_andamento");
+  const numero = Number(etapaParam) || (emAndamento.find((e) => podeComo(e.papel)) ?? emAndamento[0] ?? etapas[11]).etapa;
+  const sel = etapas.find((e) => e.etapa === numero) ?? etapas[0];
+  const ativa = c.situacao === "em_andamento" && sel.situacao === "em_andamento";
+  const pode = ativa && podeComo(sel.papel);
+  const abaixoDoLimite = Number(c.valor_orcado) < Number(c.limite_obra);
+  const proxAssinante = assinantes.find((a) => !a.assinadoEm);
+  const empresa = c.empresas_terceiras as { id: string; razao_social: string; situacao: string } | null;
+  const equipe = empresa ? await equipeDaEmpresa(empresa.id) : [];
+  const fotos = await linksDasFotos(equipe.map((m) => m.fotoPath));
+  const ehAdmin = usuario.papeis.includes("admin");
+
+  const podeEscolher = (sel.etapa === 3 && abaixoDoLimite) || (sel.etapa === 5 && (!abaixoDoLimite || !c.fornecedor_cnpj));
+  const menor = cotacoes.length ? Math.min(...cotacoes.map((x) => Number(x.valor))) : 0;
+
+  return (
+    <>
+      <div>
+        <Link href="/contratacoes" className="text-[14px] text-primary">← Contratações</Link>
+        <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <div className="font-mono text-[13px] text-muted-foreground">{c.codigo}</div>
+            <h1 className="titulo">{c.servico}</h1>
+          </div>
+          {c.situacao === "liberada" && <span className="selo selo-ok">Liberada para a obra</span>}
+          {c.situacao === "cancelada" && <span className="selo selo-neutro">Cancelada: {c.cancelamento_motivo}</span>}
+        </div>
+      </div>
+
+      <div className="painel flex-row flex-wrap gap-x-8 gap-y-3 py-4 text-[14px]">
+        {[
+          ["Obra", c.obras?.nome],
+          ["Tipo", TIPO_CONTRATACAO[c.tipo]],
+          ["Fornecedor", c.fornecedor_nome ? `${c.fornecedor_nome} · ${formatarCnpj(c.fornecedor_cnpj ?? "")}` : "a definir"],
+          ["Orçado", formatarReais(Number(c.valor_orcado))],
+          ["Negociado", formatarReais(c.valor_negociado ? Number(c.valor_negociado) : null)],
+          ["Sienge", [c.sienge_solicitacao && `SS ${c.sienge_solicitacao}`, c.sienge_contrato].filter(Boolean).join(" · ") || "—"],
+        ].map(([r, v]) => (
+          <div key={r as string}><div className="text-xs font-medium text-faint">{r}</div>{v}</div>
+        ))}
+      </div>
+
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+        <div className="flex flex-col gap-5">
+          {TRILHAS.map((t) => (
+            <div key={t.chave}>
+              <div className="flex items-baseline justify-between px-4 pb-1.5">
+                <h2 className="text-[12.5px] font-semibold tracking-wide text-faint uppercase">{t.nome}</h2>
+                {t.nota && <span className="text-xs text-faint">{t.nota}</span>}
+              </div>
+              <div className="flex flex-col overflow-hidden rounded-[14px] bg-card">
+                {etapas.filter((e) => e.trilha === t.chave).map((e) => (
+                  <Link
+                    key={e.etapa}
+                    href={`/contratacoes/${id}?etapa=${e.etapa}`}
+                    scroll={false}
+                    className={`relative grid grid-cols-[26px_minmax(0,1fr)] items-center gap-3 px-4 py-2.5 transition-colors [&+&]:border-t-[.5px] [&+&]:border-sep ${e.etapa === sel.etapa ? "bg-primary-soft" : "hover:bg-fill"}`}
+                  >
+                    <span className={`grid size-[26px] place-items-center rounded-full text-xs font-semibold ${
+                      e.situacao === "concluida" || e.situacao === "pulada" ? "bg-[var(--ok-fill)] text-white" : e.situacao === "em_andamento" ? "border-2 border-primary bg-card text-primary" : "border-[1.5px] border-input text-faint"
+                    }`}>{e.situacao === "concluida" ? "✓" : e.situacao === "pulada" ? "–" : e.etapa}</span>
+                    <span className="min-w-0">
+                      <span className={`block font-medium ${e.etapa === sel.etapa ? "text-primary" : e.situacao === "pendente" ? "text-muted-foreground" : ""}`}>{e.nome}</span>
+                      <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+                        <span className="font-semibold text-faint">{e.responsavel}</span>
+                        {e.concluidaEm && <span>{e.situacao === "pulada" ? "pulada" : "concluída"} {formatarData(e.concluidaEm).slice(0, 5)}</span>}
+                        {e.prazo && <SeloPrazo prazo={e.prazo} uteis={!!e.prazoConfig?.uteis} />}
+                      </span>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-col gap-5 lg:sticky lg:top-6">
+          <section className="painel">
+            <div>
+              <div className="text-xs font-semibold text-faint">Etapa {sel.etapa} · {sel.responsavel}</div>
+              <h2 className="subtitulo mt-1">{sel.nome}</h2>
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted-foreground">
+                <span>{sel.prazoConfig ? `Prazo: ${sel.prazoConfig.dias} ${sel.prazoConfig.uteis ? "dias úteis" : "dias"}` : "Prazo ainda não definido"}</span>
+                {sel.desde && <span>Início {formatarData(sel.desde)}</span>}
+                {sel.prazo && <SeloPrazo prazo={sel.prazo} uteis={!!sel.prazoConfig?.uteis} />}
+              </div>
+            </div>
+
+            {sel.situacao === "pendente" && (
+              <p className="rounded-xl bg-fill px-3.5 py-2.5 text-[13px] text-muted-foreground">
+                Começa quando concluir: {sel.dependencias.map((n) => etapas.find((e) => e.etapa === n)?.nome).join(" e ")}.
+              </p>
+            )}
+
+            {sel.itens.length > 0 && sel.situacao !== "pendente" && (
+              <div className="lista-agrupada">
+                {sel.itens.map((texto, i) => (
+                  <ItemChecklist key={i} contratacao={id} etapa={sel.etapa} item={i + 1} texto={texto} marcado={sel.marcados[i]} editavel={pode} />
+                ))}
+              </div>
+            )}
+
+            {CAMPO[sel.etapa] && sel.situacao !== "pendente" && (
+              pode ? (
+                <Formulario acao={salvarCampoEtapa.bind(null, id, sel.etapa)} textoBotao="Salvar" className="flex flex-wrap items-end gap-2">
+                  <CampoTexto nome="valor" rotulo={CAMPO[sel.etapa].rotulo} padrao={c[CAMPO[sel.etapa].chave] as string | null} className="min-w-[220px] flex-1" />
+                </Formulario>
+              ) : (
+                <p className="text-[13px]"><span className="text-muted-foreground">{CAMPO[sel.etapa].rotulo}:</span> {String(c[CAMPO[sel.etapa].chave] ?? "—")}</p>
+              )
+            )}
+
+            {[2, 3, 5].includes(sel.etapa) && sel.situacao !== "pendente" && (
+              <div className="flex flex-col gap-2">
+                <h3 className="text-[14px] font-semibold">Cotações ({cotacoes.length}/3)</h3>
+                <div className="lista-agrupada">
+                  {cotacoes.length === 0 && <p className="px-3.5 py-2.5 text-[13px] text-muted-foreground">Nenhuma cotação registrada.</p>}
+                  {cotacoes.map((q) => (
+                    <div key={q.id} className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5">
+                      <span className="min-w-0">
+                        <span className="block font-medium">{q.fornecedor}{Number(q.valor) === menor && cotacoes.length > 1 && <span className="ml-2 rounded-full bg-ok-soft px-2 py-px text-[11px] font-semibold text-ok">menor valor</span>}</span>
+                        <span className="block font-mono text-xs text-muted-foreground">{formatarCnpj(q.cnpj)} · {formatarReais(Number(q.valor))}{q.prazo_dias ? ` · ${q.prazo_dias} d` : ""}</span>
+                      </span>
+                      {q.escolhida ? <span className="selo selo-info">Escolhido</span> : pode && podeEscolher && <Formulario acao={escolherFornecedor.bind(null, id, q.id)} textoBotao="Escolher" variante="neutro" className="flex" />}
+                    </div>
+                  ))}
+                </div>
+                {sel.etapa === 2 && pode && cotacoes.length < 3 && (
+                  <Formulario acao={registrarCotacao.bind(null, id)} textoBotao="Registrar cotação" className="grid grid-cols-2 gap-2 max-sm:grid-cols-1">
+                    <CampoTexto nome="fornecedor" rotulo="Fornecedor" />
+                    <CampoTexto nome="cnpj" rotulo="CNPJ" />
+                    <CampoTexto nome="valor" rotulo="Valor (R$)" />
+                    <CampoTexto nome="prazo" rotulo="Prazo (dias)" />
+                  </Formulario>
+                )}
+                {sel.etapa === 3 && (
+                  <p className="rounded-xl bg-fill px-3.5 py-2.5 text-[13px] text-muted-foreground">
+                    {abaixoDoLimite ? `Abaixo de ${formatarReais(Number(c.limite_obra))}: a obra pode escolher o fornecedor e o valor.` : `A partir de ${formatarReais(Number(c.limite_obra))}, quem define o fornecedor e o valor é Suprimentos, na etapa 5.`}
+                  </p>
+                )}
+                {sel.etapa === 5 && c.negociacao_pulada && <p className="rounded-xl bg-primary-soft px-3.5 py-2.5 text-[13px]">A obra não negociou. A equalização e a negociação ficam com Suprimentos.</p>}
+                {c.fornecedor_cnpj && !empresa && (
+                  <p className="text-[13px] text-muted-foreground">O fornecedor ainda não está cadastrado como empresa. <Link href="/terceiros/empresas" className="text-primary">Convidar empresa</Link> com o mesmo CNPJ.</p>
+                )}
+              </div>
+            )}
+
+            {sel.etapa === 9 && sel.situacao !== "pendente" && (
+              <div className="flex flex-col gap-2">
+                <h3 className="text-[14px] font-semibold">Ordem de assinatura</h3>
+                <div className="lista-agrupada">
+                  {assinantes.map((a) => (
+                    <div key={a.ordem} className="flex flex-wrap items-center gap-3 px-3.5 py-2.5">
+                      <span className="grid size-[22px] place-items-center rounded-full bg-fill-2 text-xs font-semibold text-muted-foreground">{a.ordem}</span>
+                      <span className="min-w-0 flex-1 text-[14px]">{a.rotulo}</span>
+                      {a.assinadoEm ? (
+                        <span className="selo selo-ok">Assinado {formatarData(a.assinadoEm).slice(0, 5)}</span>
+                      ) : a.ordem === proxAssinante?.ordem && ativa && podeComo(a.papel as Papel) ? (
+                        <Formulario acao={assinarContrato.bind(null, id, a.ordem)} textoBotao={a.papel === "contratos" ? "Registrar assinatura" : "Assinar"} className="flex" />
+                      ) : (
+                        <span className={`selo ${a.ordem === proxAssinante?.ordem ? "selo-alerta" : "selo-neutro"}`}>{a.ordem === proxAssinante?.ordem ? "Aguardando" : "Na fila"}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {sel.etapa === 6 && sel.situacao !== "pendente" && (
+              <p className="rounded-xl bg-primary-soft px-3.5 py-2.5 text-[13px]">A data da autorização fica registrada sozinha (antes ia para a planilha compartilhada).</p>
+            )}
+            {sel.etapa === 10 && empresa && <p className="rounded-xl bg-primary-soft px-3.5 py-2.5 text-[13px]">A situação da equipe vem do portal da empresa (abaixo). O RH confere os documentos em Análise do RH.</p>}
+
+            {ativa && sel.etapa !== 9 && (
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t-[.5px] border-sep pt-4">
+                <span className="text-[12.5px] text-muted-foreground">{pode ? "" : `Etapa de ${sel.responsavel}.`}</span>
+                <span className="flex flex-wrap gap-2">
+                  {sel.pode_pular && pode && <Formulario acao={pularNegociacao.bind(null, id)} textoBotao="Pular: deixar para Suprimentos" variante="neutro" className="flex" />}
+                  {pode && <Formulario acao={concluirEtapa.bind(null, id, sel.etapa)} textoBotao={sel.etapa === 6 ? "Autorizar" : "Concluir etapa"} className="flex" />}
+                </span>
+              </div>
+            )}
+            {ehAdmin && (sel.situacao === "concluida" || sel.situacao === "pulada") && c.situacao === "em_andamento" && (
+              <Formulario acao={reabrirEtapa.bind(null, id, sel.etapa)} textoBotao="Reabrir etapa" variante="neutro" confirmar="Reabrir esta etapa? O motivo fica registrado na auditoria." className="flex flex-wrap items-center gap-2 border-t-[.5px] border-sep pt-4">
+                <input name="motivo" placeholder="Motivo da reabertura" aria-label="Motivo da reabertura" className="campo max-w-[280px] py-1.5" />
+              </Formulario>
+            )}
+          </section>
+
+          {empresa && (
+            <section className="painel">
+              <div>
+                <h2 className="subtitulo">Equipe de {empresa.razao_social}</h2>
+                <p className="mt-1 text-[13px] text-muted-foreground">Resumo da empresa (A2). <Link href={`/terceiros/empresas/${empresa.id}`} className="text-primary">Ver documentos da empresa</Link></p>
+              </div>
+              <ListaEquipe equipe={equipe} fotos={fotos} linkBase="/terceiros/pessoas" />
+            </section>
+          )}
+
+          {ehAdmin && c.situacao === "em_andamento" && (
+            <section className="painel">
+              <h2 className="subtitulo">Cancelar contratação</h2>
+              <Formulario acao={cancelarContratacao.bind(null, id)} textoBotao="Cancelar contratação" variante="perigo" confirmar="Cancelar esta contratação? Não dá para desfazer." className="flex flex-wrap items-center gap-2">
+                <input name="motivo" placeholder="Motivo" aria-label="Motivo do cancelamento" className="campo max-w-[320px] py-1.5" />
+              </Formulario>
+            </section>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}

@@ -126,6 +126,67 @@ export type Database = {
           },
         ]
       }
+      assinantes_fluxo: {
+        Row: {
+          ordem: number
+          papel: Database["public"]["Enums"]["papel"]
+          rotulo: string
+        }
+        Insert: {
+          ordem: number
+          papel: Database["public"]["Enums"]["papel"]
+          rotulo: string
+        }
+        Update: {
+          ordem?: number
+          papel?: Database["public"]["Enums"]["papel"]
+          rotulo?: string
+        }
+        Relationships: []
+      }
+      assinaturas: {
+        Row: {
+          assinado_em: string
+          assinado_por: string
+          contratacao_id: string
+          ordem: number
+        }
+        Insert: {
+          assinado_em?: string
+          assinado_por: string
+          contratacao_id: string
+          ordem: number
+        }
+        Update: {
+          assinado_em?: string
+          assinado_por?: string
+          contratacao_id?: string
+          ordem?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assinaturas_assinado_por_fkey"
+            columns: ["assinado_por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assinaturas_contratacao_id_fkey"
+            columns: ["contratacao_id"]
+            isOneToOne: false
+            referencedRelation: "contratacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assinaturas_ordem_fkey"
+            columns: ["ordem"]
+            isOneToOne: false
+            referencedRelation: "assinantes_fluxo"
+            referencedColumns: ["ordem"]
+          },
+        ]
+      }
       auditoria: {
         Row: {
           acao: string
@@ -184,6 +245,206 @@ export type Database = {
             columns: ["documento_id"]
             isOneToOne: false
             referencedRelation: "documentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contratacao_etapas: {
+        Row: {
+          concluida_em: string | null
+          concluida_por: string | null
+          contratacao_id: string
+          etapa: number
+          iniciada_em: string | null
+          situacao: Database["public"]["Enums"]["situacao_etapa"]
+        }
+        Insert: {
+          concluida_em?: string | null
+          concluida_por?: string | null
+          contratacao_id: string
+          etapa: number
+          iniciada_em?: string | null
+          situacao?: Database["public"]["Enums"]["situacao_etapa"]
+        }
+        Update: {
+          concluida_em?: string | null
+          concluida_por?: string | null
+          contratacao_id?: string
+          etapa?: number
+          iniciada_em?: string | null
+          situacao?: Database["public"]["Enums"]["situacao_etapa"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratacao_etapas_concluida_por_fkey"
+            columns: ["concluida_por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratacao_etapas_contratacao_id_fkey"
+            columns: ["contratacao_id"]
+            isOneToOne: false
+            referencedRelation: "contratacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contratacoes: {
+        Row: {
+          cancelamento_motivo: string | null
+          codigo: string
+          created_at: string
+          criado_por: string
+          empresa_id: string | null
+          fluxo_versao: number
+          fornecedor_cnpj: string | null
+          fornecedor_nome: string | null
+          id: string
+          limite_obra: number
+          negociacao_pulada: boolean
+          obra_id: string
+          pacote: string | null
+          prazos: Json
+          servico: string
+          sienge_contrato: string | null
+          sienge_solicitacao: string | null
+          situacao: Database["public"]["Enums"]["situacao_contratacao"]
+          tipo: Database["public"]["Enums"]["tipo_contratacao"]
+          updated_at: string
+          valor_negociado: number | null
+          valor_orcado: number
+        }
+        Insert: {
+          cancelamento_motivo?: string | null
+          codigo: string
+          created_at?: string
+          criado_por?: string
+          empresa_id?: string | null
+          fluxo_versao?: number
+          fornecedor_cnpj?: string | null
+          fornecedor_nome?: string | null
+          id?: string
+          limite_obra: number
+          negociacao_pulada?: boolean
+          obra_id: string
+          pacote?: string | null
+          prazos?: Json
+          servico: string
+          sienge_contrato?: string | null
+          sienge_solicitacao?: string | null
+          situacao?: Database["public"]["Enums"]["situacao_contratacao"]
+          tipo: Database["public"]["Enums"]["tipo_contratacao"]
+          updated_at?: string
+          valor_negociado?: number | null
+          valor_orcado: number
+        }
+        Update: {
+          cancelamento_motivo?: string | null
+          codigo?: string
+          created_at?: string
+          criado_por?: string
+          empresa_id?: string | null
+          fluxo_versao?: number
+          fornecedor_cnpj?: string | null
+          fornecedor_nome?: string | null
+          id?: string
+          limite_obra?: number
+          negociacao_pulada?: boolean
+          obra_id?: string
+          pacote?: string | null
+          prazos?: Json
+          servico?: string
+          sienge_contrato?: string | null
+          sienge_solicitacao?: string | null
+          situacao?: Database["public"]["Enums"]["situacao_contratacao"]
+          tipo?: Database["public"]["Enums"]["tipo_contratacao"]
+          updated_at?: string
+          valor_negociado?: number | null
+          valor_orcado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratacoes_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratacoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas_terceiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratacoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cotacoes: {
+        Row: {
+          cnpj: string
+          contratacao_id: string
+          created_at: string
+          created_by: string | null
+          escolhida: boolean
+          escolhida_por: string | null
+          fornecedor: string
+          id: string
+          prazo_dias: number | null
+          valor: number
+        }
+        Insert: {
+          cnpj: string
+          contratacao_id: string
+          created_at?: string
+          created_by?: string | null
+          escolhida?: boolean
+          escolhida_por?: string | null
+          fornecedor: string
+          id?: string
+          prazo_dias?: number | null
+          valor: number
+        }
+        Update: {
+          cnpj?: string
+          contratacao_id?: string
+          created_at?: string
+          created_by?: string | null
+          escolhida?: boolean
+          escolhida_por?: string | null
+          fornecedor?: string
+          id?: string
+          prazo_dias?: number | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cotacoes_contratacao_id_fkey"
+            columns: ["contratacao_id"]
+            isOneToOne: false
+            referencedRelation: "contratacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cotacoes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cotacoes_escolhida_por_fkey"
+            columns: ["escolhida_por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
             referencedColumns: ["id"]
           },
         ]
@@ -588,6 +849,84 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      etapa_checklist: {
+        Row: {
+          contratacao_id: string
+          etapa: number
+          item: number
+          marcado: boolean
+          marcado_em: string | null
+          marcado_por: string | null
+        }
+        Insert: {
+          contratacao_id: string
+          etapa: number
+          item: number
+          marcado?: boolean
+          marcado_em?: string | null
+          marcado_por?: string | null
+        }
+        Update: {
+          contratacao_id?: string
+          etapa?: number
+          item?: number
+          marcado?: boolean
+          marcado_em?: string | null
+          marcado_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "etapa_checklist_contratacao_id_fkey"
+            columns: ["contratacao_id"]
+            isOneToOne: false
+            referencedRelation: "contratacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etapa_checklist_marcado_por_fkey"
+            columns: ["marcado_por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      etapas_fluxo: {
+        Row: {
+          dependencias: number[]
+          etapa: number
+          itens: string[]
+          nome: string
+          papel: Database["public"]["Enums"]["papel"] | null
+          pode_pular: boolean
+          responsavel: string
+          trilha: string
+          versao: number
+        }
+        Insert: {
+          dependencias?: number[]
+          etapa: number
+          itens?: string[]
+          nome: string
+          papel?: Database["public"]["Enums"]["papel"] | null
+          pode_pular?: boolean
+          responsavel: string
+          trilha: string
+          versao?: number
+        }
+        Update: {
+          dependencias?: number[]
+          etapa?: number
+          itens?: string[]
+          nome?: string
+          papel?: Database["public"]["Enums"]["papel"] | null
+          pode_pular?: boolean
+          responsavel?: string
+          trilha?: string
+          versao?: number
+        }
+        Relationships: []
       }
       feriados: {
         Row: {
@@ -1117,6 +1456,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      abrir_contratacao: {
+        Args: {
+          p_obra: string
+          p_pacote: string
+          p_servico: string
+          p_tipo: Database["public"]["Enums"]["tipo_contratacao"]
+          p_valor: number
+        }
+        Returns: string
+      }
+      assinar_contrato: {
+        Args: { p_contratacao: string; p_ordem: number }
+        Returns: undefined
+      }
       buscar_pessoas: {
         Args: { p_termo: string }
         Returns: {
@@ -1144,6 +1497,10 @@ export type Database = {
         }
         Returns: string
       }
+      cancelar_contratacao: {
+        Args: { p_contratacao: string; p_motivo: string }
+        Returns: undefined
+      }
       concluir_envio: {
         Args: {
           p_assunto: string
@@ -1152,6 +1509,10 @@ export type Database = {
           p_texto: string
         }
         Returns: string
+      }
+      concluir_etapa: {
+        Args: { p_contratacao: string; p_etapa: number }
+        Returns: undefined
       }
       cpf_mascarado: { Args: { p_pessoa: string }; Returns: string }
       decidir_documento: {
@@ -1177,7 +1538,22 @@ export type Database = {
         Returns: string
       }
       enviar_documentos_pessoa: { Args: { p_vinculo: string }; Returns: string }
+      escolher_fornecedor: { Args: { p_cotacao: string }; Returns: undefined }
+      marcar_item: {
+        Args: {
+          p_contratacao: string
+          p_etapa: number
+          p_item: number
+          p_marcado: boolean
+        }
+        Returns: undefined
+      }
       processar_vencimentos: { Args: { p_hoje: string }; Returns: Json }
+      pular_negociacao: { Args: { p_contratacao: string }; Returns: undefined }
+      reabrir_etapa: {
+        Args: { p_contratacao: string; p_etapa: number; p_motivo: string }
+        Returns: undefined
+      }
       registrar_acesso_arquivo: { Args: { p_arquivo: string }; Returns: string }
       registrar_arquivo_empresa: {
         Args: {
@@ -1208,6 +1584,16 @@ export type Database = {
         }
         Returns: string
       }
+      registrar_cotacao: {
+        Args: {
+          p_cnpj: string
+          p_contratacao: string
+          p_fornecedor: string
+          p_prazo: number
+          p_valor: number
+        }
+        Returns: string
+      }
       registrar_foto_pessoa: {
         Args: { p_storage_path: string; p_vinculo: string }
         Returns: undefined
@@ -1224,6 +1610,10 @@ export type Database = {
       }
       registrar_primeiro_acesso: {
         Args: { p_empresa: string }
+        Returns: undefined
+      }
+      salvar_campo_etapa: {
+        Args: { p_contratacao: string; p_etapa: number; p_valor: string }
         Returns: undefined
       }
       salvar_texto_empresa: {
@@ -1269,6 +1659,7 @@ export type Database = {
         | "integracao_agendada"
         | "liberado"
         | "bloqueado"
+      situacao_contratacao: "em_andamento" | "liberada" | "cancelada"
       situacao_documento:
         | "anexado"
         | "enviado"
@@ -1283,8 +1674,10 @@ export type Database = {
         | "aprovada"
         | "bloqueada"
       situacao_envio: "aberto" | "concluido"
+      situacao_etapa: "pendente" | "em_andamento" | "concluida" | "pulada"
       situacao_notificacao: "pendente" | "enviada" | "erro"
       situacao_visita: "solicitada" | "aprovada" | "recusada"
+      tipo_contratacao: "unico" | "contrato" | "aditivo"
       tipo_usuario: "interno" | "externo"
       tipo_vinculo: "funcionario" | "socio_diario" | "socio_esporadico"
     }
@@ -1447,6 +1840,7 @@ export const Constants = {
         "liberado",
         "bloqueado",
       ],
+      situacao_contratacao: ["em_andamento", "liberada", "cancelada"],
       situacao_documento: [
         "anexado",
         "enviado",
@@ -1463,8 +1857,10 @@ export const Constants = {
         "bloqueada",
       ],
       situacao_envio: ["aberto", "concluido"],
+      situacao_etapa: ["pendente", "em_andamento", "concluida", "pulada"],
       situacao_notificacao: ["pendente", "enviada", "erro"],
       situacao_visita: ["solicitada", "aprovada", "recusada"],
+      tipo_contratacao: ["unico", "contrato", "aditivo"],
       tipo_usuario: ["interno", "externo"],
       tipo_vinculo: ["funcionario", "socio_diario", "socio_esporadico"],
     },
