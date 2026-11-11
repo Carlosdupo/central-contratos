@@ -8,6 +8,7 @@ import {
   validadeDoDocumento,
   type ItemMatriz,
 } from "@/modules/terceiros/dominio/documentos";
+import { dataDaIntegracao } from "@/modules/terceiros/dominio/integracao";
 
 const matriz: ItemMatriz[] = [
   { tipo_documento: "cnd_federal", aplica_a: "empresa", condicao: "sempre" },
@@ -73,5 +74,22 @@ describe("envio para análise", () => {
     expect(podeEnviarParaAnalise(["aprovado", "enviado"])).toBe(false);
     expect(podeEnviarParaAnalise(["anexado", "reprovado"])).toBe(false);
     expect(podeEnviarParaAnalise([])).toBe(false);
+  });
+});
+
+
+describe("data da integração (corte às 18h)", () => {
+  const feriados = new Set(["2026-11-20"]);
+  it("aprovado às 17h59 de quinta entra na sexta; às 18h00, na segunda", () => {
+    expect(dataDaIntegracao({ data: "2026-11-12", hora: 17 }, 18, new Set())).toBe("2026-11-13");
+    expect(dataDaIntegracao({ data: "2026-11-12", hora: 18 }, 18, new Set())).toBe("2026-11-16");
+  });
+  it("aprovado na sexta antes das 18h entra na segunda", () => {
+    expect(dataDaIntegracao({ data: "2026-11-13", hora: 10 }, 18, new Set())).toBe("2026-11-16");
+  });
+  it("véspera de feriado pula o feriado", () => {
+    // quinta 19/11 antes das 18h: sexta 20 é feriado, vai para segunda 23
+    expect(dataDaIntegracao({ data: "2026-11-19", hora: 9 }, 18, feriados)).toBe("2026-11-23");
+    expect(dataDaIntegracao({ data: "2026-11-19", hora: 19 }, 18, feriados)).toBe("2026-11-24");
   });
 });

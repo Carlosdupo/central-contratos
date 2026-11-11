@@ -436,6 +436,68 @@ export type Database = {
           },
         ]
       }
+      envio_itens: {
+        Row: {
+          arquivo_id: string | null
+          decidido_em: string | null
+          decidido_por: string | null
+          decisao: Database["public"]["Enums"]["decisao_documento"] | null
+          documento_id: string
+          envio_id: string
+          id: string
+          motivo: string | null
+        }
+        Insert: {
+          arquivo_id?: string | null
+          decidido_em?: string | null
+          decidido_por?: string | null
+          decisao?: Database["public"]["Enums"]["decisao_documento"] | null
+          documento_id: string
+          envio_id: string
+          id?: string
+          motivo?: string | null
+        }
+        Update: {
+          arquivo_id?: string | null
+          decidido_em?: string | null
+          decidido_por?: string | null
+          decisao?: Database["public"]["Enums"]["decisao_documento"] | null
+          documento_id?: string
+          envio_id?: string
+          id?: string
+          motivo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "envio_itens_arquivo_id_fkey"
+            columns: ["arquivo_id"]
+            isOneToOne: false
+            referencedRelation: "documento_arquivos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "envio_itens_decidido_por_fkey"
+            columns: ["decidido_por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "envio_itens_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "documentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "envio_itens_envio_id_fkey"
+            columns: ["envio_id"]
+            isOneToOne: false
+            referencedRelation: "envios_analise"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       envios_analise: {
         Row: {
           concluido_em: string | null
@@ -568,6 +630,56 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tipos_documento"
             referencedColumns: ["codigo"]
+          },
+        ]
+      }
+      notificacoes: {
+        Row: {
+          assunto: string
+          canal: string
+          criado_em: string
+          destinatario: string
+          empresa_id: string | null
+          enviado_em: string | null
+          erro: string | null
+          id: string
+          situacao: Database["public"]["Enums"]["situacao_notificacao"]
+          tentativas: number
+          texto: string
+        }
+        Insert: {
+          assunto: string
+          canal?: string
+          criado_em?: string
+          destinatario: string
+          empresa_id?: string | null
+          enviado_em?: string | null
+          erro?: string | null
+          id?: string
+          situacao?: Database["public"]["Enums"]["situacao_notificacao"]
+          tentativas?: number
+          texto: string
+        }
+        Update: {
+          assunto?: string
+          canal?: string
+          criado_em?: string
+          destinatario?: string
+          empresa_id?: string | null
+          enviado_em?: string | null
+          erro?: string | null
+          id?: string
+          situacao?: Database["public"]["Enums"]["situacao_notificacao"]
+          tentativas?: number
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificacoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas_terceiras"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1003,7 +1115,34 @@ export type Database = {
         }
         Returns: string
       }
+      concluir_envio: {
+        Args: {
+          p_assunto: string
+          p_data_integracao: string
+          p_envio: string
+          p_texto: string
+        }
+        Returns: string
+      }
       cpf_mascarado: { Args: { p_pessoa: string }; Returns: string }
+      decidir_documento: {
+        Args: {
+          p_decisao: Database["public"]["Enums"]["decisao_documento"]
+          p_item: string
+          p_motivo?: string
+        }
+        Returns: undefined
+      }
+      decidir_visita: {
+        Args: {
+          p_aprovar: boolean
+          p_assunto: string
+          p_motivo: string
+          p_texto: string
+          p_visita: string
+        }
+        Returns: undefined
+      }
       enviar_documentos_empresa: {
         Args: { p_empresa: string }
         Returns: string
@@ -1066,6 +1205,7 @@ export type Database = {
       abrangencia_feriado: "nacional" | "estadual" | "municipal"
       aplica_a_documento: "empresa" | "funcionario" | "socio_diario"
       condicao_documento: "sempre" | "eletricidade" | "mais_de_5_na_obra"
+      decisao_documento: "aprovado" | "reprovado"
       escopo_documento: "empresa" | "pessoa"
       papel:
         | "admin"
@@ -1103,6 +1243,7 @@ export type Database = {
         | "aprovada"
         | "bloqueada"
       situacao_envio: "aberto" | "concluido"
+      situacao_notificacao: "pendente" | "enviada" | "erro"
       situacao_visita: "solicitada" | "aprovada" | "recusada"
       tipo_usuario: "interno" | "externo"
       tipo_vinculo: "funcionario" | "socio_diario" | "socio_esporadico"
@@ -1239,6 +1380,7 @@ export const Constants = {
       abrangencia_feriado: ["nacional", "estadual", "municipal"],
       aplica_a_documento: ["empresa", "funcionario", "socio_diario"],
       condicao_documento: ["sempre", "eletricidade", "mais_de_5_na_obra"],
+      decisao_documento: ["aprovado", "reprovado"],
       escopo_documento: ["empresa", "pessoa"],
       papel: [
         "admin",
@@ -1281,6 +1423,7 @@ export const Constants = {
         "bloqueada",
       ],
       situacao_envio: ["aberto", "concluido"],
+      situacao_notificacao: ["pendente", "enviada", "erro"],
       situacao_visita: ["solicitada", "aprovada", "recusada"],
       tipo_usuario: ["interno", "externo"],
       tipo_vinculo: ["funcionario", "socio_diario", "socio_esporadico"],

@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-const ROTAS_PUBLICAS = ["/login", "/recuperar-senha", "/convite", "/auth"];
+// /api/cron se autentica pelo CRON_SECRET, não por sessão.
+const ROTAS_PUBLICAS = ["/login", "/recuperar-senha", "/convite", "/auth", "/api/cron"];
 
 // Renova a sessão do Supabase a cada requisição e manda para o login quem não está autenticado.
 // A autorização de verdade (papéis) acontece no servidor de cada tela/ação e na RLS.

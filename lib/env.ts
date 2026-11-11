@@ -12,6 +12,9 @@ export const esquemaServidor = z.object({
   SUPABASE_SECRET_KEY: z.string().min(20),
   // Vazio no .env conta como não informado.
   CRON_SECRET: z.preprocess((v) => (v === "" ? undefined : v), z.string().min(32).optional()),
+  // E-mail (Resend). Sem estes dois, os avisos ficam na fila e aparecem só nas telas.
+  RESEND_API_KEY: z.preprocess((v) => (v === "" ? undefined : v), z.string().startsWith("re_").optional()),
+  EMAIL_REMETENTE: z.preprocess((v) => (v === "" ? undefined : v), z.string().min(5).optional()),
 });
 
 // O Next só injeta NEXT_PUBLIC_* quando o nome aparece literalmente no código.

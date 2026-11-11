@@ -132,3 +132,28 @@ export function EnviarArquivo({ dono, tipoDoc, regra = "sem_validade", competenc
     </form>
   );
 }
+
+/** Botão genérico que chama uma ação do servidor que devolve um link temporário. */
+export function BotaoAbrir({ acao, texto = "Abrir" }: { acao: () => Promise<{ url?: string; erro?: string }>; texto?: string }) {
+  const [erro, setErro] = useState("");
+  const [abrindo, setAbrindo] = useState(false);
+  return (
+    <span className="inline-flex items-center gap-2">
+      <button
+        type="button"
+        className="text-[13px] text-primary disabled:opacity-50"
+        disabled={abrindo}
+        onClick={async () => {
+          setAbrindo(true);
+          const r = await acao();
+          setAbrindo(false);
+          if (r.url) window.open(r.url, "_blank", "noopener");
+          else setErro(r.erro ?? "Não foi possível abrir.");
+        }}
+      >
+        {abrindo ? "Abrindo…" : texto}
+      </button>
+      {erro && <span className="text-xs text-bad">{erro}</span>}
+    </span>
+  );
+}

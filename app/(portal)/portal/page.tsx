@@ -8,6 +8,7 @@ import Link from "next/link";
 import { enviarDocumentosEmpresa } from "@/modules/terceiros/acoes";
 import { podeEnviarParaAnalise } from "@/modules/terceiros/dominio/documentos";
 import { ListaDocumentosEmpresa } from "@/components/app/lista-documentos-empresa";
+import { agoraNoFuso, formatarData } from "@/lib/datas";
 import { Formulario } from "@/components/app/formulario";
 
 export const metadata: Metadata = { title: "Portal da empresa" };
@@ -34,6 +35,7 @@ export default async function PaginaPortal() {
   const prazoRh = prazo?.valor as { dias: number; uteis: boolean } | undefined;
 
   const equipe = await equipeDaEmpresa(empresaId);
+  const { data: avisos } = await supabase.from("notificacoes").select("id, assunto, texto, criado_em").eq("empresa_id", empresaId).order("criado_em", { ascending: false }).limit(10);
   const fotos = await linksDasFotos(equipe.map((m) => m.fotoPath));
   const [classe, rotulo, explicacao] = SITUACAO[empresa?.situacao ?? "cadastro_incompleto"];
   const faltam = itens.filter((i) => ["falta", "reprovado", "vencido"].includes(i.estado)).length;
@@ -78,6 +80,27 @@ export default async function PaginaPortal() {
           <Link href="/portal/equipe/nova" className="botao botao-primario botao-pequeno">+ Adicionar pessoa</Link>
         </div>
         <ListaEquipe equipe={equipe} fotos={fotos} linkBase="/portal/equipe" />
+      </section>
+      <section className="painel">
+        <div>
+          <h2 className="subtitulo">Avisos recebidos</h2>
+          <p className="mt-1 text-[13px] text-muted-foreground">Resultados das análises do RH. Também são enviados para o e-mail da empresa.</p>
+        </div>
+        {(avisos ?? []).length === 0 ? (
+          <p className="text-[14px] text-muted-foreground">Nenhum aviso ainda.</p>
+        ) : (
+          <div className="lista-agrupada">
+            {(avisos ?? []).map((a) => (
+              <details key={a.id} className="px-3.5 py-3">
+                <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2">
+                  <span className="font-medium">{a.assunto}</span>
+                  <span className="font-mono text-xs text-faint">{formatarData(agoraNoFuso(new Date(a.criado_em)).data)}</span>
+                </summary>
+                <p className="mt-2 text-[13.5px] whitespace-pre-line text-muted-foreground">{a.texto.split("\n\nAcesse o portal")[0]}</p>
+              </details>
+            ))}
+          </div>
+        )}
       </section>
     </>
   );

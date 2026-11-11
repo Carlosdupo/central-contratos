@@ -2,7 +2,7 @@ import { exigirInterno } from "@/modules/acesso/sessao";
 import { sair } from "@/modules/acesso/acoes";
 import { ROTULO_PAPEL } from "@/modules/acesso/papeis";
 import { BarraLateral, type GrupoMenu } from "@/components/app/barra-lateral";
-import { IconeAdmin, IconeBusca, IconeEmpresas, IconePainel } from "@/components/app/icones";
+import { IconeAdmin, IconeAnalise, IconeBusca, IconeEmpresas, IconePainel } from "@/components/app/icones";
 
 // Área interna. Os módulos entram no menu conforme cada fase fica pronta (F1 em diante).
 export default async function LayoutInterno({ children }: LayoutProps<"/">) {
@@ -18,6 +18,7 @@ export default async function LayoutInterno({ children }: LayoutProps<"/">) {
       ],
     },
   ];
+  if (usuario.papeis.includes("rh")) grupos[1].itens.push({ href: "/terceiros/analise", rotulo: "Análise do RH", icone: <IconeAnalise /> });
   if (usuario.papeis.includes("admin")) {
     grupos.push({ titulo: "Sistema", itens: [{ href: "/admin", rotulo: "Administração", icone: <IconeAdmin /> }] });
   }
