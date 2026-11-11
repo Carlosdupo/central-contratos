@@ -59,9 +59,20 @@ export async function exigirUsuario(): Promise<UsuarioAtual> {
 
 export async function exigirInterno(): Promise<UsuarioAtual> {
   const usuario = await exigirUsuario();
-  // O portal da empresa terceirizada chega na fase F1.
-  if (usuario.tipo !== "interno") redirect("/sem-permissao");
+  if (usuario.tipo !== "interno") redirect("/portal");
   return usuario;
+}
+
+export type AcessoExterno = { usuario: UsuarioAtual; empresaId: string };
+
+/** Usuário da empresa terceirizada, com a empresa a que está ligado. */
+export async function exigirExterno(): Promise<AcessoExterno> {
+  const usuario = await exigirUsuario();
+  if (usuario.tipo !== "externo") redirect("/painel");
+  const supabase = await criarClienteServidor();
+  const { data } = await supabase.from("empresa_usuarios").select("empresa_id").eq("usuario_id", usuario.id).limit(1).maybeSingle();
+  if (!data) redirect("/sem-permissao");
+  return { usuario, empresaId: data.empresa_id };
 }
 
 export async function exigirPapel(...papeis: Papel[]): Promise<UsuarioAtual> {

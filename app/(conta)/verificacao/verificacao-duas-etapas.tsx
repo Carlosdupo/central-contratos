@@ -56,7 +56,7 @@ export function VerificacaoDuasEtapas() {
     const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: estado.fatorId, code: codigo });
     setEnviando(false);
     if (error) return setErro("Código incorreto ou expirado. Confira o horário do celular e tente de novo.");
-    router.replace("/painel");
+    router.replace("/");
     router.refresh();
   }
 

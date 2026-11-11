@@ -22,6 +22,13 @@ export const IconeAdmin = () => (
   </Icone>
 );
 
+export const IconeEmpresas = () => (
+  <Icone>
+    <rect x="3.5" y="7.5" width="17" height="12" rx="2" />
+    <path d="M9 7.5V5.5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3.5 12.5h17" />
+  </Icone>
+);
+
 export const IconeApp = () => (
   <span className="grid size-9 shrink-0 place-items-center rounded-[9px] bg-gradient-to-br from-[#3d9bff] to-[#0062d6] text-white shadow-[inset_0_0_0_.5px_rgba(0,0,0,.15),0_2px_6px_rgba(0,98,214,.3)]">
     <Icone tamanho={20}>

@@ -10,7 +10,7 @@ import type { EstadoFormulario } from "@/lib/formulario";
 // Só aceita caminhos internos, para o "proximo" não virar redirecionamento para outro site.
 function destinoSeguro(valor: FormDataEntryValue | null): string {
   const caminho = typeof valor === "string" ? valor : "";
-  return caminho.startsWith("/") && !caminho.startsWith("//") && !caminho.startsWith("/\\") ? caminho : "/painel";
+  return caminho.startsWith("/") && !caminho.startsWith("//") && !caminho.startsWith("/\\") ? caminho : "/";
 }
 
 const esquemaEntrar = z.object({
@@ -74,5 +74,5 @@ export async function definirSenha(_: EstadoFormulario, dados: FormData): Promis
   const { error } = await supabase.auth.updateUser({ password: lido.data.senha });
   if (error) return { erro: "Não foi possível salvar a senha. Tente outra." };
 
-  redirect("/painel");
+  redirect("/");
 }

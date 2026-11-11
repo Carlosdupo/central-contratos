@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Verificação em duas etapas" };
 export default async function PaginaVerificacao() {
   const usuario = await obterUsuarioAtual();
   if (!usuario) redirect("/login");
-  if (usuario.verificado) redirect("/painel");
+  if (usuario.verificado) redirect("/");
 
   return (
     <>

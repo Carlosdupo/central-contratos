@@ -29,7 +29,7 @@ export function ProcessarLinkAcesso() {
       const { error } = await criarClienteNavegador().auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
       if (error) return setMensagem(expirado);
       const tipo = p.get("type");
-      router.replace(tipo === "invite" || tipo === "recovery" ? "/definir-senha" : "/painel");
+      router.replace(tipo === "invite" || tipo === "recovery" ? "/definir-senha" : "/");
       router.refresh();
     })();
   }, [router]);
