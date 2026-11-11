@@ -65,3 +65,10 @@ export const IconeApp = () => (
     </Icone>
   </span>
 );
+
+export const IconePanorama = () => (
+  <Icone>
+    <rect x="3" y="4" width="18" height="16" rx="2.5" />
+    <path d="M3 9.5h18M9 9.5V20M15 9.5V20" />
+  </Icone>
+);

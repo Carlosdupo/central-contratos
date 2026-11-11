@@ -114,3 +114,92 @@ export async function detalheDaContratacao(id: string) {
     }),
   };
 }
+
+// Panorama da obra (no formato da planilha "Controle de status de contratos"): uma linha por
+// contratação e uma coluna por área, preenchida pelas etapas.
+export const COLUNAS_PANORAMA = [
+  { chave: "obra", titulo: "Obra", etapas: [1, 2, 3, 4] },
+  { chave: "suprimentos", titulo: "Suprimentos", etapas: [5, 6] },
+  { chave: "contrato", titulo: "Contrato e minuta", etapas: [7, 8] },
+  { chave: "assinaturas", titulo: "Assinaturas", etapas: [9] },
+  { chave: "documentacao", titulo: "Documentação RH", etapas: [10] },
+  { chave: "integracao", titulo: "Integração", etapas: [11] },
+  { chave: "liberacao", titulo: "Liberação", etapas: [12] },
+] as const;
+
+export type CelulaPanorama =
+  | { tipo: "ok"; data: string }
+  | { tipo: "na" }
+  | { tipo: "andamento"; etapa: string; prazo: SituacaoPrazo; uteis: boolean }
+  | { tipo: "pendente" };
+
+export type LinhaPanorama = {
+  id: string;
+  codigo: string;
+  abertaEm: string;
+  servico: string;
+  pacote: string | null;
+  obraId: string;
+  obra: string;
+  situacao: "em_andamento" | "liberada" | "cancelada";
+  comQuem: string[];
+  atrasada: boolean;
+  celulas: CelulaPanorama[];
+  siengeSolicitacao: string | null;
+  siengeContrato: string | null;
+  fornecedor: string | null;
+  valorFinal: number | null;
+};
+
+export async function panoramaDasContratacoes(obraId?: string): Promise<LinhaPanorama[]> {
+  const supabase = await criarClienteServidor();
+  let consulta = supabase
+    .from("contratacoes")
+    .select("id, codigo, created_at, servico, pacote, obra_id, situacao, prazos, sienge_solicitacao, sienge_contrato, fornecedor_nome, valor_negociado, obras(nome), contratacao_etapas(etapa, situacao, iniciada_em, concluida_em)")
+    .order("created_at", { ascending: false });
+  if (obraId) consulta = consulta.eq("obra_id", obraId);
+  const [{ data }, fluxo, feriados] = await Promise.all([consulta, carregarFluxo(), carregarFeriados()]);
+  const hoje = agoraNoFuso().data;
+  const porNumero = new Map(fluxo.map((f) => [f.etapa, f]));
+
+  return (data ?? []).map((c) => {
+    const etapas = new Map(c.contratacao_etapas.map((e) => [e.etapa, e]));
+    let atrasada = false;
+    const comQuem = new Set<string>();
+    const celulas: CelulaPanorama[] = COLUNAS_PANORAMA.map((col) => {
+      const lista = col.etapas.map((n) => ({ n, e: etapas.get(n) }));
+      const andamento = lista.find((x) => x.e?.situacao === "em_andamento");
+      if (andamento && c.situacao === "em_andamento") {
+        const prazo = prazoDaEtapa(c.prazos, andamento.n);
+        const desde = dataNoFuso(andamento.e!.iniciada_em ?? new Date().toISOString());
+        const situacao = situacaoPrazo({ inicio: desde, hoje, prazo, feriados });
+        if (situacao.tipo === "atrasada") atrasada = true;
+        comQuem.add(porNumero.get(andamento.n)?.responsavel ?? "");
+        return { tipo: "andamento", etapa: porNumero.get(andamento.n)?.nome ?? "", prazo: situacao, uteis: !!prazo?.uteis };
+      }
+      if (lista.every((x) => x.e?.situacao === "pulada")) return { tipo: "na" };
+      if (lista.every((x) => x.e?.situacao === "concluida" || x.e?.situacao === "pulada")) {
+        const ultima = lista.map((x) => x.e?.concluida_em).filter(Boolean).sort().at(-1);
+        return { tipo: "ok", data: ultima ? dataNoFuso(ultima) : "" };
+      }
+      return { tipo: "pendente" };
+    });
+    return {
+      id: c.id,
+      codigo: c.codigo,
+      abertaEm: dataNoFuso(c.created_at),
+      servico: c.servico,
+      pacote: c.pacote,
+      obraId: c.obra_id,
+      obra: c.obras?.nome ?? "—",
+      situacao: c.situacao,
+      comQuem: [...comQuem].filter(Boolean),
+      atrasada,
+      celulas,
+      siengeSolicitacao: c.sienge_solicitacao,
+      siengeContrato: c.sienge_contrato,
+      fornecedor: c.fornecedor_nome,
+      valorFinal: c.valor_negociado == null ? null : Number(c.valor_negociado),
+    };
+  });
+}

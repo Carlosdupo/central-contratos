@@ -11,7 +11,10 @@ export type GrupoMenu = { titulo?: string; itens: ItemMenu[] };
 // Barra lateral translúcida do protótipo. Os grupos chegam já filtrados pelos papéis (no servidor).
 export function BarraLateral({ grupos, rodape }: { grupos: GrupoMenu[]; rodape: ReactNode }) {
   const caminho = usePathname();
-  const ativo = (href: string) => caminho === href || caminho.startsWith(`${href}/`);
+  // O item mais específico vence (ex.: "Panorama" em /contratacoes/panorama não acende "Contratações").
+  const todos = grupos.flatMap((g) => g.itens.map((i) => i.href));
+  const ativo = (href: string) =>
+    (caminho === href || caminho.startsWith(`${href}/`)) && !todos.some((h) => h !== href && h.startsWith(`${href}/`) && (caminho === h || caminho.startsWith(`${h}/`)));
 
   return (
     <aside className="sticky top-0 flex h-screen flex-col gap-5 border-r-[.5px] border-sep bg-[var(--lateral)] px-3.5 py-5 backdrop-blur-xl backdrop-saturate-[1.8] max-md:static max-md:h-auto max-md:flex-row max-md:flex-wrap max-md:items-center max-md:border-r-0 max-md:border-b-[.5px]">
