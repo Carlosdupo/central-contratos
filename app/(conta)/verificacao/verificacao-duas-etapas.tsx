@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { criarClienteNavegador } from "@/lib/supabase/browser";
 
@@ -17,7 +17,13 @@ export function VerificacaoDuasEtapas() {
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
 
+  // Em desenvolvimento o React roda o efeito duas vezes; sem esta trava, dois QR codes
+  // seriam pedidos ao mesmo tempo e o segundo falharia por nome repetido.
+  const iniciou = useRef(false);
+
   useEffect(() => {
+    if (iniciou.current) return;
+    iniciou.current = true;
     const supabase = criarClienteNavegador();
     (async () => {
       const { data, error } = await supabase.auth.mfa.listFactors();
@@ -28,10 +34,14 @@ export function VerificacaoDuasEtapas() {
 
       // Remove cadastros que ficaram pela metade antes de gerar um novo QR code.
       for (const f of data.all.filter((f) => f.factor_type === "totp" && f.status !== "verified")) {
-        await supabase.auth.mfa.unenroll({ factorId: f.id });
+        const { error: erroRemover } = await supabase.auth.mfa.unenroll({ factorId: f.id });
+        if (erroRemover) console.error("Falha ao remover cadastro incompleto de verificação", erroRemover.message);
       }
       const novo = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: "Central de Contratos" });
-      if (novo.error) return setEstado({ etapa: "falha", mensagem: "Não foi possível gerar o QR code. Recarregue a página." });
+      if (novo.error) {
+        console.error("Falha ao gerar QR code", novo.error.message);
+        return setEstado({ etapa: "falha", mensagem: "Não foi possível gerar o QR code. Recarregue a página." });
+      }
       setEstado({ etapa: "cadastrar", fatorId: novo.data.id, qrCode: novo.data.totp.qr_code, segredo: novo.data.totp.secret });
     })();
   }, []);
