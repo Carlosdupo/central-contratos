@@ -1,7 +1,7 @@
 -- F6: fluxo de contratação (12 etapas, regra dos R$ 4.000, pular, assinaturas em ordem, visibilidade A8).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(23);
+select plan(27);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000c01', 'coord@teste.local', '{}'),
@@ -30,14 +30,15 @@ grant all on ids to authenticated;
 set local role authenticated;
 -- Abertura
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000c02", "role": "authenticated", "aal": "aal1"}', true);
-select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-00000000000b', 'Alvenaria', null, 100000, 'contrato') $$, '42501', null, 'Coordenador de outra obra não abre contratação aqui');
+select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-00000000000b', 'Alvenaria', null, 100000, 'contrato', 'suprimentos') $$, '42501', null, 'Coordenador de outra obra não abre contratação aqui');
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000c01", "role": "authenticated", "aal": "aal1"}', true);
-insert into ids select 'grande', public.abrir_contratacao('00000000-0000-0000-0000-00000000000b', 'Alvenaria de vedação', 'Alvenaria', 100000, 'contrato');
-insert into ids select 'pequena', public.abrir_contratacao('00000000-0000-0000-0000-00000000000b', 'Soleiras', null, 3200, 'unico');
+insert into ids select 'grande', public.abrir_contratacao('00000000-0000-0000-0000-00000000000b', 'Alvenaria de vedação', null, 100000, 'contrato', 'suprimentos');
+insert into ids select 'pequena', public.abrir_contratacao('00000000-0000-0000-0000-00000000000b', 'Soleiras', null, null, 'unico', 'obra');
 select ok((select codigo from public.contratacoes where id = (select id from ids where nome = 'grande')) ~ '^CT-\d{4}-\d{3,}$', 'Código no formato CT-AAAA-NNN');
 select is((select situacao::text from public.contratacao_etapas where contratacao_id = (select id from ids where nome = 'grande') and etapa = 1), 'em_andamento', 'Etapa 1 começa ao abrir');
-select throws_ok(format($$ select public.concluir_etapa(%L, 1::smallint) $$, (select id from ids where nome = 'grande')), 'P0001', null, 'Não conclui com item desmarcado');
-select lives_ok(format($$ select public.marcar_item(%L, 1::smallint, 1::smallint, true) $$, (select id from ids where nome = 'grande')), 'Coordenador marca o item');
+select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-00000000000b', 'Fundação', null, 50000, 'contrato', 'obra') $$,
+  'P0001', 'A partir de R$ 4.000 do orçamento, a negociação é de Suprimentos.', 'Orçamento acima do limite: a obra não negocia');
+select is((select valor_orcado from public.contratacoes where id = (select id from ids where nome = 'pequena')), null, 'Valor orçado pode ficar sem informar');
 select lives_ok(format($$ select public.concluir_etapa(%L, 1::smallint) $$, (select id from ids where nome = 'grande')), 'Coordenador conclui a etapa 1');
 
 -- Cotações
@@ -45,17 +46,21 @@ select lives_ok(format($$ select public.registrar_cotacao(%L, 'Fornecedor A', '1
 select lives_ok(format($$ select public.registrar_cotacao(%L, 'Fornecedor B', '11444777000161', 104000, 40) $$, (select id from ids where nome = 'grande')), 'Registra cotação 2');
 select throws_ok(format($$ select public.concluir_etapa(%L, 2::smallint) $$, (select id from ids where nome = 'grande')), 'P0001', null, 'Etapa 2 exige 3 cotações');
 select lives_ok(format($$ select public.registrar_cotacao(%L, 'Fornecedor C', '11222333000262', 109000, 50) $$, (select id from ids where nome = 'grande')), 'Registra cotação 3');
-select lives_ok(format($$ select public.marcar_item(%L, 2::smallint, i::smallint, true) from generate_series(1, 2) i $$, (select id from ids where nome = 'grande')), 'Marca itens da etapa 2');
 select lives_ok(format($$ select public.concluir_etapa(%L, 2::smallint) $$, (select id from ids where nome = 'grande')), 'Conclui a etapa 2');
 
--- Regra dos R$ 4.000: acima do limite, a obra não escolhe; pode pular a negociação
-select throws_ok(format($$ select public.escolher_fornecedor(id) from public.cotacoes where contratacao_id = %L and fornecedor = 'Fornecedor A' $$, (select id from ids where nome = 'grande')),
-  'P0001', 'A partir de R$ 4.000, quem escolhe o fornecedor é Suprimentos, na etapa 5.', 'Acima de R$ 4.000 a obra não escolhe o fornecedor');
-select lives_ok(format($$ select public.pular_negociacao(%L) $$, (select id from ids where nome = 'grande')), 'Obra pula a negociação');
-select is((select situacao::text from public.contratacao_etapas where contratacao_id = (select id from ids where nome = 'grande') and etapa = 4), 'em_andamento', 'Depois de pular, começa a etapa 4');
+-- Negociação por Suprimentos: a etapa 3 é pulada e a obra não escolhe o fornecedor
+select is((select situacao::text from public.contratacao_etapas where contratacao_id = (select id from ids where nome = 'grande') and etapa = 3), 'pulada', 'Negociação por Suprimentos: etapa 3 pulada');
+select is((select situacao::text from public.contratacao_etapas where contratacao_id = (select id from ids where nome = 'grande') and etapa = 4), 'em_andamento', 'Depois da cotação, começa a etapa 4');
+select throws_ok(format($$ select public.definir_fornecedor(id, 95000) from public.cotacoes where contratacao_id = %L and fornecedor = 'Fornecedor A' $$, (select id from ids where nome = 'grande')),
+  'P0001', 'A escolha do fornecedor é feita na negociação (etapa 3 ou 5).', 'Fora da negociação ninguém escolhe o fornecedor');
 
--- Contratação pequena: a obra escolhe
-select lives_ok(format($$ select public.marcar_item(%L, 1::smallint, 1::smallint, true) $$, (select id from ids where nome = 'pequena')), 'Marca item da pequena');
+-- Negociação pela obra: escolhe o fornecedor com o valor final na etapa 3
+select lives_ok(format($$ select public.concluir_etapa(%L, 1::smallint) $$, (select id from ids where nome = 'pequena')), 'Conclui a etapa 1 da pequena');
+select lives_ok(format($$ select public.registrar_cotacao(%L, x.f, x.c, 3000, 10) from (values ('Forn 1', '11222333000181'), ('Forn 2', '11444777000161'), ('Forn 3', '11222333000262')) x(f, c) $$, (select id from ids where nome = 'pequena')), 'Pequena: 3 cotações');
+select lives_ok(format($$ select public.concluir_etapa(%L, 2::smallint) $$, (select id from ids where nome = 'pequena')), 'Pequena: conclui a etapa 2');
+select throws_ok(format($$ select public.concluir_etapa(%L, 3::smallint) $$, (select id from ids where nome = 'pequena')), 'P0001', null, 'Etapa 3 exige fornecedor e valor final');
+select lives_ok(format($$ select public.definir_fornecedor(id, 2800) from public.cotacoes where contratacao_id = %L and fornecedor = 'Forn 2' $$, (select id from ids where nome = 'pequena')), 'Obra escolhe o fornecedor com o valor final');
+select is((select valor_negociado from public.contratacoes where id = (select id from ids where nome = 'pequena')), 2800.00, 'Valor final gravado');
 
 -- Visibilidade (A8)
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000c02", "role": "authenticated", "aal": "aal1"}', true);

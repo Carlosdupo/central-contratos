@@ -12,6 +12,7 @@ export async function lerParametros() {
     prazoAnaliseRh: (p.get("prazo_analise_rh") ?? { dias: 2, uteis: true }) as Prazo,
     horarioCorte: Number(p.get("horario_corte_integracao") ?? 18),
     antecedenciaVisita: Number(p.get("antecedencia_visita_dias") ?? 1),
+    limiteEscolhaObra: Number(p.get("limite_escolha_obra_reais") ?? 4000),
   };
 }
 

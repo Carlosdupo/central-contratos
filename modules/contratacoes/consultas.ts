@@ -77,10 +77,9 @@ export async function etapasEmAberto(): Promise<EtapaAberta[]> {
 
 export async function detalheDaContratacao(id: string) {
   const supabase = await criarClienteServidor();
-  const [{ data: c }, { data: etapas }, { data: checklist }, { data: cotacoes }, { data: assinaturas }, { data: assinantes }, fluxo, feriados] = await Promise.all([
+  const [{ data: c }, { data: etapas }, { data: cotacoes }, { data: assinaturas }, { data: assinantes }, fluxo, feriados] = await Promise.all([
     supabase.from("contratacoes").select("*, obras(nome), empresas_terceiras(id, razao_social, situacao)").eq("id", id).maybeSingle(),
     supabase.from("contratacao_etapas").select("etapa, situacao, iniciada_em, concluida_em, usuarios:concluida_por(nome)").eq("contratacao_id", id),
-    supabase.from("etapa_checklist").select("etapa, item, marcado").eq("contratacao_id", id),
     supabase.from("cotacoes").select("id, fornecedor, cnpj, valor, prazo_dias, escolhida").eq("contratacao_id", id).order("valor"),
     supabase.from("assinaturas").select("ordem, assinado_em, usuarios:assinado_por(nome)").eq("contratacao_id", id),
     supabase.from("assinantes_fluxo").select("ordem, rotulo, papel").order("ordem"),
@@ -101,7 +100,6 @@ export async function detalheDaContratacao(id: string) {
       concluidaPor: (e?.usuarios as { nome: string } | null)?.nome ?? null,
       prazoConfig: prazo,
       prazo: e?.situacao === "em_andamento" && desde ? situacaoPrazo({ inicio: desde, hoje, prazo, feriados }) : null,
-      marcados: f.itens.map((_, i) => !!(checklist ?? []).find((k) => k.etapa === f.etapa && k.item === i + 1)?.marcado),
     };
   });
   return {

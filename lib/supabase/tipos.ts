@@ -294,78 +294,111 @@ export type Database = {
       contratacoes: {
         Row: {
           cancelamento_motivo: string | null
+          caucao: string | null
           codigo: string
           created_at: string
           criado_por: string
+          eap_item_id: string | null
           empresa_id: string | null
+          fat_direto: boolean | null
+          fat_direto_percentual: number | null
+          fat_direto_valor: number | null
           fluxo_versao: number
           fornecedor_cnpj: string | null
           fornecedor_email: string | null
           fornecedor_nome: string | null
           id: string
           limite_obra: number
+          negociacao: string
           negociacao_pulada: boolean
           obra_id: string
           pacote: string | null
+          permuta: boolean | null
+          permuta_formato: string | null
+          permuta_valor: number | null
           prazos: Json
           servico: string
           sienge_contrato: string | null
           sienge_solicitacao: string | null
+          sinal: boolean | null
+          sinal_valor: number | null
           situacao: Database["public"]["Enums"]["situacao_contratacao"]
           tipo: Database["public"]["Enums"]["tipo_contratacao"]
           updated_at: string
           valor_negociado: number | null
-          valor_orcado: number
+          valor_orcado: number | null
         }
         Insert: {
           cancelamento_motivo?: string | null
+          caucao?: string | null
           codigo: string
           created_at?: string
           criado_por?: string
+          eap_item_id?: string | null
           empresa_id?: string | null
+          fat_direto?: boolean | null
+          fat_direto_percentual?: number | null
+          fat_direto_valor?: number | null
           fluxo_versao?: number
           fornecedor_cnpj?: string | null
           fornecedor_email?: string | null
           fornecedor_nome?: string | null
           id?: string
           limite_obra: number
+          negociacao?: string
           negociacao_pulada?: boolean
           obra_id: string
           pacote?: string | null
+          permuta?: boolean | null
+          permuta_formato?: string | null
+          permuta_valor?: number | null
           prazos?: Json
           servico: string
           sienge_contrato?: string | null
           sienge_solicitacao?: string | null
+          sinal?: boolean | null
+          sinal_valor?: number | null
           situacao?: Database["public"]["Enums"]["situacao_contratacao"]
           tipo: Database["public"]["Enums"]["tipo_contratacao"]
           updated_at?: string
           valor_negociado?: number | null
-          valor_orcado: number
+          valor_orcado?: number | null
         }
         Update: {
           cancelamento_motivo?: string | null
+          caucao?: string | null
           codigo?: string
           created_at?: string
           criado_por?: string
+          eap_item_id?: string | null
           empresa_id?: string | null
+          fat_direto?: boolean | null
+          fat_direto_percentual?: number | null
+          fat_direto_valor?: number | null
           fluxo_versao?: number
           fornecedor_cnpj?: string | null
           fornecedor_email?: string | null
           fornecedor_nome?: string | null
           id?: string
           limite_obra?: number
+          negociacao?: string
           negociacao_pulada?: boolean
           obra_id?: string
           pacote?: string | null
+          permuta?: boolean | null
+          permuta_formato?: string | null
+          permuta_valor?: number | null
           prazos?: Json
           servico?: string
           sienge_contrato?: string | null
           sienge_solicitacao?: string | null
+          sinal?: boolean | null
+          sinal_valor?: number | null
           situacao?: Database["public"]["Enums"]["situacao_contratacao"]
           tipo?: Database["public"]["Enums"]["tipo_contratacao"]
           updated_at?: string
           valor_negociado?: number | null
-          valor_orcado?: number
+          valor_orcado?: number | null
         }
         Relationships: [
           {
@@ -373,6 +406,13 @@ export type Database = {
             columns: ["criado_por"]
             isOneToOne: false
             referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratacoes_eap_item_id_fkey"
+            columns: ["eap_item_id"]
+            isOneToOne: false
+            referencedRelation: "obra_eap"
             referencedColumns: ["id"]
           },
           {
@@ -1054,6 +1094,41 @@ export type Database = {
           },
         ]
       }
+      obra_eap: {
+        Row: {
+          descricao: string
+          id: string
+          nivel: number
+          obra_id: string
+          ordem: number
+          referencia: string
+        }
+        Insert: {
+          descricao: string
+          id?: string
+          nivel: number
+          obra_id: string
+          ordem: number
+          referencia: string
+        }
+        Update: {
+          descricao?: string
+          id?: string
+          nivel?: number
+          obra_id?: string
+          ordem?: number
+          referencia?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_eap_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obras: {
         Row: {
           ativa: boolean
@@ -1061,6 +1136,7 @@ export type Database = {
           codigo: string
           created_at: string
           created_by: string | null
+          eap_importada_em: string | null
           id: string
           nome: string
           uf: string
@@ -1072,6 +1148,7 @@ export type Database = {
           codigo: string
           created_at?: string
           created_by?: string | null
+          eap_importada_em?: string | null
           id?: string
           nome: string
           uf: string
@@ -1083,6 +1160,7 @@ export type Database = {
           codigo?: string
           created_at?: string
           created_by?: string | null
+          eap_importada_em?: string | null
           id?: string
           nome?: string
           uf?: string
@@ -1461,8 +1539,9 @@ export type Database = {
     Functions: {
       abrir_contratacao: {
         Args: {
+          p_eap_item: string
+          p_negociacao: string
           p_obra: string
-          p_pacote: string
           p_servico: string
           p_tipo: Database["public"]["Enums"]["tipo_contratacao"]
           p_valor: number
@@ -1536,12 +1615,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      definir_fornecedor: {
+        Args: { p_cotacao: string; p_valor: number }
+        Returns: undefined
+      }
       enviar_documentos_empresa: {
         Args: { p_empresa: string }
         Returns: string
       }
       enviar_documentos_pessoa: { Args: { p_vinculo: string }; Returns: string }
-      escolher_fornecedor: { Args: { p_cotacao: string }; Returns: undefined }
+      importar_eap: { Args: { p_itens: Json; p_obra: string }; Returns: number }
       marcar_item: {
         Args: {
           p_contratacao: string
@@ -1617,6 +1700,21 @@ export type Database = {
       }
       salvar_campo_etapa: {
         Args: { p_contratacao: string; p_etapa: number; p_valor: string }
+        Returns: undefined
+      }
+      salvar_condicoes_gerente: {
+        Args: {
+          p_caucao: string
+          p_contratacao: string
+          p_fat_direto: boolean
+          p_fat_direto_percentual: number
+          p_fat_direto_valor: number
+          p_permuta: boolean
+          p_permuta_formato: string
+          p_permuta_valor: number
+          p_sinal: boolean
+          p_sinal_valor: number
+        }
         Returns: undefined
       }
       salvar_email_fornecedor: {

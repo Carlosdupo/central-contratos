@@ -17,6 +17,8 @@ const cabecalhosSeguranca = [
 const nextConfig: NextConfig = {
   cacheComponents: false,
   poweredByHeader: false,
+  // Importação da EAP em PDF pelo administrador.
+  experimental: { serverActions: { bodySizeLimit: "6mb" } },
   turbopack: {
     rules: {
       "*.css": {

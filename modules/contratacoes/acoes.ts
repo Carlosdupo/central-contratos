@@ -26,39 +26,40 @@ const lerValor = (v: FormDataEntryValue | null) => {
 
 const esquemaAbertura = z.object({
   obra: z.uuid("Escolha a obra."),
+  eap: z.uuid().nullable(),
   servico: z.string().trim().min(3, "Descreva o serviço ou escopo.").max(200),
-  pacote: z.string().trim().max(120).optional(),
-  valor: z.number({ message: "Informe o valor orçado." }).positive("Informe o valor orçado.").max(1e11),
+  valor: z.number().positive("Informe o valor orçado ou marque \"Não informar\".").max(1e11).nullable(),
   tipo: z.enum(["unico", "contrato", "aditivo"], { message: "Escolha o tipo de contrato." }),
+  negociacao: z.enum(["obra", "suprimentos"], { message: "Escolha quem negocia." }),
 });
 
 export async function abrirContratacao(_: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
   await exigirPapel("coordenador_obra");
+  const semValor = dados.get("sem_valor") === "on";
+  const valor = semValor ? null : lerValor(dados.get("valor"));
+  if (!semValor && Number.isNaN(valor)) return { erro: "Informe o valor orçado ou marque \"Não informar\"." };
+  const eap = dados.get("eap");
   const lido = esquemaAbertura.safeParse({
     obra: dados.get("obra"),
+    eap: typeof eap === "string" && eap ? eap : null,
     servico: dados.get("servico"),
-    pacote: dados.get("pacote") ?? undefined,
-    valor: lerValor(dados.get("valor")),
+    valor,
     tipo: dados.get("tipo"),
+    negociacao: dados.get("negociacao"),
   });
   if (!lido.success) return { erro: lido.error.issues[0].message };
   const supabase = await criarClienteServidor();
   const { data, error } = await supabase.rpc("abrir_contratacao", {
-    p_obra: lido.data.obra, p_servico: lido.data.servico, p_pacote: lido.data.pacote ?? "", p_valor: lido.data.valor, p_tipo: lido.data.tipo,
+    p_obra: lido.data.obra,
+    p_servico: lido.data.servico,
+    p_eap_item: lido.data.eap as string,
+    p_valor: lido.data.valor as number,
+    p_tipo: lido.data.tipo,
+    p_negociacao: lido.data.negociacao,
   });
-  if (error || !data) return { erro: mensagemDeErro(error, "Não foi possível abrir a contratação.") };
+  if (error || !data) return { erro: mensagemDeErro(error, error?.message ?? "Não foi possível abrir a contratação.") };
   recarregar(data);
   redirect(`/contratacoes/${data}`);
-}
-
-export async function marcarItem(contratacao: string, numeroEtapa: number, item: number, marcado: boolean): Promise<EstadoFormulario> {
-  await exigirInterno();
-  if (!uuid.safeParse(contratacao).success || !etapa.safeParse(numeroEtapa).success) return { erro: "Dados inválidos." };
-  const supabase = await criarClienteServidor();
-  const { error } = await supabase.rpc("marcar_item", { p_contratacao: contratacao, p_etapa: numeroEtapa, p_item: item, p_marcado: marcado });
-  if (error) return { erro: mensagemDeErro(error, "Não foi possível marcar.") };
-  recarregar(contratacao);
-  return {};
 }
 
 export async function salvarCampoEtapa(contratacao: string, numeroEtapa: number, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
@@ -113,14 +114,44 @@ export async function registrarCotacao(contratacao: string, _: EstadoFormulario,
   return { ok: "Cotação registrada." };
 }
 
-export async function escolherFornecedor(contratacao: string, cotacao: string): Promise<EstadoFormulario> {
+export async function definirFornecedor(contratacao: string, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
   await exigirInterno();
-  if (!uuid.safeParse(cotacao).success) return { erro: "Cotação inválida." };
+  const cotacao = String(dados.get("cotacao") ?? "");
+  if (!uuid.safeParse(cotacao).success) return { erro: "Escolha a empresa." };
+  const valor = lerValor(dados.get("valor"));
+  if (!Number.isFinite(valor) || valor <= 0) return { erro: "Informe o valor final negociado." };
   const supabase = await criarClienteServidor();
-  const { error } = await supabase.rpc("escolher_fornecedor", { p_cotacao: cotacao });
-  if (error) return { erro: mensagemDeErro(error, "Não foi possível escolher.") };
+  const { error } = await supabase.rpc("definir_fornecedor", { p_cotacao: cotacao, p_valor: Number(valor.toFixed(2)) });
+  if (error) return { erro: mensagemDeErro(error, error.message ?? "Não foi possível salvar a escolha.") };
   recarregar(contratacao);
-  return {};
+  return { ok: "Fornecedor e valor final salvos." };
+}
+
+const simNao = (v: FormDataEntryValue | null) => (v === "sim" ? true : v === "nao" ? false : null);
+const numeroOuNulo = (v: FormDataEntryValue | null) => {
+  const n = lerValor(v);
+  return Number.isFinite(n) ? Number(n.toFixed(2)) : null;
+};
+
+export async function salvarCondicoesGerente(contratacao: string, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
+  await exigirInterno();
+  if (!uuid.safeParse(contratacao).success) return { erro: "Dados inválidos." };
+  const supabase = await criarClienteServidor();
+  const { error } = await supabase.rpc("salvar_condicoes_gerente", {
+    p_contratacao: contratacao,
+    p_permuta: simNao(dados.get("permuta")) as boolean,
+    p_permuta_valor: numeroOuNulo(dados.get("permuta_valor")) as number,
+    p_permuta_formato: String(dados.get("permuta_formato") ?? "").trim().slice(0, 160),
+    p_fat_direto: simNao(dados.get("fat_direto")) as boolean,
+    p_fat_direto_valor: numeroOuNulo(dados.get("fat_direto_valor")) as number,
+    p_fat_direto_percentual: numeroOuNulo(dados.get("fat_direto_percentual")) as number,
+    p_sinal: simNao(dados.get("sinal")) as boolean,
+    p_sinal_valor: numeroOuNulo(dados.get("sinal_valor")) as number,
+    p_caucao: String(dados.get("caucao") ?? "") || (null as unknown as string),
+  });
+  if (error) return { erro: mensagemDeErro(error, error.message ?? "Não foi possível salvar.") };
+  recarregar(contratacao);
+  return { ok: "Condições salvas." };
 }
 
 export async function pularNegociacao(contratacao: string): Promise<EstadoFormulario> {

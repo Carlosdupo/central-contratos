@@ -7,22 +7,23 @@ import { temAlgumPapel, type Papel } from "@/modules/acesso/papeis";
 import { detalheDaContratacao } from "@/modules/contratacoes/consultas";
 import { TIPO_CONTRATACAO, TRILHAS, formatarReais } from "@/modules/contratacoes/rotulos";
 import {
-  assinarContrato, cancelarContratacao, concluirEtapa, escolherFornecedor, pularNegociacao, reabrirEtapa, registrarCotacao, salvarCampoEtapa, salvarEmailFornecedor,
+  assinarContrato, cancelarContratacao, concluirEtapa, definirFornecedor, pularNegociacao, reabrirEtapa, registrarCotacao, salvarCampoEtapa, salvarCondicoesGerente, salvarEmailFornecedor,
 } from "@/modules/contratacoes/acoes";
 import { equipeDaEmpresa } from "@/modules/terceiros/consultas";
 import { linksDasFotos } from "@/modules/terceiros/fotos";
 import { formatarCnpj } from "@/lib/documentos-br";
 import { formatarData } from "@/lib/datas";
 import { SeloPrazo } from "@/components/app/selo-prazo";
-import { ItemChecklist } from "@/components/app/item-checklist";
+import { CampoFornecedor } from "@/components/app/campo-fornecedor";
+import { CamposCondicoesGerente } from "@/components/app/campos-condicoes-gerente";
+import { criarClienteServidor } from "@/lib/supabase/server";
 import { CampoTexto, Formulario } from "@/components/app/formulario";
 import { ListaEquipe } from "@/components/app/lista-equipe";
 
 export const metadata: Metadata = { title: "Contratação" };
 
-const CAMPO: Record<number, { rotulo: string; chave: "sienge_solicitacao" | "valor_negociado" | "sienge_contrato" }> = {
+const CAMPO: Record<number, { rotulo: string; chave: "sienge_solicitacao" | "sienge_contrato" }> = {
   4: { rotulo: "Nº da solicitação no Sienge", chave: "sienge_solicitacao" },
-  5: { rotulo: "Valor negociado (R$)", chave: "valor_negociado" },
   7: { rotulo: "Código do contrato no Sienge", chave: "sienge_contrato" },
 };
 
@@ -43,14 +44,21 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
   const sel = etapas.find((e) => e.etapa === numero) ?? etapas[0];
   const ativa = c.situacao === "em_andamento" && sel.situacao === "em_andamento";
   const pode = ativa && podeComo(sel.papel);
-  const abaixoDoLimite = Number(c.valor_orcado) < Number(c.limite_obra);
+  const negociaObra = c.negociacao === "obra" && !c.negociacao_pulada;
+  // Negociação pela obra: em 5, Suprimentos só ajusta o valor do fornecedor que a obra escolheu.
+  const fornecedorTravado = sel.etapa === 5 && negociaObra && !!c.fornecedor_cnpj;
   const proxAssinante = assinantes.find((a) => !a.assinadoEm);
   const empresa = c.empresas_terceiras as { id: string; razao_social: string; situacao: string } | null;
   const equipe = empresa ? await equipeDaEmpresa(empresa.id) : [];
   const fotos = await linksDasFotos(equipe.map((m) => m.fotoPath));
   const ehAdmin = usuario.papeis.includes("admin");
 
-  const podeEscolher = (sel.etapa === 3 && abaixoDoLimite) || (sel.etapa === 5 && (!abaixoDoLimite || !c.fornecedor_cnpj));
+  const podeEscolher = (sel.etapa === 3 && c.negociacao === "obra") || sel.etapa === 5;
+  const opcoes = fornecedorTravado ? cotacoes.filter((q) => q.escolhida) : cotacoes;
+  const empresasCadastradas =
+    sel.etapa === 2 && pode
+      ? ((await (await criarClienteServidor()).from("empresas_terceiras").select("razao_social, cnpj").order("razao_social")).data ?? []).map((e) => ({ razao: e.razao_social, cnpj: e.cnpj }))
+      : [];
   const menor = cotacoes.length ? Math.min(...cotacoes.map((x) => Number(x.valor))) : 0;
 
   return (
@@ -72,7 +80,9 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
           ["Obra", c.obras?.nome],
           ["Tipo", TIPO_CONTRATACAO[c.tipo]],
           ["Fornecedor", c.fornecedor_nome ? `${c.fornecedor_nome} · ${formatarCnpj(c.fornecedor_cnpj ?? "")}` : "a definir"],
-          ["Orçado", formatarReais(Number(c.valor_orcado))],
+          ["Serviço da EAP", c.pacote ?? "—"],
+          ["Negociação", negociaObra ? "Pela obra" : "Pelo Suprimentos"],
+          ["Orçado", c.valor_orcado == null ? "não informado" : formatarReais(Number(c.valor_orcado))],
           ["Negociado", formatarReais(c.valor_negociado ? Number(c.valor_negociado) : null)],
           ["Sienge", [c.sienge_solicitacao && `SS ${c.sienge_solicitacao}`, c.sienge_contrato].filter(Boolean).join(" · ") || "—"],
         ].map(([r, v]) => (
@@ -133,10 +143,11 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
             )}
 
             {sel.itens.length > 0 && sel.situacao !== "pendente" && (
-              <div className="lista-agrupada">
-                {sel.itens.map((texto, i) => (
-                  <ItemChecklist key={i} contratacao={id} etapa={sel.etapa} item={i + 1} texto={texto} marcado={sel.marcados[i]} editavel={pode} />
-                ))}
+              <div className="flex flex-col gap-1.5 rounded-xl bg-fill px-3.5 py-3">
+                <span className="text-[12.5px] font-semibold text-muted-foreground">O que fazer nesta etapa</span>
+                <ul className="flex list-disc flex-col gap-0.5 pl-5 text-[13.5px]">
+                  {sel.itens.map((texto, i) => <li key={i}>{texto}</li>)}
+                </ul>
               </div>
             )}
 
@@ -161,22 +172,33 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                         <span className="block font-medium">{q.fornecedor}{Number(q.valor) === menor && cotacoes.length > 1 && <span className="ml-2 rounded-full bg-ok-soft px-2 py-px text-[11px] font-semibold text-ok">menor valor</span>}</span>
                         <span className="block font-mono text-xs text-muted-foreground">{formatarCnpj(q.cnpj)} · {formatarReais(Number(q.valor))}{q.prazo_dias ? ` · ${q.prazo_dias} d` : ""}</span>
                       </span>
-                      {q.escolhida ? <span className="selo selo-info">Escolhido</span> : pode && podeEscolher && <Formulario acao={escolherFornecedor.bind(null, id, q.id)} textoBotao="Escolher" variante="neutro" className="flex" />}
+                      {q.escolhida && <span className="selo selo-info">Escolhido{c.valor_negociado ? ` · final ${formatarReais(Number(c.valor_negociado))}` : ""}</span>}
                     </div>
                   ))}
                 </div>
                 {sel.etapa === 2 && pode && cotacoes.length < 3 && (
                   <Formulario acao={registrarCotacao.bind(null, id)} textoBotao="Registrar cotação" className="grid grid-cols-2 gap-2 max-sm:grid-cols-1">
-                    <CampoTexto nome="fornecedor" rotulo="Fornecedor" />
-                    <CampoTexto nome="cnpj" rotulo="CNPJ" />
+                    <CampoFornecedor empresas={empresasCadastradas} />
                     <CampoTexto nome="valor" rotulo="Valor (R$)" />
                     <CampoTexto nome="prazo" rotulo="Prazo (dias)" />
                   </Formulario>
                 )}
-                {sel.etapa === 3 && (
-                  <p className="rounded-xl bg-fill px-3.5 py-2.5 text-[13px] text-muted-foreground">
-                    {abaixoDoLimite ? `Abaixo de ${formatarReais(Number(c.limite_obra))}: a obra pode escolher o fornecedor e o valor.` : `A partir de ${formatarReais(Number(c.limite_obra))}, quem define o fornecedor e o valor é Suprimentos, na etapa 5.`}
-                  </p>
+                {pode && podeEscolher && cotacoes.length > 0 && (
+                  <Formulario acao={definirFornecedor.bind(null, id)} textoBotao="Salvar escolha" className="flex flex-col gap-3 rounded-xl border-[.5px] border-sep p-3.5">
+                    <div className="grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-2 max-sm:grid-cols-1">
+                      <label className="flex min-w-0 flex-col gap-1.5">
+                        <span className="text-[12.5px] font-medium text-muted-foreground">{fornecedorTravado ? "Fornecedor escolhido pela obra" : "Escolher a empresa"}</span>
+                        <select name="cotacao" className="campo" defaultValue={cotacoes.find((q) => q.escolhida)?.id ?? ""}>
+                          <option value="" disabled>Escolha</option>
+                          {opcoes.map((q) => <option key={q.id} value={q.id}>{q.fornecedor} · {formatarReais(Number(q.valor))}</option>)}
+                        </select>
+                      </label>
+                      <CampoTexto nome="valor" rotulo="Valor final (R$)" padrao={c.valor_negociado ? String(c.valor_negociado).replace(".", ",") : null} />
+                    </div>
+                  </Formulario>
+                )}
+                {sel.etapa === 3 && c.negociacao === "obra" && (
+                  <p className="rounded-xl bg-fill px-3.5 py-2.5 text-[13px] text-muted-foreground">Negociação pela obra: escolha a empresa e informe o valor final. Se preferir, deixe a negociação para Suprimentos.</p>
                 )}
                 {sel.etapa === 5 && c.negociacao_pulada && <p className="rounded-xl bg-primary-soft px-3.5 py-2.5 text-[13px]">A obra não negociou. A equalização e a negociação ficam com Suprimentos.</p>}
               </div>
@@ -203,12 +225,33 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
               </div>
             )}
 
-            {[5, 6].includes(sel.etapa) && sel.situacao !== "pendente" && c.fornecedor_cnpj && (
+            {sel.etapa === 6 && sel.situacao !== "pendente" && (
+              <div className="flex flex-col gap-2">
+                <h3 className="text-[14px] font-semibold">Condições da contratação</h3>
+                {pode ? (
+                  <Formulario acao={salvarCondicoesGerente.bind(null, id)} textoBotao="Salvar condições">
+                    <CamposCondicoesGerente inicial={c} />
+                  </Formulario>
+                ) : (
+                  <div className="lista-agrupada text-[13.5px]">
+                    {[
+                      ["Permuta", c.permuta == null ? "—" : c.permuta ? `Sim · ${formatarReais(Number(c.permuta_valor))} · ${c.permuta_formato}` : "Não"],
+                      ["Faturamento direto", c.fat_direto == null ? "—" : c.fat_direto ? `Sim · ${formatarReais(Number(c.fat_direto_valor))} · ${String(c.fat_direto_percentual).replace(".", ",")}%` : "Não"],
+                      ["Sinal", c.sinal == null ? "—" : c.sinal ? `Sim · ${formatarReais(Number(c.sinal_valor))}` : "Não"],
+                      ["Caução", c.caucao == null ? "—" : c.caucao === "na" ? "N.A." : `${c.caucao}%`],
+                    ].map(([r, v]) => (
+                      <div key={r} className="flex justify-between gap-3 px-3.5 py-2.5"><span className="text-muted-foreground">{r}</span><span>{v}</span></div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {(sel.etapa === 5 || (sel.etapa === 6 && !c.fornecedor_email && !empresa)) && sel.situacao !== "pendente" && c.fornecedor_cnpj && (
               <div className="flex flex-col gap-2">
                 <h3 className="text-[14px] font-semibold">Acesso do fornecedor ao portal</h3>
                 {empresa ? (
                   <p className="text-[13px] text-muted-foreground">
-                    {c.fornecedor_nome} já está cadastrado como empresa. {sel.etapa === 6 && sel.situacao === "em_andamento" ? `Ao autorizar, ele passa a poder cadastrar a equipe para ${c.obras?.nome}.` : ""}
+                    {c.fornecedor_nome} já está cadastrado como empresa.
                   </p>
                 ) : sel.situacao === "em_andamento" && pode ? (
                   <Formulario acao={salvarEmailFornecedor.bind(null, id)} textoBotao="Salvar e-mail" className="flex flex-wrap items-end gap-2">
@@ -218,14 +261,9 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                   <p className="text-[13px]"><span className="text-muted-foreground">E-mail para o portal:</span> {c.fornecedor_email ?? "—"}</p>
                 )}
                 {!empresa && sel.situacao === "em_andamento" && (
-                  <p className="text-[12.5px] text-muted-foreground">Na autorização do gerente, a empresa é cadastrada e recebe o convite do portal neste e-mail para enviar os documentos e a equipe.</p>
+                  <p className="text-[12.5px] text-muted-foreground">Com a autorização do gerente, a empresa recebe o convite do portal neste e-mail.</p>
                 )}
               </div>
-            )}
-            {sel.etapa === 6 && sel.situacao !== "pendente" && (
-              <p className="rounded-xl bg-primary-soft px-3.5 py-2.5 text-[13px]">
-                Ao autorizar, o fornecedor ganha acesso ao portal para {c.obras?.nome} e já pode enviar os documentos da empresa e da equipe. A data da autorização fica registrada sozinha.
-              </p>
             )}
             {sel.etapa === 10 && empresa && <p className="rounded-xl bg-primary-soft px-3.5 py-2.5 text-[13px]">A situação da equipe vem do portal da empresa (abaixo). O RH confere os documentos em Análise do RH.</p>}
 
@@ -233,8 +271,8 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
               <div className="flex flex-wrap items-center justify-between gap-3 border-t-[.5px] border-sep pt-4">
                 <span className="text-[12.5px] text-muted-foreground">{pode ? "" : `Etapa de ${sel.responsavel}.`}</span>
                 <span className="flex flex-wrap gap-2">
-                  {sel.pode_pular && pode && <Formulario acao={pularNegociacao.bind(null, id)} textoBotao="Pular: deixar para Suprimentos" variante="neutro" className="flex" />}
-                  {pode && <Formulario acao={concluirEtapa.bind(null, id, sel.etapa)} textoBotao={sel.etapa === 6 ? "Autorizar" : "Concluir etapa"} className="flex" />}
+                  {sel.pode_pular && pode && c.negociacao === "obra" && <Formulario acao={pularNegociacao.bind(null, id)} textoBotao="Pular: deixar para Suprimentos" variante="neutro" className="flex" />}
+                  {pode && <Formulario acao={concluirEtapa.bind(null, id, sel.etapa)} textoBotao={sel.etapa === 6 ? "Autorizar" : "Concluir etapa"} confirmar={sel.etapa === 6 ? "Autorizar esta contratação?" : `Concluir a etapa "${sel.nome}"?`} className="flex" />}
                 </span>
               </div>
             )}

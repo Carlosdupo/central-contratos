@@ -9,6 +9,7 @@ import { criarClienteAdmin } from "@/lib/supabase/admin";
 import { envPublico } from "@/lib/env";
 import { mensagemDeErro, type EstadoFormulario } from "@/lib/formulario";
 import { reenviarAcesso } from "@/modules/acesso/reenvio";
+import { lerEap } from "@/lib/eap";
 import { ehChaveParametro, lerParametroDoFormulario, PARAMETROS_SOMENTE_LEITURA } from "./parametros";
 
 // Todas as ações exigem papel admin com verificação em duas etapas (exigirPapel redireciona se faltar).
@@ -220,4 +221,34 @@ export async function excluirFeriado(feriadoId: string): Promise<EstadoFormulari
   if (error) return { erro: mensagemDeErro(error, "Não foi possível excluir o feriado.") };
   revalidatePath("/admin/feriados");
   return { ok: "Feriado excluído." };
+}
+
+// EAP da obra ---------------------------------------------------------------------------------
+
+/** Importa a EAP exportada do Sienge em PDF (Nível | Referência | Descrição). Troca a EAP anterior. */
+export async function importarEap(obraId: string, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
+  await exigirPapel("admin");
+  if (!uuid.safeParse(obraId).success) return { erro: "Obra inválida." };
+  const arquivo = dados.get("arquivo");
+  if (!(arquivo instanceof File) || arquivo.size === 0) return { erro: "Escolha o PDF da EAP." };
+  if (arquivo.size > 5 * 1024 * 1024) return { erro: "O arquivo passa de 5 MB." };
+  const bytes = new Uint8Array(await arquivo.arrayBuffer());
+  if (String.fromCharCode(...bytes.slice(0, 5)) !== "%PDF-") return { erro: "O arquivo não é um PDF." };
+
+  let itens;
+  try {
+    const { extractText, getDocumentProxy } = await import("unpdf");
+    const { text } = await extractText(await getDocumentProxy(bytes), { mergePages: false });
+    itens = lerEap(text.join("\n"));
+  } catch {
+    return { erro: "Não foi possível ler o PDF." };
+  }
+  if (itens.length === 0) return { erro: "Nenhum item encontrado. O PDF precisa ter as colunas Nível, Referência e Descrição (exportação da EAP do Sienge)." };
+
+  const supabase = await criarClienteServidor();
+  const { error } = await supabase.rpc("importar_eap", { p_obra: obraId, p_itens: itens });
+  if (error) return { erro: mensagemDeErro(error, error.message ?? "Não foi possível importar a EAP.") };
+  revalidatePath(`/admin/obras/${obraId}`);
+  const grupos = itens.filter((i) => i.nivel === 1).length;
+  return { ok: `EAP importada: ${grupos} grupos e ${itens.length - grupos} serviços.` };
 }

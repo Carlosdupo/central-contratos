@@ -1,7 +1,7 @@
 -- Acesso do fornecedor: ao autorizar (etapa 6), a empresa é cadastrada/ligada à obra da contratação.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(10);
+select plan(13);
 
 delete from public.empresas_terceiras where cnpj in ('99888777000155');
 insert into auth.users (id, email, raw_user_meta_data) values
@@ -23,8 +23,8 @@ grant all on ids to authenticated;
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000e01", "role": "authenticated", "aal": "aal1"}', true);
-insert into ids select 'um', public.abrir_contratacao('00000000-0000-0000-0000-0000000000a1', 'Pintura', null, 50000, 'contrato');
-insert into ids select 'dois', public.abrir_contratacao('00000000-0000-0000-0000-0000000000a2', 'Pintura torre 2', null, 50000, 'contrato');
+insert into ids select 'um', public.abrir_contratacao('00000000-0000-0000-0000-0000000000a1', 'Pintura', null, 50000, 'contrato', 'suprimentos');
+insert into ids select 'dois', public.abrir_contratacao('00000000-0000-0000-0000-0000000000a2', 'Pintura torre 2', null, null, 'contrato', 'suprimentos');
 
 -- Pula direto para a etapa 6 (como postgres), com fornecedor novo escolhido.
 reset role;
@@ -39,6 +39,12 @@ select throws_ok(format($$ select public.salvar_email_fornecedor(%L, 'contato@pi
   '42501', null, 'Na etapa 6, só o gerente altera o e-mail');
 
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000e03", "role": "authenticated", "aal": "aal1"}', true);
+select throws_ok(format($$ select public.concluir_etapa(%L, 6::smallint) $$, (select id from ids where nome = 'um')),
+  'P0001', 'Preencha as condições: permuta, faturamento direto, sinal e caução.', 'Autorizar exige as condições do gerente');
+select throws_ok(format($$ select public.salvar_condicoes_gerente(%L, true, null, null, false, null, null, false, null, '5') $$, (select id from ids where nome = 'um')),
+  'P0001', 'Permuta: informe o valor e o formato.', 'Permuta sim exige valor e formato');
+select lives_ok(format($$ select public.salvar_condicoes_gerente(%L, d, 20000, 'Um apartamento', false, null, null, false, null, '5'), public.salvar_condicoes_gerente(%L, false, null, null, false, null, null, false, null, 'na') from (values (true)) v(d) $$,
+  (select id from ids where nome = 'um'), (select id from ids where nome = 'dois')), 'Gerente preenche as condições');
 select throws_ok(format($$ select public.concluir_etapa(%L, 6::smallint) $$, (select id from ids where nome = 'um')),
   'P0001', 'Informe o e-mail do fornecedor para o acesso ao portal.', 'Fornecedor novo: autorizar exige o e-mail');
 select throws_ok(format($$ select public.salvar_email_fornecedor(%L, 'sem-arroba') $$, (select id from ids where nome = 'um')),
