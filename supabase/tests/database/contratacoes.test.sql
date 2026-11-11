@@ -1,7 +1,7 @@
 -- F6: fluxo de contratação (12 etapas, regra dos R$ 4.000, pular, assinaturas em ordem, visibilidade A8).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(31);
+select plan(36);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000c01', 'coord@teste.local', '{}'),
@@ -39,6 +39,8 @@ select is((select situacao::text from public.contratacao_etapas where contrataca
 select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-00000000000b', 'Fundação', null, 50000, 'contrato', 'obra') $$,
   'P0001', 'A partir de R$ 4.000 do orçamento, a negociação é de Suprimentos.', 'Orçamento acima do limite: a obra não negocia');
 select is((select valor_orcado from public.contratacoes where id = (select id from ids where nome = 'pequena')), null, 'Valor orçado pode ficar sem informar');
+select throws_ok(format($$ select public.concluir_etapa(%L, 1::smallint) $$, (select id from ids where nome = 'grande')), 'P0001', 'Marque todos os itens da etapa.', 'Itens começam desmarcados: não conclui');
+select lives_ok(format($$ select public.marcar_item(%L, 1::smallint, i::smallint, true) from generate_series(1, 3) i $$, (select id from ids where nome = 'grande')), 'Marca os itens da etapa 1 (grande)');
 select lives_ok(format($$ select public.concluir_etapa(%L, 1::smallint) $$, (select id from ids where nome = 'grande')), 'Coordenador conclui a etapa 1');
 
 -- Cotações
@@ -46,6 +48,7 @@ select lives_ok(format($$ select public.registrar_cotacao(%L, 'Fornecedor A', '1
 select lives_ok(format($$ select public.registrar_cotacao(%L, 'Fornecedor B', '11444777000161', 104000, 40) $$, (select id from ids where nome = 'grande')), 'Registra cotação 2');
 select throws_ok(format($$ select public.concluir_etapa(%L, 2::smallint) $$, (select id from ids where nome = 'grande')), 'P0001', null, 'Etapa 2 exige 3 cotações');
 select lives_ok(format($$ select public.registrar_cotacao(%L, 'Fornecedor C', '11222333000262', 109000, 50) $$, (select id from ids where nome = 'grande')), 'Registra cotação 3');
+select lives_ok(format($$ select public.marcar_item(%L, 2::smallint, i::smallint, true) from generate_series(1, 2) i $$, (select id from ids where nome = 'grande')), 'Marca os itens da etapa 2 (grande)');
 select lives_ok(format($$ select public.concluir_etapa(%L, 2::smallint) $$, (select id from ids where nome = 'grande')), 'Conclui a etapa 2');
 
 -- Negociação por Suprimentos: a etapa 3 é pulada e a obra não escolhe o fornecedor
@@ -55,8 +58,10 @@ select throws_ok(format($$ select public.definir_fornecedor(id, 95000) from publ
   'P0001', 'A escolha do fornecedor é feita na negociação (etapa 3 ou 5).', 'Fora da negociação ninguém escolhe o fornecedor');
 
 -- Negociação pela obra: escolhe o fornecedor com o valor final na etapa 3
+select lives_ok(format($$ select public.marcar_item(%L, 1::smallint, i::smallint, true) from generate_series(1, 3) i $$, (select id from ids where nome = 'pequena')), 'Marca os itens da etapa 1 (pequena)');
 select lives_ok(format($$ select public.concluir_etapa(%L, 1::smallint) $$, (select id from ids where nome = 'pequena')), 'Conclui a etapa 1 da pequena');
 select lives_ok(format($$ select public.registrar_cotacao(%L, x.f, x.c, 3000, 10) from (values ('Forn 1', '11222333000181'), ('Forn 2', '11444777000161'), ('Forn 3', '11222333000262')) x(f, c) $$, (select id from ids where nome = 'pequena')), 'Pequena: 3 cotações');
+select lives_ok(format($$ select public.marcar_item(%L, 2::smallint, i::smallint, true) from generate_series(1, 2) i $$, (select id from ids where nome = 'pequena')), 'Marca os itens da etapa 2 (pequena)');
 select lives_ok(format($$ select public.concluir_etapa(%L, 2::smallint) $$, (select id from ids where nome = 'pequena')), 'Pequena: conclui a etapa 2');
 select throws_ok(format($$ select public.concluir_etapa(%L, 3::smallint) $$, (select id from ids where nome = 'pequena')), 'P0001', null, 'Etapa 3 exige fornecedor e valor final');
 select lives_ok(format($$ select public.nova_proposta(id, 2900) from public.cotacoes where contratacao_id = %L and fornecedor = 'Forn 2' $$, (select id from ids where nome = 'pequena')), 'Obra registra a 2a proposta');

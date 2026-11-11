@@ -62,6 +62,15 @@ export async function abrirContratacao(_: EstadoFormulario, dados: FormData): Pr
   redirect(`/contratacoes/${data}`);
 }
 
+export async function marcarItem(contratacao: string, numeroEtapa: number, item: number, marcado: boolean): Promise<EstadoFormulario> {
+  await exigirInterno();
+  if (!uuid.safeParse(contratacao).success || !etapa.safeParse(numeroEtapa).success) return { erro: "Dados inválidos." };
+  const supabase = await criarClienteServidor();
+  const { error } = await supabase.rpc("marcar_item", { p_contratacao: contratacao, p_etapa: numeroEtapa, p_item: item, p_marcado: marcado });
+  if (error) return { erro: mensagemDeErro(error, "Não foi possível marcar.") };
+  return {};
+}
+
 export async function salvarCampoEtapa(contratacao: string, numeroEtapa: number, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
   await exigirInterno();
   if (!uuid.safeParse(contratacao).success) return { erro: "Dados inválidos." };

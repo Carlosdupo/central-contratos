@@ -11,10 +11,12 @@ type Props = {
   /** Pergunta de confirmação antes de enviar (ações difíceis de desfazer). */
   confirmar?: string;
   className?: string;
+  /** Botão desligado (ex.: itens da etapa ainda não marcados). */
+  desabilitado?: boolean;
 };
 
 // Formulário com Server Action: mostra o resultado (erro ou confirmação) ao lado do botão.
-export function Formulario({ acao, textoBotao, children, variante = "primario", confirmar, className }: Props) {
+export function Formulario({ acao, textoBotao, children, variante = "primario", confirmar, className, desabilitado }: Props) {
   const [estado, enviar, enviando] = useActionState(acao, {});
   const aoEnviar = (e: FormEvent) => {
     if (confirmar && !window.confirm(confirmar)) e.preventDefault();
@@ -27,7 +29,7 @@ export function Formulario({ acao, textoBotao, children, variante = "primario", 
       <div className="flex flex-wrap items-center justify-end gap-3">
         {estado.erro && <p role="alert" className="mr-auto text-[13px] text-bad">{estado.erro}</p>}
         {estado.ok && <p role="status" className="mr-auto text-[13px] text-ok">{estado.ok}</p>}
-        <button type="submit" className={classeBotao} disabled={enviando}>
+        <button type="submit" className={classeBotao} disabled={enviando || desabilitado}>
           {enviando ? "Salvando…" : textoBotao}
         </button>
       </div>

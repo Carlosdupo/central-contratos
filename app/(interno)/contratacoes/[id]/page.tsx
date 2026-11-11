@@ -15,6 +15,7 @@ import { formatarCnpj } from "@/lib/documentos-br";
 import { formatarData } from "@/lib/datas";
 import { SeloPrazo } from "@/components/app/selo-prazo";
 import { CampoFornecedor } from "@/components/app/campo-fornecedor";
+import { ChecklistEtapa } from "@/components/app/checklist-etapa";
 import { CamposCondicoesGerente } from "@/components/app/campos-condicoes-gerente";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { CampoTexto, Formulario } from "@/components/app/formulario";
@@ -145,12 +146,16 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
             )}
 
             {sel.itens.length > 0 && sel.situacao !== "pendente" && (
-              <div className="flex flex-col gap-1.5 rounded-xl bg-fill px-3.5 py-3">
-                <span className="text-[12.5px] font-semibold text-muted-foreground">O que fazer nesta etapa</span>
-                <ul className="flex list-disc flex-col gap-0.5 pl-5 text-[13.5px]">
-                  {sel.itens.map((texto, i) => <li key={i}>{texto}</li>)}
-                </ul>
-              </div>
+              <ChecklistEtapa
+                key={`${id}-${sel.etapa}`}
+                contratacao={id}
+                etapa={sel.etapa}
+                itens={sel.itens}
+                marcados={sel.marcados}
+                editavel={pode}
+                concluir={pode ? concluirEtapa.bind(null, id, sel.etapa) : null}
+                textoBotao={sel.etapa === 6 ? "Autorizar" : "Concluir etapa"}
+              />
             )}
 
             {CAMPO[sel.etapa] && sel.situacao !== "pendente" && (
@@ -287,7 +292,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                 <span className="text-[12.5px] text-muted-foreground">{pode ? "" : `Etapa de ${sel.responsavel}.`}</span>
                 <span className="flex flex-wrap gap-2">
                   {sel.pode_pular && pode && c.negociacao === "obra" && <Formulario acao={pularNegociacao.bind(null, id)} textoBotao="Pular: deixar para Suprimentos" variante="neutro" className="flex" />}
-                  {pode && <Formulario acao={concluirEtapa.bind(null, id, sel.etapa)} textoBotao={sel.etapa === 6 ? "Autorizar" : "Concluir etapa"} confirmar={sel.etapa === 6 ? "Autorizar esta contratação?" : `Concluir a etapa "${sel.nome}"?`} className="flex" />}
+                  {pode && sel.itens.length === 0 && <Formulario acao={concluirEtapa.bind(null, id, sel.etapa)} textoBotao={sel.etapa === 6 ? "Autorizar" : "Concluir etapa"} confirmar={sel.etapa === 6 ? "Autorizar esta contratação?" : `Concluir a etapa "${sel.nome}"?`} className="flex" />}
                 </span>
               </div>
             )}
