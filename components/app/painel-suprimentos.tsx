@@ -15,9 +15,9 @@ type Props = {
 };
 
 function Numero({ n, rotulo, tom }: { n: number; rotulo: string; tom?: "erro" | "alerta" }) {
-  const cor = n > 0 && tom === "erro" ? "text-bad" : n > 0 && tom === "alerta" ? "text-warn" : "";
+  const cor = n === 0 ? "font-medium! text-muted-foreground" : tom === "erro" ? "text-bad" : tom === "alerta" ? "text-hot" : "";
   return (
-    <div className="flex flex-col gap-1 rounded-2xl bg-card px-4 py-3">
+    <div className="flex flex-col gap-1 rounded-[14px] border border-sep px-4 py-3">
       <span className={`text-[34px] leading-none font-bold tracking-tight tabular-nums ${cor}`}>{n}</span>
       <span className="text-[12.5px] font-medium text-muted-foreground">{rotulo}</span>
     </div>
@@ -31,7 +31,7 @@ const Contagem = ({ n, tom }: { n: number; tom?: "erro" }) => (
 // Painel de Suprimentos: negociações, autorizações, assinaturas e a situação de cada obra.
 export function PainelSuprimentos({ fila, negociar, autorizar, atrasadas, assinaturas, chegando, obras, ehGerente }: Props) {
   return (
-    <section className="flex flex-col gap-4 rounded-[22px] bg-[color-mix(in_srgb,var(--warn-soft)_70%,transparent)] p-5">
+    <section className="flex flex-col gap-4 rounded-[14px] border border-sep bg-card p-[18px]">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <h2 className="subtitulo">Suprimentos</h2>
@@ -45,7 +45,7 @@ export function PainelSuprimentos({ fila, negociar, autorizar, atrasadas, assina
         <Numero n={autorizar} rotulo={ehGerente ? "Para você autorizar" : "Com o gerente"} tom={ehGerente ? "alerta" : undefined} />
         <Numero n={assinaturas.length} rotulo="Assinaturas de Suprimentos" tom="alerta" />
         <Numero n={atrasadas} rotulo="Fora do prazo" tom="erro" />
-        <Numero n={chegando} rotulo="Ainda na obra (vão chegar)" />
+        <Numero n={chegando} rotulo="Em preparação na obra" />
       </div>
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">

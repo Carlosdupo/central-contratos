@@ -5,9 +5,9 @@ import { formatarData, type DataISO } from "@/lib/datas";
 type Props = { hoje: DataISO; agendadas: PessoaAgendada[]; noRh: number; bloqueados: number; liberados: number };
 
 function Numero({ n, rotulo, tom }: { n: number; rotulo: string; tom?: "erro" | "alerta" }) {
-  const cor = n > 0 && tom === "erro" ? "text-bad" : n > 0 && tom === "alerta" ? "text-warn" : "";
+  const cor = n === 0 ? "font-medium! text-muted-foreground" : tom === "erro" ? "text-bad" : tom === "alerta" ? "text-hot" : "";
   return (
-    <div className="flex flex-col gap-1 rounded-2xl bg-card px-4 py-3">
+    <div className="flex flex-col gap-1 rounded-[14px] border border-sep px-4 py-3">
       <span className={`text-[34px] leading-none font-bold tracking-tight tabular-nums ${cor}`}>{n}</span>
       <span className="text-[12.5px] font-medium text-muted-foreground">{rotulo}</span>
     </div>
@@ -25,7 +25,7 @@ export function PainelSst({ hoje, agendadas, noRh, bloqueados, liberados }: Prop
   const lista = [...atrasadas, ...deHoje, ...proximas];
 
   return (
-    <section className="flex flex-col gap-4 rounded-[22px] bg-ok-soft p-5">
+    <section className="flex flex-col gap-4 rounded-[14px] border border-sep bg-card p-[18px]">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <h2 className="subtitulo">Integração de segurança</h2>
