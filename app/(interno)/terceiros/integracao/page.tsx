@@ -52,26 +52,31 @@ export default async function PaginaIntegracao() {
       <div>
         <h1 className="titulo">Integração de segurança</h1>
         <p className="mt-1.5 max-w-[66ch] text-[15px] text-muted-foreground">
-          A lista se monta sozinha: quem o RH aprova até as {parametros.horarioCorte}h entra na integração do próximo dia útil. Ao marcar presença, a pessoa fica liberada para a obra e a empresa é avisada.
+          A lista se monta sozinha. Ao marcar presença, a pessoa fica liberada para a obra e a empresa é avisada.
         </p>
       </div>
 
-      {dias.length === 0 && <section className="painel"><p className="text-[14px] text-muted-foreground">Ninguém agendado.</p></section>}
+      <p className="flex items-center gap-2 rounded-[10px] border border-sep bg-card px-4 py-3 text-[13.5px]">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true" className="shrink-0 text-primary"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+        <span><strong>Horário de corte: {parametros.horarioCorte}h.</strong> Quem o RH aprova até as {parametros.horarioCorte}h entra na integração do próximo dia útil.</span>
+      </p>
+
+      {dias.length === 0 && <section className="painel"><p className="text-[14px] text-muted-foreground">Ninguém agendado. As pessoas aparecem aqui quando o RH aprova os documentos.</p></section>}
       {dias.map((dia) => {
         const grupo = (agendadas ?? []).filter((a) => a.integracao_data === dia);
         return (
           <section key={dia} className="painel">
             <div className="flex flex-wrap items-end justify-between gap-2">
               <h2 className="subtitulo">{diaPorExtenso(dia)}{dia < hoje && <span className="ml-2 selo selo-erro align-middle">Atrasada</span>}</h2>
-              <span className="text-[13px] text-muted-foreground">{grupo.length} pessoa(s)</span>
+              <span className="text-[13px] text-muted-foreground">{grupo.length === 1 ? "1 pessoa" : `${grupo.length} pessoas`}</span>
             </div>
             <div className="lista-agrupada">
               {grupo.map((a) => (
                 <div key={a.id} className="flex flex-wrap items-center gap-3 px-3.5 py-2.5">
                   <Pessoa a={a} fotos={fotos} />
                   <span className="flex flex-wrap items-center gap-2">
-                    <Formulario acao={registrarIntegracao.bind(null, a.id, false)} textoBotao="Não compareceu" variante="neutro" className="flex" />
-                    <Formulario acao={registrarIntegracao.bind(null, a.id, true)} textoBotao="Presente" className="flex" />
+                    <Formulario acao={registrarIntegracao.bind(null, a.id, false)} textoBotao="Não compareceu" variante="discreto" className="flex" />
+                    <Formulario acao={registrarIntegracao.bind(null, a.id, true)} textoBotao="Marcar presente" variante="ok" className="flex" />
                   </span>
                 </div>
               ))}
@@ -83,7 +88,7 @@ export default async function PaginaIntegracao() {
       <section className="painel">
         <h2 className="subtitulo">Liberados recentemente</h2>
         {(liberadas ?? []).length === 0 ? (
-          <p className="text-[14px] text-muted-foreground">Ninguém liberado ainda.</p>
+          <p className="text-[14px] text-muted-foreground">Ninguém liberado ainda. Quem tiver presença marcada aparece aqui.</p>
         ) : (
           <div className="lista-agrupada">
             {(liberadas ?? []).map((a) => (

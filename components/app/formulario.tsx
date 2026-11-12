@@ -7,7 +7,7 @@ type Props = {
   acao: (estado: EstadoFormulario, dados: FormData) => Promise<EstadoFormulario>;
   textoBotao: string;
   children?: ReactNode;
-  variante?: "primario" | "perigo" | "neutro";
+  variante?: "primario" | "perigo" | "neutro" | "ok" | "discreto";
   /** Pergunta de confirmação antes de enviar (ações difíceis de desfazer). */
   confirmar?: string;
   className?: string;
@@ -21,7 +21,12 @@ export function Formulario({ acao, textoBotao, children, variante = "primario", 
   const aoEnviar = (e: FormEvent) => {
     if (confirmar && !window.confirm(confirmar)) e.preventDefault();
   };
-  const classeBotao = variante === "primario" ? "botao botao-primario" : variante === "perigo" ? "botao botao-perigo" : "botao";
+  const classeBotao =
+    variante === "primario" ? "botao botao-primario"
+    : variante === "perigo" ? "botao botao-perigo"
+    : variante === "ok" ? "botao botao-ok"
+    : variante === "discreto" ? "botao border-transparent bg-transparent text-muted-foreground hover:text-foreground"
+    : "botao";
 
   return (
     <form action={enviar} onSubmit={aoEnviar} className={className ?? "flex flex-col gap-4"} noValidate>

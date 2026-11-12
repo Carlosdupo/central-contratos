@@ -13,7 +13,8 @@ import { Formulario } from "@/components/app/formulario";
 export const metadata: Metadata = { title: "Análise do RH" };
 
 export default async function PaginaFilaRh() {
-  await exigirPapel("rh");
+  const usuario = await exigirPapel("rh");
+  const ehAdmin = usuario.papeis.includes("admin");
   const [fila, visitas, parametros] = await Promise.all([filaDeAnalise(), visitasSolicitadas(), lerParametros()]);
   const prazo = parametros.prazoAnaliseRh;
 
@@ -25,16 +26,19 @@ export default async function PaginaFilaRh() {
           Envios das empresas esperando conferência. Prazo: {prazo.dias} {prazo.uteis ? "dias úteis" : "dias"} a partir do envio. Aprovado até as {parametros.horarioCorte}h entra na integração do próximo dia útil.
         </p>
       </div>
-      {!emailConfigurado() && (
-        <p className="rounded-xl bg-warn-soft px-4 py-3 text-[13px] text-warn">
-          O envio de e-mail ainda não está configurado. Os avisos ficam guardados e aparecem no portal da empresa; saem por e-mail quando o Resend for configurado.
-        </p>
-      )}
+      {!emailConfigurado() &&
+        (ehAdmin ? (
+          <p className="rounded-[10px] bg-warn-soft px-4 py-3 text-[13px] text-warn">
+            Para administradores: o envio de e-mail ainda não está configurado. Os avisos ficam guardados e aparecem no portal da empresa; saem por e-mail quando o Resend for configurado.
+          </p>
+        ) : (
+          <p className="text-[13px] text-muted-foreground">Os avisos para a empresa aparecem no portal dela.</p>
+        ))}
 
       <section className="painel">
         <h2 className="subtitulo">Documentos para conferir</h2>
         {fila.length === 0 ? (
-          <p className="text-[14px] text-muted-foreground">Nenhum envio esperando análise.</p>
+          <p className="text-[14px] text-muted-foreground">Nenhum envio esperando análise. Quando uma empresa enviar documentos, eles aparecem aqui com o prazo.</p>
         ) : (
           <div className="-mx-1.5 overflow-x-auto">
             <table className="tabela">
@@ -63,7 +67,7 @@ export default async function PaginaFilaRh() {
           <p className="mt-1 text-[13px] text-muted-foreground">Sócios com acesso esporádico. Confira o documento com foto antes de aprovar.</p>
         </div>
         {visitas.length === 0 ? (
-          <p className="text-[14px] text-muted-foreground">Nenhum pedido de visita.</p>
+          <p className="text-[14px] text-muted-foreground">Nenhum pedido de visita. Os sócios com acesso esporádico pedem a visita pelo portal.</p>
         ) : (
           <div className="lista-agrupada">
             {visitas.map((v) => (
