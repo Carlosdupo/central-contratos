@@ -15,7 +15,7 @@ let falhou = false;
 
 for (const arquivo of arquivos) {
   const sql = readFileSync(arquivo, "utf8")
-    .replace(/^select plan\(/m, "create temp table _r (n serial, t text);\ngrant all on _r to authenticated;\ngrant all on sequence _r_n_seq to authenticated;\nselect plan(")
+    .replace(/^select plan\(/m, "create temp table _r (n serial, t text);\ngrant all on _r to authenticated, anon, service_role;\ngrant all on sequence _r_n_seq to authenticated, anon, service_role;\nselect plan(")
     .replace(/^select (?!set_config)/gm, "insert into _r (t) select ")
     .replace(/^insert into _r \(t\) select \* from finish\(\);/m, "insert into _r (t) select * from finish();\nreset role;\nselect string_agg(t, E'\\n' order by n) as resultado from _r;");
   const destino = join(temp, "teste.sql");

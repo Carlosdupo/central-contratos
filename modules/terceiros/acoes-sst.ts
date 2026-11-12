@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { exigirPapel } from "@/modules/acesso/sessao";
@@ -41,7 +42,7 @@ export async function registrarIntegracao(alocacaoId: string, presente: boolean)
     p_texto: `${texto}\n\nAcesse o portal: ${envPublico.NEXT_PUBLIC_SITE_URL}/portal\n\nCentral de Contratos`,
   });
   if (error) return { erro: mensagemDeErro(error, "Não foi possível registrar.") };
-  await despacharPendentes(5).catch(() => undefined);
+  after(() => despacharPendentes(5).catch(() => undefined)); // depois da resposta: não faz o usuário esperar o e-mail
   revalidatePath("/terceiros/integracao");
   return { ok: presente ? `${pessoa} liberado(a).` : `Remarcado para ${formatarData(novaData!)}.` };
 }

@@ -1,3 +1,4 @@
+import "./zod-navegador";
 import { z } from "zod";
 
 // Variáveis públicas: vão para o navegador. Nunca coloque segredo aqui.

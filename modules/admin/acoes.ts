@@ -47,7 +47,13 @@ export async function convidarUsuario(_: EstadoFormulario, dados: FormData): Pro
     .from("usuario_papeis")
     .insert(papeis.map((papel) => ({ usuario_id: data.user.id, papel })));
   revalidatePath("/admin/usuarios");
-  if (erroPapeis) return { erro: `Convite enviado, mas os perfis não foram salvos: ${mensagemDeErro(erroPapeis, "tente pela tela do usuário")}.` };
+  if (erroPapeis) {
+    // Sem perfis o usuário não serve para nada: desfaz o convite (o cadastro em usuarios sai junto, por cascata)
+    // para o e-mail poder ser convidado de novo e não ficar uma conta órfã.
+    const { error: erroRemocao } = await criarClienteAdmin().auth.admin.deleteUser(data.user.id);
+    if (!erroRemocao) return { erro: `Os perfis não foram salvos e o convite foi desfeito: ${mensagemDeErro(erroPapeis, "tente de novo")}.` };
+    return { erro: `Convite enviado, mas os perfis não foram salvos: ${mensagemDeErro(erroPapeis, "tente pela tela do usuário")}.` };
+  }
   return { ok: `Convite enviado para ${lido.data.email}.` };
 }
 
@@ -117,8 +123,13 @@ export async function alterarSituacaoUsuario(usuarioId: string, ativo: boolean):
   const { error } = await supabase.from("usuarios").update({ ativo }).eq("id", usuarioId);
   if (error) return { erro: mensagemDeErro(error, "Não foi possível alterar a situação.") };
 
-  // Bloqueia (ou libera) o login no Auth, além de marcar no cadastro.
-  await criarClienteAdmin().auth.admin.updateUserById(usuarioId, { ban_duration: ativo ? "none" : "876000h" });
+  // Bloqueia (ou libera) o login no Auth, além de marcar no cadastro. Se o Auth falhar, desfaz a marcação:
+  // não pode ficar "desativado" no sistema e ainda conseguindo entrar (ou o contrário).
+  const { error: erroAuth } = await criarClienteAdmin().auth.admin.updateUserById(usuarioId, { ban_duration: ativo ? "none" : "876000h" });
+  if (erroAuth) {
+    await supabase.from("usuarios").update({ ativo: !ativo }).eq("id", usuarioId);
+    return { erro: "Não foi possível alterar o acesso no login. Nada foi mudado; tente de novo." };
+  }
 
   revalidatePath(`/admin/usuarios/${usuarioId}`);
   revalidatePath("/admin/usuarios");

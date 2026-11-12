@@ -42,3 +42,6 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# supabase CLI (estado local da vinculação; não versionar)
+/supabase/.temp/

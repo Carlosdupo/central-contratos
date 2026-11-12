@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { agoraNoFuso, type DataISO } from "@/lib/datas";
 import {
@@ -15,7 +16,8 @@ import {
 
 // Consultas com o cliente do usuário: a RLS decide o que cada um enxerga.
 
-export async function carregarCatalogo() {
+// cache() do React: dentro da mesma requisição o catálogo é lido uma vez só (não guarda nada entre requisições).
+export const carregarCatalogo = cache(async () => {
   const supabase = await criarClienteServidor();
   const [tipos, matriz, validade] = await Promise.all([
     supabase.from("tipos_documento").select("codigo, nome, regra_validade, chave_validade, sensivel, aceita_texto, observacao, ordem").eq("ativo", true).order("ordem"),
@@ -28,7 +30,7 @@ export async function carregarCatalogo() {
     matriz: matriz.data as ItemMatriz[],
     meses: (validade.data?.valor ?? { aso: 12, nr: 24, rg_cnh: 120 }) as ValidadeMeses,
   };
-}
+});
 
 export type ItemDocumentoEmpresa = {
   tipo: TipoDocumento;
@@ -46,17 +48,18 @@ export async function documentosDaEmpresa(empresaId: string): Promise<{ itens: I
   const supabase = await criarClienteServidor();
   const hoje = agoraNoFuso().data;
   const competencia = competenciaAtual(hoje);
-  const [catalogo, { data: docs, error }] = await Promise.all([
+  const [catalogo, { data: docs, error }, pessoasNaObra] = await Promise.all([
     carregarCatalogo(),
     supabase
       .from("documentos")
       .select("id, tipo_documento, competencia, situacao, data_emissao, data_validade, valor_texto, arquivo_atual_id, motivo_reprovacao")
       .eq("empresa_id", empresaId)
       .is("vinculo_id", null),
+    pessoasNaObraDaEmpresa(empresaId),
   ]);
   if (error) throw new Error("Falha ao carregar os documentos.");
 
-  const exigidos = documentosExigidos(catalogo.matriz, "empresa", { pessoasNaObra: await pessoasNaObraDaEmpresa(empresaId) });
+  const exigidos = documentosExigidos(catalogo.matriz, "empresa", { pessoasNaObra });
   const itens = exigidos
     .map((codigo) => catalogo.tipos.get(codigo))
     .filter((t): t is TipoDocumento => !!t)

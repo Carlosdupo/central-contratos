@@ -1054,6 +1054,24 @@ export type Database = {
           },
         ]
       }
+      limites_tentativas: {
+        Row: {
+          chave: string
+          contagem: number
+          janela: string
+        }
+        Insert: {
+          chave: string
+          contagem?: number
+          janela: string
+        }
+        Update: {
+          chave?: string
+          contagem?: number
+          janela?: string
+        }
+        Relationships: []
+      }
       matriz_documental: {
         Row: {
           aplica_a: Database["public"]["Enums"]["aplica_a_documento"]
@@ -1096,6 +1114,7 @@ export type Database = {
           enviado_em: string | null
           erro: string | null
           id: string
+          reservado_em: string | null
           situacao: Database["public"]["Enums"]["situacao_notificacao"]
           tentativas: number
           texto: string
@@ -1109,6 +1128,7 @@ export type Database = {
           enviado_em?: string | null
           erro?: string | null
           id?: string
+          reservado_em?: string | null
           situacao?: Database["public"]["Enums"]["situacao_notificacao"]
           tentativas?: number
           texto: string
@@ -1122,6 +1142,7 @@ export type Database = {
           enviado_em?: string | null
           erro?: string | null
           id?: string
+          reservado_em?: string | null
           situacao?: Database["public"]["Enums"]["situacao_notificacao"]
           tentativas?: number
           texto?: string
@@ -1638,6 +1659,10 @@ export type Database = {
         Args: { p_contratacao: string; p_etapa: number }
         Returns: undefined
       }
+      consumir_limite: {
+        Args: { p_chave: string; p_janela_seg: number; p_max: number }
+        Returns: boolean
+      }
       cpf_mascarado: { Args: { p_pessoa: string }; Returns: string }
       decidir_documento: {
         Args: {
@@ -1744,6 +1769,29 @@ export type Database = {
         Args: { p_empresa: string }
         Returns: undefined
       }
+      reservar_notificacoes: {
+        Args: { p_limite: number; p_max_tentativas?: number }
+        Returns: {
+          assunto: string
+          canal: string
+          criado_em: string
+          destinatario: string
+          empresa_id: string | null
+          enviado_em: string | null
+          erro: string | null
+          id: string
+          reservado_em: string | null
+          situacao: Database["public"]["Enums"]["situacao_notificacao"]
+          tentativas: number
+          texto: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "notificacoes"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       salvar_campo_etapa: {
         Args: { p_contratacao: string; p_etapa: number; p_valor: string }
         Returns: undefined
@@ -1826,7 +1874,7 @@ export type Database = {
         | "bloqueada"
       situacao_envio: "aberto" | "concluido"
       situacao_etapa: "pendente" | "em_andamento" | "concluida" | "pulada"
-      situacao_notificacao: "pendente" | "enviada" | "erro"
+      situacao_notificacao: "pendente" | "enviada" | "erro" | "enviando"
       situacao_visita: "solicitada" | "aprovada" | "recusada"
       tipo_contratacao: "unico" | "contrato" | "aditivo"
       tipo_usuario: "interno" | "externo"
@@ -2009,7 +2057,7 @@ export const Constants = {
       ],
       situacao_envio: ["aberto", "concluido"],
       situacao_etapa: ["pendente", "em_andamento", "concluida", "pulada"],
-      situacao_notificacao: ["pendente", "enviada", "erro"],
+      situacao_notificacao: ["pendente", "enviada", "erro", "enviando"],
       situacao_visita: ["solicitada", "aprovada", "recusada"],
       tipo_contratacao: ["unico", "contrato", "aditivo"],
       tipo_usuario: ["interno", "externo"],

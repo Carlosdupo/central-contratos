@@ -6,6 +6,7 @@ Contratação de empreiteiros e gestão de terceiros (documentos, análise do RH
 - Regras de negócio: [docs/BRIEFING-sistema-contratos.md](docs/BRIEFING-sistema-contratos.md)
 - Protótipo de referência (visual e regras): [docs/prototipo/prototipo-contratacao.html](docs/prototipo/prototipo-contratacao.html)
 - Decisões técnicas: [docs/adr](docs/adr)
+- Deploy: [docs/DEPLOY-CHECKLIST.md](docs/DEPLOY-CHECKLIST.md) · Testes: [docs/PLANO-DE-TESTES.md](docs/PLANO-DE-TESTES.md) · Dívida técnica: [docs/DIVIDA-TECNICA.md](docs/DIVIDA-TECNICA.md)
 
 ## Stack
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · Supabase (Postgres, Auth, Storage) · Zod · Vitest · pgTAP · Vercel · GitHub Actions

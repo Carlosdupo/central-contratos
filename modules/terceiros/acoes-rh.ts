@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -78,7 +79,7 @@ export async function concluirAnalise(envioId: string): Promise<EstadoFormulario
   const supabase = await criarClienteServidor();
   const { error } = await supabase.rpc("concluir_envio", { p_envio: envioId, p_data_integracao: integracao, p_assunto: assunto, p_texto: texto + rodape() });
   if (error) return { erro: mensagemDeErro(error, "Não foi possível concluir.") };
-  await despacharPendentes(5).catch(() => undefined);
+  after(() => despacharPendentes(5).catch(() => undefined)); // depois da resposta: não faz o usuário esperar o e-mail
   revalidatePath("/terceiros/analise", "layout");
   redirect("/terceiros/analise");
 }
@@ -99,7 +100,7 @@ export async function decidirVisita(visitaId: string, aprovar: boolean, _: Estad
     : `A visita de ${pessoa} à obra ${v.obras?.nome} em ${diaPorExtenso(v.data)} foi recusada. Motivo: ${motivo}`;
   const { error } = await supabase.rpc("decidir_visita", { p_visita: visitaId, p_aprovar: aprovar, p_motivo: motivo, p_assunto: assunto, p_texto: texto + rodape() });
   if (error) return { erro: mensagemDeErro(error, "Não foi possível registrar a decisão.") };
-  await despacharPendentes(5).catch(() => undefined);
+  after(() => despacharPendentes(5).catch(() => undefined)); // depois da resposta: não faz o usuário esperar o e-mail
   revalidatePath("/terceiros/analise", "layout");
   return { ok: aprovar ? "Visita aprovada. A empresa foi avisada." : "Visita recusada. A empresa foi avisada." };
 }
