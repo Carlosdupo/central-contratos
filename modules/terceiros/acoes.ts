@@ -7,6 +7,7 @@ import { z } from "zod";
 import { exigirExterno, exigirPapel, obterUsuarioAtual } from "@/modules/acesso/sessao";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
+import { caminhoDeArquivoValido } from "@/lib/caminho-arquivo";
 import { cnpjValido, cpfValido, somenteDigitos } from "@/lib/documentos-br";
 import { mensagemDeErro, type EstadoFormulario } from "@/lib/formulario";
 import { reenviarAcesso } from "@/modules/acesso/reenvio";
@@ -147,7 +148,7 @@ export async function confirmarArquivo(entrada: z.input<typeof esquemaConfirmaca
   const lido = esquemaConfirmacao.safeParse(entrada);
   if (!lido.success) return { erro: "Dados do envio inválidos." };
   const { dono, tipoDoc, caminho, nome, dataEmissao, dataValidade, competencia, obra, dataVisita } = lido.data;
-  if (!caminho.startsWith(pastaDoArquivo(empresaId, dono, tipoDoc))) return { erro: "Caminho de arquivo inválido." };
+  if (!caminho.startsWith(pastaDoArquivo(empresaId, dono, tipoDoc)) || !caminhoDeArquivoValido(caminho)) return { erro: "Caminho de arquivo inválido." };
 
   const admin = criarClienteAdmin();
   const descartar = () => admin.storage.from(BUCKET).remove([caminho]);

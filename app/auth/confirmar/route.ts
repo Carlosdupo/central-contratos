@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { criarClienteServidor } from "@/lib/supabase/server";
+import { destinoSeguro } from "@/lib/destino-seguro";
 
 const TIPOS: EmailOtpType[] = ["invite", "recovery", "email", "email_change"];
 
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest) {
   const tokenHash = url.searchParams.get("token_hash");
   const tipo = url.searchParams.get("type") as EmailOtpType | null;
   const proximo = url.searchParams.get("proximo");
-  const destino = proximo?.startsWith("/") && !proximo.startsWith("//") ? proximo : "/painel";
+  const destino = destinoSeguro(proximo, "/painel");
 
   // Link padrão do Supabase com fluxo PKCE (recuperação de senha pedida pelo próprio sistema): ?code=...
   const codigo = url.searchParams.get("code");

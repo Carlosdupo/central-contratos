@@ -24,8 +24,8 @@ insert into public.documentos (id, tipo_documento, empresa_id, situacao) values
   ('00000000-0000-0000-0000-0000000000d1', 'cnd_federal', '00000000-0000-0000-0000-00000000aaaa', 'enviado'),
   ('00000000-0000-0000-0000-0000000000d2', 'aso', '00000000-0000-0000-0000-00000000aaaa', 'enviado');
 insert into public.documento_arquivos (id, documento_id, storage_path, nome_original, mime, tamanho, sha256, enviado_por) values
-  ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000d1', 'empresas/teste/a1.pdf', 'cnd.pdf', 'application/pdf', 100, repeat('a', 64), '00000000-0000-0000-0000-0000000000e1'),
-  ('00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-0000000000d2', 'empresas/teste/a2.pdf', 'aso.pdf', 'application/pdf', 100, repeat('b', 64), '00000000-0000-0000-0000-0000000000e1');
+  ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000d1', 'empresas/00000000-0000-0000-0000-00000000aaaa/empresa/cnd_federal/00000000-0000-4000-8000-000000000001.pdf', 'cnd.pdf', 'application/pdf', 100, repeat('a', 64), '00000000-0000-0000-0000-0000000000e1'),
+  ('00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-0000000000d2', 'empresas/00000000-0000-0000-0000-00000000aaaa/empresa/aso/00000000-0000-4000-8000-000000000002.pdf', 'aso.pdf', 'application/pdf', 100, repeat('b', 64), '00000000-0000-0000-0000-0000000000e1');
 
 set local role authenticated;
 
@@ -38,7 +38,7 @@ select throws_ok(
   $$ select public.registrar_acesso_arquivo('00000000-0000-0000-0000-0000000000a1') $$,
   '42501', null, 'Empresa B não abre arquivo da A');
 select throws_ok(
-  $$ select public.registrar_arquivo_empresa('00000000-0000-0000-0000-00000000aaaa', 'cnd_federal', 'empresas/00000000-0000-0000-0000-00000000aaaa/empresa/cnd_federal/x.pdf', 'x.pdf', 'application/pdf', 10, repeat('c', 64), null, '2099-01-01') $$,
+  $$ select public.registrar_arquivo_empresa('00000000-0000-0000-0000-00000000aaaa', 'cnd_federal', 'empresas/00000000-0000-0000-0000-00000000aaaa/empresa/cnd_federal/00000000-0000-4000-8000-000000000003.pdf', 'x.pdf', 'application/pdf', 10, repeat('c', 64), null, '2099-01-01') $$,
   '42501', null, 'Empresa B não grava documento na A');
 select throws_ok(
   $$ insert into public.documentos (tipo_documento, empresa_id) values ('pgr', '00000000-0000-0000-0000-00000000bbbb') $$,
@@ -48,13 +48,13 @@ select throws_ok(
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000000e1", "role": "authenticated", "aal": "aal1"}', true);
 select is((select count(*)::int from public.documento_arquivos), 2, 'Empresa A vê os próprios arquivos, inclusive o ASO');
 select throws_ok(
-  $$ select public.registrar_arquivo_empresa('00000000-0000-0000-0000-00000000aaaa', 'pgr', 'empresas/outra/empresa/pgr/x.pdf', 'x.pdf', 'application/pdf', 10, repeat('c', 64), null, '2099-01-01') $$,
+  $$ select public.registrar_arquivo_empresa('00000000-0000-0000-0000-00000000aaaa', 'pgr', 'empresas/outra/empresa/pgr/00000000-0000-4000-8000-000000000004.pdf', 'x.pdf', 'application/pdf', 10, repeat('c', 64), null, '2099-01-01') $$,
   'P0001', null, 'Caminho do arquivo precisa ser da própria empresa e do tipo');
 select lives_ok(
-  $$ select public.registrar_arquivo_empresa('00000000-0000-0000-0000-00000000aaaa', 'pgr', 'empresas/00000000-0000-0000-0000-00000000aaaa/empresa/pgr/x.pdf', 'x.pdf', 'application/pdf', 10, repeat('c', 64), null, '2099-01-01') $$,
+  $$ select public.registrar_arquivo_empresa('00000000-0000-0000-0000-00000000aaaa', 'pgr', 'empresas/00000000-0000-0000-0000-00000000aaaa/empresa/pgr/00000000-0000-4000-8000-000000000005.pdf', 'x.pdf', 'application/pdf', 10, repeat('c', 64), null, '2099-01-01') $$,
   'Empresa A anexa o PGR');
 select throws_ok(
-  $$ select public.registrar_arquivo_empresa('00000000-0000-0000-0000-00000000aaaa', 'ltcat', 'empresas/00000000-0000-0000-0000-00000000aaaa/empresa/ltcat/x.pdf', 'x.pdf', 'application/pdf', 10, repeat('d', 64), null, '2000-01-01') $$,
+  $$ select public.registrar_arquivo_empresa('00000000-0000-0000-0000-00000000aaaa', 'ltcat', 'empresas/00000000-0000-0000-0000-00000000aaaa/empresa/ltcat/00000000-0000-4000-8000-000000000006.pdf', 'x.pdf', 'application/pdf', 10, repeat('d', 64), null, '2000-01-01') $$,
   'P0001', null, 'Documento com validade vencida é recusado');
 
 -- Equipe interna

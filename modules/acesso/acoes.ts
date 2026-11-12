@@ -7,12 +7,7 @@ import { z } from "zod";
 import { criarClienteServidor } from "@/lib/supabase/server";
 
 import type { EstadoFormulario } from "@/lib/formulario";
-
-// Só aceita caminhos internos, para o "proximo" não virar redirecionamento para outro site.
-function destinoSeguro(valor: FormDataEntryValue | null): string {
-  const caminho = typeof valor === "string" ? valor : "";
-  return caminho.startsWith("/") && !caminho.startsWith("//") && !caminho.startsWith("/\\") ? caminho : "/";
-}
+import { destinoSeguro } from "@/lib/destino-seguro";
 
 const esquemaEntrar = z.object({
   email: z.email("Informe um e-mail válido."),

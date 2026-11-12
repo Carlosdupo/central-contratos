@@ -46,19 +46,19 @@ select throws_ok($$ select public.decidir_documento('00000000-0000-0000-0000-000
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000000f3", "role": "authenticated", "aal": "aal2"}', true);
 select throws_ok($$ select public.decidir_documento('00000000-0000-0000-0000-000000000011', 'reprovado', '') $$, 'P0001', null, 'Reprovar exige motivo');
 select lives_ok($$ select public.decidir_documento('00000000-0000-0000-0000-000000000011', 'aprovado') $$, 'RH aprova o ASO');
-select throws_ok($$ select public.concluir_envio('00000000-0000-0000-0000-0000000000b1', current_date + 1, 'a', 'b') $$, 'P0001', null, 'Não conclui com documento sem decisão');
+select throws_ok($$ select public.concluir_envio('00000000-0000-0000-0000-0000000000b1', (now() at time zone 'America/Sao_Paulo')::date + 1, 'a', 'b') $$, 'P0001', null, 'Não conclui com documento sem decisão');
 select lives_ok($$ select public.decidir_documento('00000000-0000-0000-0000-000000000012', 'aprovado') $$, 'RH aprova a NR-18');
 select is(
-  (select public.concluir_envio('00000000-0000-0000-0000-0000000000b1', current_date + 1, 'Assunto', 'Texto')),
+  (select public.concluir_envio('00000000-0000-0000-0000-0000000000b1', (now() at time zone 'America/Sao_Paulo')::date + 1, 'Assunto', 'Texto')),
   'pessoa_aguardando_empresa', 'Pessoa aprovada com a empresa ainda em análise fica aguardando a empresa');
 select is((select situacao::text from public.documentos where id = '00000000-0000-0000-0000-0000000000d1'), 'aprovado', 'Documento recebe a decisão');
 
 select lives_ok($$ select public.decidir_documento('00000000-0000-0000-0000-000000000013', 'aprovado') $$, 'RH aprova o PGR da empresa');
 select is(
-  (select public.concluir_envio('00000000-0000-0000-0000-0000000000b2', current_date + 2, 'Assunto', 'Texto')),
+  (select public.concluir_envio('00000000-0000-0000-0000-0000000000b2', (now() at time zone 'America/Sao_Paulo')::date + 2, 'Assunto', 'Texto')),
   'empresa_aprovada', 'Empresa aprovada');
 select is(
-  (select situacao::text || ' ' || (integracao_data = current_date + 2)::text from public.alocacoes where vinculo_id = '00000000-0000-0000-0000-0000000000a1'),
+  (select situacao::text || ' ' || (integracao_data = (now() at time zone 'America/Sao_Paulo')::date + 2)::text from public.alocacoes where vinculo_id = '00000000-0000-0000-0000-0000000000a1'),
   'integracao_agendada true', 'Quem aguardava a empresa entra na integração na data calculada');
 
 -- Avisos: cada empresa vê só os seus
