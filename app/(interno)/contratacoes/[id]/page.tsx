@@ -110,7 +110,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                     className={`relative grid grid-cols-[26px_minmax(0,1fr)] items-center gap-3 px-4 py-2.5 transition-colors [&+&]:border-t-[.5px] [&+&]:border-sep ${e.etapa === sel.etapa ? "bg-primary-soft" : "hover:bg-fill"}`}
                   >
                     <span className={`grid size-[26px] place-items-center rounded-full text-xs font-semibold ${
-                      e.situacao === "concluida" || e.situacao === "pulada" ? "bg-[var(--ok-fill)] text-white" : e.situacao === "em_andamento" ? "border-2 border-primary bg-card text-primary" : "border-[1.5px] border-input text-faint"
+                      e.situacao === "concluida" || e.situacao === "pulada" ? "bg-[var(--ok-fill)] text-[var(--superficie)]" : e.situacao === "em_andamento" ? "border-2 border-primary bg-card text-primary" : "border-[1.5px] border-input text-faint"
                     }`}>{e.situacao === "concluida" ? "✓" : e.situacao === "pulada" ? "–" : e.etapa}</span>
                     <span className="min-w-0">
                       <span className={`block font-medium ${e.etapa === sel.etapa ? "text-primary" : e.situacao === "pendente" ? "text-muted-foreground" : ""}`}>{e.nome}</span>
