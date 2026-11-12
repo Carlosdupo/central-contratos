@@ -22,15 +22,33 @@ const filtra = (f: string) => (l: LinhaPanorama) =>
   : f === "canceladas" ? l.situacao === "cancelada"
   : true;
 
+const IconeOk = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" />
+    <path d="m8 12.5 3 3 5-6" />
+  </svg>
+);
+const Traco = () => <i className="my-2.5 inline-block h-0.5 w-3.5 rounded bg-sep-strong opacity-60" aria-hidden="true" />;
+
 function Celula({ c, cancelada }: { c: CelulaPanorama; cancelada: boolean }) {
-  if (c.tipo === "ok") return <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-ok-soft px-2 py-0.5 text-[12px] font-semibold text-ok">✓ {formatarData(c.data).slice(0, 5)}</span>;
-  if (c.tipo === "na") return <span className="text-[12px] font-medium text-faint">N/A</span>;
-  if (c.tipo === "pendente") return <span className="text-[12px] text-faint">{cancelada ? "" : "—"}</span>;
+  if (c.tipo === "ok")
+    return (
+      <span className="inline-flex flex-col items-center gap-0.5 text-[11px] font-medium text-ok tabular-nums">
+        <IconeOk />
+        <span><span className="sr-only">Liberado em </span>{formatarData(c.data).slice(0, 5)}</span>
+      </span>
+    );
+  if (c.tipo === "na") return <span className="text-[12px] font-medium text-muted-foreground">N/A<span className="sr-only">: não se aplica</span></span>;
+  if (c.tipo === "pendente") return cancelada ? <span className="sr-only">Cancelada</span> : <span><Traco /><span className="sr-only">Ainda não chegou</span></span>;
   const atrasada = c.prazo.tipo === "atrasada";
-  const alerta = c.prazo.tipo === "vence_hoje" || c.prazo.tipo === "vence_amanha";
   return (
-    <span title={c.etapa} className={`inline-flex flex-col whitespace-nowrap rounded-lg px-2 py-0.5 text-[12px] font-semibold ${atrasada ? "bg-bad-soft text-bad" : alerta ? "bg-warn-soft text-warn" : "bg-primary-soft text-primary"}`}>
-      {atrasada ? `Atrasada ${-(c.prazo as { restantes: number }).restantes}d` : alerta ? "Vence já" : "Em andamento"}
+    <span className="inline-flex flex-col items-center gap-1">
+      <span className="rounded-full bg-primary px-2.5 py-0.5 text-[12px] font-semibold text-primary-foreground">
+        <span className="sr-only">Está com esta área: </span>Agora
+      </span>
+      <span className="sr-only">Etapa: {c.etapa}.</span>
+      {atrasada && <span className="text-[11px] font-semibold text-bad">Atrasada {-(c.prazo as { restantes: number }).restantes} d</span>}
+      {(c.prazo.tipo === "vence_hoje" || c.prazo.tipo === "vence_amanha") && <span className="text-[11px] font-semibold text-hot">{c.prazo.tipo === "vence_hoje" ? "Vence hoje" : "Vence amanhã"}</span>}
     </span>
   );
 }
@@ -60,66 +78,73 @@ export default async function PaginaPanorama({ searchParams }: PageProps<"/contr
         <div>
           <h1 className="titulo">Panorama das obras</h1>
           <p className="mt-1.5 max-w-[70ch] text-[15px] text-muted-foreground">
-            Todas as solicitações de cada obra e em que área cada uma está. Cada coluna mostra a data em que a área liberou, ou se ainda está com ela.
+            Cada linha é uma contratação. Cada coluna mostra a data em que a área liberou, ou se ainda está com ela.
           </p>
         </div>
-        <Link href="/contratacoes" className="text-[14px] text-primary">Ver lista de contratações</Link>
+        <Link href="/contratacoes" className="botao">Ver como lista de contratações</Link>
       </div>
 
       <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por obra">
           {obras.length > 1 && (
-            <Link href={link("", filtro)} className={`rounded-full px-3.5 py-1.5 text-[13px] font-medium ${!obraId ? "bg-primary text-primary-foreground" : "bg-card hover:bg-fill-2"}`}>Todas as obras</Link>
+            <Link href={link("", filtro)} aria-current={!obraId ? "true" : undefined} className={`inline-flex min-h-10 items-center rounded-full border px-3.5 text-[13px] font-medium ${!obraId ? "border-primary bg-primary text-primary-foreground" : "border-sep-strong bg-card hover:bg-fill"}`}>Todas as obras</Link>
           )}
           {obras.map(([id, nome]) => (
-            <Link key={id} href={link(id, filtro)} className={`rounded-full px-3.5 py-1.5 text-[13px] font-medium ${obraId === id ? "bg-primary text-primary-foreground" : "bg-card hover:bg-fill-2"}`}>{nome}</Link>
+            <Link key={id} href={link(id, filtro)} aria-current={obraId === id ? "true" : undefined} className={`inline-flex min-h-10 items-center rounded-full border px-3.5 text-[13px] font-medium ${obraId === id ? "border-primary bg-primary text-primary-foreground" : "border-sep-strong bg-card hover:bg-fill"}`}>{nome}</Link>
           ))}
         </div>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por situação">
           {FILTROS.map((f) => (
-            <Link key={f.chave} href={link(obraId, f.chave)} className={`rounded-full px-3 py-1 text-[12.5px] font-medium ${filtro === f.chave ? "bg-foreground text-background" : "bg-fill-2 text-muted-foreground hover:text-foreground"}`}>
-              {f.rotulo} <span className="tabular-nums opacity-70">{contar(f.chave)}</span>
+            <Link key={f.chave} href={link(obraId, f.chave)} aria-current={filtro === f.chave ? "true" : undefined} className={`inline-flex min-h-10 items-center rounded-full border px-3.5 text-[13px] font-medium ${filtro === f.chave ? "border-foreground bg-foreground text-background" : "border-sep-strong bg-card hover:bg-fill"}`}>
+              {f.rotulo} <span className="ml-1 tabular-nums opacity-75">{contar(f.chave)}</span>
             </Link>
           ))}
         </div>
       </div>
 
-      <section className="painel p-0 py-2">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] text-muted-foreground" aria-label="Legenda">
+        <span className="inline-flex items-center gap-1.5 text-ok"><IconeOk /><span className="text-muted-foreground">Área liberou, com a data</span></span>
+        <span className="inline-flex items-center gap-1.5"><span className="rounded-full bg-primary px-2.5 py-0.5 text-[12px] font-semibold text-primary-foreground">Agora</span>Está com esta área</span>
+        <span className="inline-flex items-center gap-1.5"><Traco />Ainda não chegou</span>
+        <span className="inline-flex items-center gap-1.5"><span className="font-medium">N/A</span>Não se aplica</span>
+      </div>
+
+      <section className="painel overflow-hidden p-0">
         {linhas.length === 0 ? (
-          <p className="px-5 py-3 text-[14px] text-muted-foreground">Nenhuma contratação neste filtro.</p>
+          <p className="px-[18px] py-4 text-[14px] text-muted-foreground">Nenhuma contratação neste filtro. Escolha outra obra ou situação acima.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="tabela min-w-[1180px]">
+          <div className="overflow-x-auto focus-visible:outline-offset-[-2px]" tabIndex={0} role="region" aria-label="Tabela do panorama. Role para o lado para ver todas as áreas.">
+            <table className="tabela min-w-[1180px] border-separate border-spacing-0">
+              <caption className="sr-only">Situação de cada contratação por área</caption>
               <thead>
                 <tr>
-                  <th className="pl-5">Solicitação</th>
-                  {!obraId && <th>Obra</th>}
-                  <th>Com quem está</th>
-                  {COLUNAS_PANORAMA.map((c) => <th key={c.chave} className="text-center">{c.titulo}</th>)}
-                  <th>Contrato Sienge</th>
-                  <th>Fornecedor</th>
-                  <th className="pr-5">Status</th>
+                  <th scope="col" className="sticky left-0 z-10 w-[260px] min-w-[260px] bg-card pt-3.5 pl-[18px]">Contratação</th>
+                  {!obraId && <th scope="col" className="pt-3.5">Obra</th>}
+                  <th scope="col" className="pt-3.5">Com quem está</th>
+                  {COLUNAS_PANORAMA.map((c) => <th scope="col" key={c.chave} className="pt-3.5 text-center">{c.titulo}</th>)}
+                  <th scope="col" className="pt-3.5">Contrato Sienge</th>
+                  <th scope="col" className="pt-3.5">Fornecedor e valor contratado</th>
+                  <th scope="col" className="pt-3.5 pr-[18px]">Situação</th>
                 </tr>
               </thead>
               <tbody>
                 {linhas.map((l) => (
                   <tr key={l.id} className={l.situacao === "cancelada" ? "opacity-55" : ""}>
-                    <td className="max-w-[280px] pl-5">
-                      <Link href={`/contratacoes/${l.id}`} className="font-medium text-primary">{l.servico}</Link>
-                      <div className="text-[12px] text-muted-foreground">
+                    <th scope="row" className="sticky left-0 z-10 w-[260px] max-w-[260px] min-w-[260px] border-b border-sep bg-card py-3 pr-3 pl-[18px] text-left align-top text-[14px] font-normal tracking-normal text-foreground normal-case">
+                      <Link href={`/contratacoes/${l.id}`} className="line-clamp-2 font-semibold whitespace-normal hover:text-primary">{l.servico}</Link>
+                      <span className="block text-[12px] whitespace-normal text-muted-foreground">
                         <span className="font-mono">{l.codigo}</span>{l.siengeSolicitacao ? ` · SS ${l.siengeSolicitacao}` : ""} · aberta {formatarData(l.abertaEm).slice(0, 5)}
-                      </div>
-                      {l.pacote && <div className="truncate text-[12px] text-faint">{l.pacote}</div>}
-                    </td>
+                      </span>
+                    </th>
                     {!obraId && <td className="text-[13px]">{l.obra}</td>}
                     <td className="text-[13px]">{l.situacao === "em_andamento" ? l.comQuem.join(", ") || "—" : "—"}</td>
-                    {l.celulas.map((c, i) => <td key={i} className="text-center"><Celula c={c} cancelada={l.situacao === "cancelada"} /></td>)}
+                    {l.celulas.map((c, i) => <td key={i} className="text-center align-middle"><Celula c={c} cancelada={l.situacao === "cancelada"} /></td>)}
                     <td className="font-mono text-[12.5px]">{l.siengeContrato ?? "—"}</td>
                     <td className="text-[13px]">
                       {l.fornecedor ?? <span className="text-faint">a definir</span>}
-                      {l.valorFinal != null && <div className="text-[12px] text-muted-foreground">{formatarReais(l.valorFinal)}</div>}
+                      {l.valorFinal != null && <div className="text-[12px] text-muted-foreground">Contratado: {formatarReais(l.valorFinal)}</div>}
                     </td>
-                    <td className="pr-5"><Status l={l} /></td>
+                    <td className="pr-[18px]"><Status l={l} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -127,7 +152,6 @@ export default async function PaginaPanorama({ searchParams }: PageProps<"/contr
           </div>
         )}
       </section>
-      <p className="text-[12.5px] text-faint">✓ data = área liberou · N/A = etapa não se aplica · — = ainda não chegou na área. Passe o mouse sobre &ldquo;Em andamento&rdquo; para ver a etapa.</p>
     </>
   );
 }
