@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { IconeApp } from "./icones";
+import { Marca } from "./logo";
 
 export type ItemMenu = { href: string; rotulo: string; icone: ReactNode };
 export type GrupoMenu = { titulo?: string; itens: ItemMenu[] };
@@ -19,11 +19,7 @@ export function BarraLateral({ grupos, rodape }: { grupos: GrupoMenu[]; rodape: 
   return (
     <aside className="sticky top-0 flex h-screen flex-col gap-5 border-r-[.5px] border-sep bg-[var(--lateral)] px-3.5 py-5 backdrop-blur-xl backdrop-saturate-[1.8] max-md:static max-md:h-auto max-md:flex-row max-md:flex-wrap max-md:items-center max-md:border-r-0 max-md:border-b-[.5px]">
       <div className="flex items-center gap-2.5 px-1.5">
-        <IconeApp />
-        <div className="leading-tight max-md:hidden">
-          <div className="text-[15px] font-semibold tracking-tight">Central de Contratos</div>
-          <div className="text-xs text-muted-foreground">Contratação de empreiteiros</div>
-        </div>
+        <Marca />
       </div>
       <nav className="flex flex-1 flex-col gap-px max-md:w-full max-md:flex-row max-md:overflow-x-auto" aria-label="Menu principal">
         {grupos.map((grupo, i) => (

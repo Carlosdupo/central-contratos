@@ -57,15 +57,6 @@ export const IconeContratos = () => (
   </Icone>
 );
 
-export const IconeApp = () => (
-  <span className="grid size-9 shrink-0 place-items-center rounded-[9px] bg-gradient-to-br from-[#3d9bff] to-[#0062d6] text-white shadow-[inset_0_0_0_.5px_rgba(0,0,0,.15),0_2px_6px_rgba(0,98,214,.3)]">
-    <Icone tamanho={20}>
-      <path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" />
-      <path d="M9.5 14.5l2 2 3.5-4" />
-    </Icone>
-  </span>
-);
-
 export const IconePanorama = () => (
   <Icone>
     <rect x="3" y="4" width="18" height="16" rx="2.5" />
