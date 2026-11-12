@@ -15,8 +15,8 @@ export function FormularioAcesso({ acao, textoBotao, children }: Props) {
   return (
     <form action={enviar} className="flex flex-col gap-4" noValidate>
       {children}
-      {estado.erro && <p role="alert" className="text-[13px] text-bad">{estado.erro}</p>}
-      {estado.ok && <p role="status" className="rounded-xl bg-ok-soft px-3.5 py-2.5 text-[13px] text-ok">{estado.ok}</p>}
+      {estado.erro && <p role="alert" className="rounded-[10px] bg-bad-soft px-3 py-2 text-[13px] font-medium text-bad">{estado.erro}</p>}
+      {estado.ok && <p role="status" className="rounded-[10px] bg-ok-soft px-3.5 py-2.5 text-[13px] text-ok">{estado.ok}</p>}
       <button type="submit" className="botao botao-primario mt-1" disabled={enviando}>
         {enviando ? "Aguarde…" : textoBotao}
       </button>
@@ -27,7 +27,7 @@ export function FormularioAcesso({ acao, textoBotao, children }: Props) {
 export function Campo(props: { id: string; rotulo: string; tipo?: string; autoComplete?: string; padrao?: string }) {
   return (
     <label htmlFor={props.id} className="flex flex-col gap-1.5">
-      <span className="text-[12.5px] font-medium text-muted-foreground">{props.rotulo}</span>
+      <span className="text-[13px] font-semibold">{props.rotulo}</span>
       <input
         id={props.id}
         name={props.id}
