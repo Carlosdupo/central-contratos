@@ -6,6 +6,7 @@ import { convidarUsuario } from "@/modules/admin/acoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
 import { CampoTexto, Formulario, Marcador } from "@/components/app/formulario";
+import { JanelaLateral } from "@/components/app/janela-lateral";
 
 export const metadata: Metadata = { title: "Usuários" };
 
@@ -21,9 +22,27 @@ export default async function PaginaUsuarios() {
   const aceitou = new Map((auth?.users ?? []).map((u) => [u.id, !!u.last_sign_in_at]));
 
   return (
-    <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+    <div className="flex flex-col gap-5">
       <section className="painel">
-        <h2 className="subtitulo">Equipe interna</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="subtitulo">Equipe interna</h2>
+          <JanelaLateral
+            textoBotao="Convidar pessoa"
+            titulo="Convidar pessoa"
+            descricao="A pessoa recebe um e-mail para criar a senha. RH, segurança do trabalho e administradores também cadastram a verificação em duas etapas."
+          >
+            <Formulario acao={convidarUsuario} textoBotao="Enviar convite à pessoa">
+              <CampoTexto nome="nome" rotulo="Nome completo" />
+              <CampoTexto nome="email" rotulo="E-mail" tipo="email" />
+              <fieldset className="flex flex-col gap-1.5">
+                <legend className="mb-1.5 text-[13px] font-semibold">Perfis</legend>
+                <div className="lista-agrupada">
+                  {PAPEIS.map((p) => <Marcador key={p} nome="papeis" valor={p} rotulo={ROTULO_PAPEL[p]} />)}
+                </div>
+              </fieldset>
+            </Formulario>
+          </JanelaLateral>
+        </div>
         <div className="-mx-1.5 overflow-x-auto">
           <table className="tabela">
             <thead>
@@ -47,23 +66,6 @@ export default async function PaginaUsuarios() {
             </tbody>
           </table>
         </div>
-      </section>
-
-      <section className="painel">
-        <div>
-          <h2 className="subtitulo">Convidar pessoa</h2>
-          <p className="mt-1 text-[13px] text-muted-foreground">A pessoa recebe um e-mail para criar a senha. RH, segurança do trabalho e administradores também cadastram a verificação em duas etapas.</p>
-        </div>
-        <Formulario acao={convidarUsuario} textoBotao="Enviar convite">
-          <CampoTexto nome="nome" rotulo="Nome completo" />
-          <CampoTexto nome="email" rotulo="E-mail" tipo="email" />
-          <fieldset className="flex flex-col gap-1.5">
-            <legend className="mb-1.5 text-[12.5px] font-medium text-muted-foreground">Perfis</legend>
-            <div className="lista-agrupada">
-              {PAPEIS.map((p) => <Marcador key={p} nome="papeis" valor={p} rotulo={ROTULO_PAPEL[p]} />)}
-            </div>
-          </fieldset>
-        </Formulario>
       </section>
     </div>
   );
