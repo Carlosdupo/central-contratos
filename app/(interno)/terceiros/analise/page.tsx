@@ -80,8 +80,8 @@ export default async function PaginaFilaRh() {
                   <BotaoAbrir acao={abrirDocumentoDaVisita.bind(null, v.id)} texto="Ver documento com foto" />
                 </div>
                 <div className="flex flex-wrap items-start gap-3">
-                  <Formulario acao={decidirVisita.bind(null, v.id, true)} textoBotao="Aprovar" className="flex" />
-                  <Formulario acao={decidirVisita.bind(null, v.id, false)} textoBotao="Recusar" variante="perigo" className="flex flex-wrap items-center gap-2">
+                  <Formulario acao={decidirVisita.bind(null, v.id, true)} textoBotao="Aprovar visita" className="flex" />
+                  <Formulario acao={decidirVisita.bind(null, v.id, false)} textoBotao="Recusar visita" variante="perigo" className="flex flex-wrap items-center gap-2">
                     <input name="motivo" placeholder="Motivo da recusa" aria-label="Motivo da recusa" className="campo max-w-[260px] py-1.5" />
                   </Formulario>
                 </div>

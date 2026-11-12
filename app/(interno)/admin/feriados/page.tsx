@@ -38,7 +38,7 @@ export default async function PaginaFeriados() {
                     {ROTULO[f.abrangencia]}{f.uf ? ` · ${f.cidade ? `${f.cidade}/` : ""}${f.uf}` : ""}
                   </td>
                   <td className="text-right">
-                    <Formulario acao={excluirFeriado.bind(null, f.id)} textoBotao="Excluir" variante="neutro" confirmar={`Excluir o feriado ${f.descricao} (${formatarData(f.data)})?`} className="flex" />
+                    <Formulario acao={excluirFeriado.bind(null, f.id)} textoBotao="Excluir feriado" variante="neutro" confirmar={`Excluir o feriado ${f.descricao} (${formatarData(f.data)})?`} className="flex" />
                   </td>
                 </tr>
               ))}
@@ -56,7 +56,7 @@ export default async function PaginaFeriados() {
           <CampoTexto nome="data" rotulo="Data" tipo="date" />
           <CampoTexto nome="descricao" rotulo="Descrição" />
           <label className="flex flex-col gap-1.5">
-            <span className="text-[12.5px] font-medium text-muted-foreground">Abrangência</span>
+            <span className="text-[13px] font-semibold">Abrangência</span>
             <select name="abrangencia" defaultValue="municipal" className="campo">
               <option value="nacional">Nacional</option>
               <option value="estadual">Estadual</option>

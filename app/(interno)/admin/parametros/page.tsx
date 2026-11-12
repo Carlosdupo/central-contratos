@@ -55,15 +55,15 @@ function Editor({ chave, valor }: { chave: ChaveParametro; valor: unknown }) {
     case "fuso_horario":
       return <p className="font-mono text-[14px]">{String(valor)}</p>;
     case "limite_escolha_obra_reais":
-      return <Formulario acao={acao} textoBotao="Salvar"><CampoTexto nome="valor" rotulo="Valor em reais" tipo="number" min={0} padrao={valor as number} /></Formulario>;
+      return <Formulario acao={acao} textoBotao="Salvar parâmetro"><CampoTexto nome="valor" rotulo="Valor em reais" tipo="number" min={0} padrao={valor as number} /></Formulario>;
     case "horario_corte_integracao":
-      return <Formulario acao={acao} textoBotao="Salvar"><CampoTexto nome="valor" rotulo="Hora (0 a 23)" tipo="number" min={0} max={23} padrao={valor as number} /></Formulario>;
+      return <Formulario acao={acao} textoBotao="Salvar parâmetro"><CampoTexto nome="valor" rotulo="Hora (0 a 23)" tipo="number" min={0} max={23} padrao={valor as number} /></Formulario>;
     case "antecedencia_visita_dias":
-      return <Formulario acao={acao} textoBotao="Salvar"><CampoTexto nome="valor" rotulo="Dias de antecedência" tipo="number" min={0} padrao={valor as number} /></Formulario>;
+      return <Formulario acao={acao} textoBotao="Salvar parâmetro"><CampoTexto nome="valor" rotulo="Dias de antecedência" tipo="number" min={0} padrao={valor as number} /></Formulario>;
     case "prazo_analise_rh": {
       const v = valor as { dias: number; uteis: boolean };
       return (
-        <Formulario acao={acao} textoBotao="Salvar">
+        <Formulario acao={acao} textoBotao="Salvar parâmetro">
           <CampoTexto nome="dias" rotulo="Dias" tipo="number" min={1} padrao={v.dias} />
           <div className="lista-agrupada"><Marcador nome="uteis" marcado={v.uteis} rotulo="Contar só dias úteis" /></div>
         </Formulario>
@@ -72,7 +72,7 @@ function Editor({ chave, valor }: { chave: ChaveParametro; valor: unknown }) {
     case "validade_documentos_meses": {
       const v = valor as { aso: number; nr: number; rg_cnh: number };
       return (
-        <Formulario acao={acao} textoBotao="Salvar">
+        <Formulario acao={acao} textoBotao="Salvar parâmetro">
           <div className="grid grid-cols-3 gap-3">
             <CampoTexto nome="aso" rotulo="ASO (meses)" tipo="number" min={1} padrao={v.aso} />
             <CampoTexto nome="nr" rotulo="NRs (meses)" tipo="number" min={1} padrao={v.nr} />

@@ -31,7 +31,7 @@ export default async function PaginaObra({ params }: PageProps<"/admin/obras/[id
         <h2 className="titulo mt-2 text-[28px]">{obra.nome}</h2>
       </div>
       <section className="painel max-w-[560px]">
-        <Formulario acao={atualizarObra.bind(null, obra.id)} textoBotao="Salvar">
+        <Formulario acao={atualizarObra.bind(null, obra.id)} textoBotao="Salvar obra">
           <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-3">
             <CampoTexto nome="codigo" rotulo="Código" padrao={obra.codigo} />
             <CampoTexto nome="nome" rotulo="Nome" padrao={obra.nome} />

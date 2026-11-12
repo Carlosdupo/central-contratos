@@ -56,8 +56,8 @@ export default async function PaginaAnaliseEnvio({ params }: PageProps<"/terceir
               </div>
               {aberto && !item.decisao && (
                 <div className="flex flex-wrap items-start gap-3">
-                  <Formulario acao={aprovarDocumento.bind(null, item.id)} textoBotao="Aprovar" className="flex" />
-                  <Formulario acao={reprovarDocumento.bind(null, item.id)} textoBotao="Reprovar" variante="perigo" className="flex flex-wrap items-center gap-2">
+                  <Formulario acao={aprovarDocumento.bind(null, item.id)} textoBotao="Aprovar documento" className="flex" />
+                  <Formulario acao={reprovarDocumento.bind(null, item.id)} textoBotao="Devolver documento" variante="perigo" className="flex flex-wrap items-center gap-2">
                     <input name="motivo" placeholder="Motivo (a empresa vai ver)" aria-label="Motivo da reprovação" className="campo max-w-[300px] py-1.5" />
                   </Formulario>
                 </div>

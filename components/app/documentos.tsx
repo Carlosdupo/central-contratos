@@ -134,7 +134,7 @@ export function EnviarArquivo({ dono, tipoDoc, regra = "sem_validade", competenc
 }
 
 /** Botão genérico que chama uma ação do servidor que devolve um link temporário. */
-export function BotaoAbrir({ acao, texto = "Abrir" }: { acao: () => Promise<{ url?: string; erro?: string }>; texto?: string }) {
+export function BotaoAbrir({ acao, texto = "Abrir arquivo" }: { acao: () => Promise<{ url?: string; erro?: string }>; texto?: string }) {
   const [erro, setErro] = useState("");
   const [abrindo, setAbrindo] = useState(false);
   return (

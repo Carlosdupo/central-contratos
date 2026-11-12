@@ -35,7 +35,7 @@ export function ListaDocumentosEmpresa({ itens, editavel, podeAbrir }: { itens: 
             </div>
             {aceitaNovo &&
               (item.tipo.aceita_texto ? (
-                <Formulario acao={salvarTextoEmpresa.bind(null, item.tipo.codigo)} textoBotao="Salvar" className="flex flex-wrap items-center gap-2">
+                <Formulario acao={salvarTextoEmpresa.bind(null, item.tipo.codigo)} textoBotao="Salvar informação" className="flex flex-wrap items-center gap-2">
                   <input name="texto" defaultValue={item.valorTexto ?? ""} placeholder="Nome da contabilidade e telefone" aria-label={item.tipo.nome} className="campo max-w-[360px] py-1.5" />
                 </Formulario>
               ) : (
