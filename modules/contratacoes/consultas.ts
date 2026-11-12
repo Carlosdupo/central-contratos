@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { carregarFeriados } from "@/lib/configuracao";
 import { agoraNoFuso, situacaoPrazo, type Prazo, type SituacaoPrazo } from "@/lib/datas";
@@ -42,7 +43,8 @@ export type EtapaAberta = {
 const ORDEM: Record<string, number> = { atrasada: 0, vence_hoje: 1, vence_amanha: 2, no_prazo: 3, sem_prazo: 4 };
 
 /** Etapas em andamento das contratações que o usuário vê (a RLS filtra por obra para o coordenador). */
-export async function etapasEmAberto(): Promise<EtapaAberta[]> {
+// cache(): na mesma requisição (menu + painel) a consulta roda uma vez só.
+export const etapasEmAberto = cache(async (): Promise<EtapaAberta[]> => {
   const supabase = await criarClienteServidor();
   const [fluxo, feriados, { data }] = await Promise.all([
     carregarFluxo(),
@@ -73,7 +75,7 @@ export async function etapasEmAberto(): Promise<EtapaAberta[]> {
       };
     })
     .sort((a, b) => ORDEM[a.prazo.tipo] - ORDEM[b.prazo.tipo] || (b.prazo.usados - a.prazo.usados));
-}
+});
 
 export async function detalheDaContratacao(id: string) {
   const supabase = await criarClienteServidor();
