@@ -1,6 +1,6 @@
-# Central de Contratos
+# Nexo
 
-Contratação de empreiteiros e gestão de terceiros (documentos, análise do RH e integração).
+Contratação e liberação de terceiros: contratação de empreiteiros e gestão de terceiros (documentos, análise do RH e integração). O repositório e o pacote continuam com o nome técnico `central-contratos`.
 
 - Plano técnico aprovado: [docs/ETAPA-0-arquitetura.md](docs/ETAPA-0-arquitetura.md)
 - Regras de negócio: [docs/BRIEFING-sistema-contratos.md](docs/BRIEFING-sistema-contratos.md)

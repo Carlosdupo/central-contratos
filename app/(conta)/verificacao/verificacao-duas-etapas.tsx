@@ -37,7 +37,7 @@ export function VerificacaoDuasEtapas() {
         const { error: erroRemover } = await supabase.auth.mfa.unenroll({ factorId: f.id });
         if (erroRemover) console.error("Falha ao remover cadastro incompleto de verificação", erroRemover.message);
       }
-      const novo = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: "Central de Contratos" });
+      const novo = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: "Nexo" });
       if (novo.error) {
         console.error("Falha ao gerar QR code", novo.error.message);
         return setEstado({ etapa: "falha", mensagem: "Não foi possível gerar o QR code. Recarregue a página." });

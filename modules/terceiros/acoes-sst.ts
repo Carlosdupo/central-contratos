@@ -39,7 +39,7 @@ export async function registrarIntegracao(alocacaoId: string, presente: boolean)
     p_presente: presente,
     p_nova_data: novaData ?? hoje, // ignorada quando presente
     p_assunto: assunto,
-    p_texto: `${texto}\n\nAcesse o portal: ${envPublico.NEXT_PUBLIC_SITE_URL}/portal\n\nCentral de Contratos`,
+    p_texto: `${texto}\n\nAcesse o portal: ${envPublico.NEXT_PUBLIC_SITE_URL}/portal\n\nNexo`,
   });
   if (error) return { erro: mensagemDeErro(error, "Não foi possível registrar.") };
   after(() => despacharPendentes(5).catch(() => undefined)); // depois da resposta: não faz o usuário esperar o e-mail

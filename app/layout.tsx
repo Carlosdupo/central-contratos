@@ -7,8 +7,8 @@ export const dynamic = "force-dynamic";
 
 // Fonte do sistema (San Francisco no Mac/iPhone, Segoe UI no Windows), como no protótipo.
 export const metadata: Metadata = {
-  title: { default: "Central de Contratos", template: "%s · Central de Contratos" },
-  description: "Contratação de empreiteiros e gestão de terceiros.",
+  title: { default: "Nexo", template: "%s · Nexo" },
+  description: "Nexo: contratação e liberação de terceiros.",
   robots: { index: false, follow: false },
 };
 

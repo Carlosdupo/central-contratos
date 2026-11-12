@@ -20,7 +20,7 @@ import { dataDaIntegracao } from "./dominio/integracao";
 const uuid = z.uuid();
 const DIAS = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
 const diaPorExtenso = (data: string) => `${DIAS[new Date(`${data}T12:00:00Z`).getUTCDay()]}, ${formatarData(data)}`;
-const rodape = () => `\n\nAcesse o portal: ${envPublico.NEXT_PUBLIC_SITE_URL}/portal\n\nCentral de Contratos`;
+const rodape = () => `\n\nAcesse o portal: ${envPublico.NEXT_PUBLIC_SITE_URL}/portal\n\nNexo`;
 
 export async function aprovarDocumento(itemId: string): Promise<EstadoFormulario> {
   await exigirPapel("rh");

@@ -252,11 +252,11 @@ otp_expiry = 3600
 # Modelos em português: o plano gratuito sem SMTP próprio não permite trocar os modelos.
 # Descomentar quando o envio pelo Resend estiver configurado (fase F3).
 # [auth.email.template.invite]
-# subject = "Convite para a Central de Contratos"
+# subject = "Convite para o Nexo"
 # content_path = "./supabase/templates/convite.html"
 
 # [auth.email.template.recovery]
-# subject = "Criar uma nova senha na Central de Contratos"
+# subject = "Criar uma nova senha no Nexo"
 # content_path = "./supabase/templates/recuperar-senha.html"
 
 # Uncomment to customize notification email template

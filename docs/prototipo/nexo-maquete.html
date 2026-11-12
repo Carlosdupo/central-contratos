@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0;font-size:14px}</style>
+</head>
+<body>
+<title>Nexo Maquete</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: menu lateral agrupado + área de trabalho; no celular o menu vira gaveta. Quatro telas: Entrar, Painel, Panorama, Pessoas. */
+:root{
+  --bg:#F4F6F9; --surface:#FFFFFF; --surface-2:#EEF1F6; --fg:#101827; --muted:#5B6678; --line:#DDE2EA;
+  --line-strong:#778296; --accent:#1D5FE0; --accent-ink:#FFFFFF; --accent-soft:#E4EDFD;
+  --ok:#0E7A4B; --ok-soft:#DDF3E8; --warn:#8A5A00; --warn-soft:#FBEBC8; --hot:#B4410A; --hot-soft:#FCE3D3; --bad:#B42318; --bad-soft:#FCE0DD;
+  --r-sm:10px; --r-md:14px; --r-pill:99px; --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px;
+  --font-display:"Space Grotesk","Inter",system-ui,sans-serif; --font-body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0C0F14; --surface:#151A22; --surface-2:#1C222C; --fg:#E8ECF3; --muted:#9AA5B6; --line:#262D39;
+  --line-strong:#66738A; --accent:#5B8DFF; --accent-ink:#0A1226; --accent-soft:#17274A;
+  --ok:#4CD39A; --ok-soft:#10301F; --warn:#F2BD52; --warn-soft:#382A0A; --hot:#FF9A62; --hot-soft:#3A1F10; --bad:#FF8A80; --bad-soft:#3B1815; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0C0F14; --surface:#151A22; --surface-2:#1C222C; --fg:#E8ECF3; --muted:#9AA5B6; --line:#262D39;
+  --line-strong:#66738A; --accent:#5B8DFF; --accent-ink:#0A1226; --accent-soft:#17274A;
+  --ok:#4CD39A; --ok-soft:#10301F; --warn:#F2BD52; --warn-soft:#382A0A; --hot:#FF9A62; --hot-soft:#3A1F10; --bad:#FF8A80; --bad-soft:#3B1815; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:14px/1.5 var(--font-body);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--font-display);margin:0;letter-spacing:-.01em;text-wrap:balance}
+p{margin:0}
+button,input{font:inherit;color:inherit}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* faixa de aviso da maquete */
+.mock{background:var(--accent-soft);color:var(--fg);font-size:12px;padding:6px max(16px,env(safe-area-inset-right,0px)) 6px max(16px,env(safe-area-inset-left,0px));text-align:center;border-bottom:1px solid var(--line)}
+
+/* casca */
+.app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:calc(100vh - 30px)}
+.side{background:var(--surface);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:20px;position:sticky;top:0;align-self:start;height:100vh;overflow:auto}
+.brand{display:flex;align-items:center;gap:10px;padding:0 10px}
+.brand b{font:700 20px/1 var(--font-display);letter-spacing:.14em}
+.brand small{display:block;font-size:11px;color:var(--muted);letter-spacing:0;font-weight:400;margin-top:3px;font-family:var(--font-body)}
+.logo{width:34px;height:34px;flex:none}
+.logo .bg{fill:var(--accent)}.logo .fg{stroke:var(--accent-ink);fill:none;stroke-width:2.6;stroke-linecap:round}.logo .dot{fill:var(--accent-ink)}
+.grp{display:flex;flex-direction:column;gap:2px}
+.grp h3{font:600 11px/1 var(--font-body);text-transform:uppercase;letter-spacing:.09em;color:var(--muted);padding:0 10px 8px}
+.nav{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;color:var(--muted);font-weight:500;min-height:44px}
+.nav:hover{background:var(--surface-2);color:var(--fg)}
+.nav[aria-current="page"]{background:var(--accent-soft);color:var(--accent)}
+.nav .pill{margin-left:auto}
+.nav .pill::before{display:none}
+.user{margin-top:auto;display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:12px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-weight:600;font-size:12px}
+.user small{display:block;color:var(--muted);font-size:12px}
+
+.topbar{display:none}
+.main{padding:28px max(24px,env(safe-area-inset-right,0px)) 56px max(28px,env(safe-area-inset-left,0px));min-width:0;max-width:1180px;width:100%}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.head h1{font-size:28px;line-height:1.15}
+.head p{color:var(--muted);margin-top:4px;max-width:60ch}
+
+/* botões e etiquetas */
+.btn{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 16px;border-radius:var(--r-sm);border:1px solid var(--line-strong);background:var(--surface);font-weight:600;cursor:pointer}
+.btn:hover{background:var(--surface-2)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.btn.sm{min-height:40px;padding:0 12px;font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--surface-2);color:var(--muted)}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.hot{background:var(--hot-soft);color:var(--hot)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.info{background:var(--accent-soft);color:var(--accent)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;min-width:0}
+.card>header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px 0}
+.card>header h2{font-size:16px}
+.card>header a{color:var(--accent);font-weight:600;font-size:13px}
+.pad{padding:16px 18px 18px}
+
+/* painel */
+.today{display:grid;gap:12px;margin-bottom:22px}
+.task{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surface);flex-wrap:wrap}
+.task .tx{flex:1 1 260px;min-width:0}
+.task .tx b{display:block;font-weight:600}
+.task .tx span{color:var(--muted);font-size:13px}
+.stripe{width:4px;align-self:stretch;border-radius:4px;background:var(--hot)}
+.stripe.info{background:var(--accent)}.stripe.warn{background:var(--warn)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:22px}
+.kpi{padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.kpi b{display:block;font:600 30px/1.1 var(--font-display)}
+.kpi span{color:var(--muted);font-size:13px}
+.kpi.zero b{color:var(--muted);font-weight:500}
+.kpi.zero{background:transparent}
+.kpi.hot b{color:var(--hot)}
+.cols{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:16px}
+.list{list-style:none;margin:0;padding:6px 0 0}
+.list li{display:flex;align-items:center;gap:12px;padding:11px 18px;border-top:1px solid var(--line);flex-wrap:wrap}
+.list li:first-child{border-top:0}
+.list .tx{flex:1 1 200px;min-width:0}
+.list .tx b{display:block;font-weight:600}
+.list .tx span{color:var(--muted);font-size:13px}
+.steps{display:flex;gap:3px;margin-top:8px}
+.steps i{height:5px;flex:1;border-radius:3px;background:var(--line-strong);opacity:.55;max-width:22px}
+.steps i.d,.steps i.n{opacity:1}
+.sn{display:block;margin-top:4px;color:var(--muted);font-size:12px}
+.steps i.d{background:var(--ok)}.steps i.n{background:var(--accent)}
+.empty{padding:22px 18px;text-align:center;color:var(--muted)}
+
+/* panorama */
+.legend{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:13px;margin-bottom:14px;align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.chip{padding:6px 12px;border-radius:99px;border:1px solid var(--line-strong);background:var(--surface);font-weight:500;font-size:13px;cursor:pointer;min-height:40px}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.scroll{overflow-x:auto;position:relative}
+table{border-collapse:separate;border-spacing:0;width:100%;min-width:800px}
+th{font:600 11px/1.2 var(--font-body);text-transform:uppercase;letter-spacing:.07em;color:var(--muted);text-align:center;padding:12px 8px;border-bottom:1px solid var(--line);background:var(--surface)}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--surface);z-index:1;min-width:240px;max-width:240px;padding-left:18px}
+td{padding:14px 8px;border-bottom:1px solid var(--line);text-align:center;vertical-align:middle}
+tr:last-child td{border-bottom:0}
+th[scope="row"]{font:inherit;text-transform:none;letter-spacing:0;color:var(--fg);text-align:left;padding:14px 8px 14px 18px;border-bottom:1px solid var(--line)}
+th[scope="row"] b{display:block;font-weight:600;white-space:normal}
+th[scope="row"] span{color:var(--muted);font-size:12px;font-weight:400}
+tr:last-child th[scope="row"]{border-bottom:0}
+.cell{display:inline-flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--muted)}
+.cell svg{width:22px;height:22px}
+.cell.done{color:var(--ok)}
+.cell.now{color:var(--accent)}
+.cell .dash{width:14px;height:2px;border-radius:2px;background:var(--line);margin:10px 0}
+.now-tag{background:var(--accent);color:var(--accent-ink);border-radius:99px;padding:3px 10px;font-weight:600;font-size:12px}
+
+/* pessoas */
+.search{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.field{flex:1 1 260px;display:flex;align-items:center;gap:10px;border:1px solid var(--line-strong);background:var(--surface);border-radius:12px;padding:0 14px;min-height:46px}
+.field:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.field input{border:0;background:transparent;outline:0;flex:1;min-width:0}
+.person{display:flex;align-items:center;gap:14px;padding:14px 18px;border-top:1px solid var(--line);flex-wrap:wrap}
+.person:first-child{border-top:0}
+.person .tx{flex:1 1 220px;min-width:0}
+.person .tx b{display:block;font-weight:600}
+.person .tx span{color:var(--muted);font-size:13px}
+.badge{display:inline-flex;align-items:center;gap:8px;font:700 13px/1 var(--font-display);letter-spacing:.08em;padding:10px 14px;border-radius:10px}
+.badge svg{width:18px;height:18px}
+.badge.ok{background:var(--ok);color:var(--surface)}
+.badge.bad{background:var(--bad);color:var(--surface)}
+.badge.warn{background:var(--warn-soft);color:var(--warn)}
+.docs{color:var(--muted);font-size:12px;width:100%;padding-left:0}
+
+/* entrar */
+.login{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);min-height:calc(100vh - 30px)}
+.login .form{display:flex;flex-direction:column;justify-content:center;gap:24px;padding:40px max(24px,env(safe-area-inset-left,0px));max-width:460px;width:100%;margin:0 auto}
+.login .form .brand{padding:0}
+.login .form .brand b{font-size:24px}
+.login form{display:flex;flex-direction:column;gap:16px}
+.lab{display:flex;flex-direction:column;gap:6px;font-weight:600;font-size:13px}
+.lab input{min-height:46px;border:1px solid var(--line-strong);background:var(--surface);border-radius:12px;padding:0 14px;font-weight:400}
+.lab input:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.pw{position:relative}.pw input{width:100%;padding-right:48px}
+.pw button{position:absolute;right:4px;top:4px;width:38px;height:38px;border:0;background:transparent;border-radius:8px;cursor:pointer;color:var(--muted)}
+.hint{color:var(--muted);font-size:13px;font-weight:400}
+.promo{background:var(--accent);color:var(--accent-ink);padding:48px max(32px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;justify-content:center;gap:28px;position:relative;overflow:hidden}
+.promo h2{font-size:34px;line-height:1.1;max-width:16ch}
+.promo ul{list-style:none;margin:0;padding:0;display:grid;gap:16px;max-width:42ch}
+.promo li{display:flex;gap:14px;align-items:flex-start}
+.promo li svg{width:22px;height:22px;margin-top:2px}
+.promo li b{display:block}
+.promo li span{font-size:13px}
+.net{position:absolute;right:-60px;bottom:-60px;width:380px;opacity:.16}
+.net *{stroke:var(--accent-ink);fill:none;stroke-width:3}.net circle{fill:var(--accent-ink)}
+
+/* responsivo */
+@media (max-width:980px){
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cols{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:860px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+  .topbar .brand b{font-size:18px}
+  .side{position:fixed;inset:0 auto 0 0;width:min(86vw,300px);height:100%;z-index:20;transform:translateX(-102%);visibility:hidden;transition:transform .2s,visibility 0s .2s;padding-top:calc(20px + env(safe-area-inset-top,0px));padding-left:max(14px,env(safe-area-inset-left,0px))}
+  .side.open{transform:none;visibility:visible;transition-delay:0s;box-shadow:0 0 0 100vmax rgba(0,0,0,.45)}
+  .main{padding:20px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
+  .head h1{font-size:24px}
+  .login{grid-template-columns:minmax(0,1fr)}
+  .promo{order:2;padding:32px max(16px,env(safe-area-inset-left,0px))}
+  .promo h2{font-size:26px}
+  td:first-child,th:first-child{min-width:200px;max-width:200px}
+}
+@media (max-width:420px){.kpis{gap:8px}.kpi b{font-size:26px}}
+@media (prefers-reduced-motion:reduce){.side{transition:none}}
+[hidden]{display:none!important}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:-1px;padding:0;border:0}
+.skip{position:absolute;left:12px;top:-60px;z-index:50;background:var(--accent);color:var(--accent-ink);padding:10px 16px;border-radius:var(--r-sm);font-weight:600}
+.skip:focus{top:8px}
+.err{color:var(--bad);background:var(--bad-soft);border-radius:var(--r-sm);padding:10px 12px;font-weight:500}
+.scroll:focus-visible{outline-offset:-2px}
+h1:focus{outline:0}
+@media (pointer:coarse){.btn,.btn.sm,.chip,.field,.lab input{min-height:44px}.pw button{width:44px;height:44px;top:1px;right:1px}}
+/* padrões visuais */
+.ds{display:grid;gap:18px}
+.ds h2{font-size:18px}
+.ds .card .pad{display:grid;gap:14px}
+.ds table{min-width:640px}
+.ds td,.ds th{text-align:left;padding:10px 12px;vertical-align:middle}
+.ds th:first-child,.ds td:first-child{position:static;min-width:0;max-width:none;padding-left:12px}
+.sw{display:inline-block;width:28px;height:28px;border-radius:8px;border:1px solid var(--line-strong);vertical-align:middle;margin-right:8px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tscale{display:grid;gap:8px}
+.tscale div{display:flex;gap:16px;align-items:baseline;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:8px}
+.tscale small{color:var(--muted);min-width:170px}
+.dd{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.dd ul{margin:0;padding-left:18px;display:grid;gap:4px}
+@media (max-width:700px){.dd{grid-template-columns:minmax(0,1fr)}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 13h5M10 17h5"/></symbol>
+  <symbol id="i-matrix" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></symbol>
+  <symbol id="i-build" viewBox="0 0 24 24"><path d="M4 21V8l8-4 8 4v13M9 21v-5h6v5M8 11h2M14 11h2"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.500 7-4.500 7-9V6z"/><path d="m9 12 2.200 2.200L15 10"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.600 5.600l2.100 2.100M16.300 16.300l2.100 2.100M5.600 18.400l2.100-2.100M16.300 7.700l2.100-2.100"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-block" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.500-6.500 10-6.500S22 12 22 12s-3.500 6.500-10 6.500S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.500"/><path d="M2.500 20c.5-3.500 3-5.500 6.500-5.500s6 2 6.500 5.500M16 5a3.500 3.500 0 0 1 0 6.500M18.500 14.800c1.800.8 3 2.600 3.300 5.200"/></symbol>
+  <symbol id="logo" viewBox="0 0 40 40"><rect width="40" height="40" rx="11" style="fill:var(--accent)"/><path d="M12 28V12M28 28V12M12 12l16 16" style="fill:none;stroke:var(--accent-ink);stroke-width:2.6;stroke-linecap:round"/><circle cx="12" cy="12" r="3" style="fill:var(--accent-ink)"/><circle cx="28" cy="28" r="3" style="fill:var(--accent-ink)"/></symbol>
+  <symbol id="i-pal" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.200 0 1.800-.8 1.800-1.700 0-1.300-1-1.600-1-2.600 0-.9.700-1.500 1.700-1.500H17a4 4 0 0 0 4-4C21 6.200 17 3 12 3z"/><circle cx="7.500" cy="11" r="1"/><circle cx="10" cy="7.500" r="1"/><circle cx="15" cy="7.500" r="1"/></symbol>
+</svg>
+
+<a class="skip" href="#conteudo">Ir para o conteúdo</a>
+<div class="mock" role="note">Maquete visual do Nexo com dados de exemplo da obra Block Aparts. Nada aqui grava informação. Itens do menu sem tela de exemplo levam ao Painel.</div>
+
+<!-- ENTRAR -->
+<section id="v-login" class="login" hidden>
+  <div class="form">
+    <div class="brand"><svg class="logo" aria-hidden="true" focusable="false"><use href="#logo"/></svg><div><b>NEXO</b><small>Contratação e liberação de terceiros</small></div></div>
+    <div>
+      <h1 style="font-size:28px">Acesse sua conta</h1>
+      <p class="hint" style="margin-top:6px">Use o e-mail cadastrado no convite. Depois da senha, o sistema pede o código de verificação em duas etapas.</p>
+    </div>
+    <form id="f-login" novalidate>
+      <label class="lab" for="em">E-mail<input id="em" type="email" required placeholder="nome@empresa.com.br" autocomplete="username" aria-describedby="err"></label>
+      <label class="lab" for="pw">Senha
+        <span class="pw"><input id="pw" type="password" required autocomplete="current-password" aria-describedby="err"><button type="button" id="tg" aria-label="Mostrar senha" aria-pressed="false"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-eye"/></svg></button></span>
+      </label>
+      <p class="err" id="err" role="alert" hidden></p>
+      <button class="btn pri" style="min-height:46px;justify-content:center" type="submit">Entrar</button>
+      <a href="#login" class="hint" style="text-align:center;color:var(--accent);font-weight:500;padding:12px 0">Esqueci minha senha</a>
+    </form>
+    <p class="hint">Sua empresa foi convidada e ainda não tem acesso? Peça ao contato de Suprimentos para reenviar o convite.</p>
+  </div>
+  <aside class="promo">
+    <svg class="net" viewBox="0 0 200 200" aria-hidden="true"><path d="M30 40 100 100 170 60M100 100 60 170M100 100 160 160"/><circle cx="30" cy="40" r="9"/><circle cx="100" cy="100" r="12"/><circle cx="170" cy="60" r="9"/><circle cx="60" cy="170" r="9"/><circle cx="160" cy="160" r="9"/></svg>
+    <h2>Ninguém entra na obra sem estar em dia.</h2>
+    <ul>
+      <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-doc"/></svg><div><b>Documentos da empresa e da equipe</b><span>Envio pelo portal, com vencimento calculado e avisos 30, 15 e 0 dias antes.</span></div></li>
+      <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg><div><b>Análise do RH em 2 dias úteis</b><span>Cada documento é aprovado ou devolvido com o motivo.</span></div></li>
+      <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-shield"/></svg><div><b>Integração e liberação</b><span>Presença marcada pela segurança do trabalho e pessoa liberada para a obra.</span></div></li>
+    </ul>
+  </aside>
+</section>
+
+<!-- CASCA -->
+<div class="app" id="shell" hidden>
+  <div class="topbar">
+    <div class="brand"><svg class="logo" aria-hidden="true" focusable="false" style="width:30px;height:30px"><use href="#logo"/></svg><b>NEXO</b></div>
+    <button class="btn sm" id="mn" aria-controls="side" aria-expanded="false"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-menu"/></svg>Menu</button>
+  </div>
+  <aside class="side" id="side" aria-label="Menu principal">
+    <div class="brand"><svg class="logo" aria-hidden="true" focusable="false"><use href="#logo"/></svg><div><b>NEXO</b><small>Contratação e liberação de terceiros</small></div></div>
+    <nav class="grp" aria-label="Obras"><h3>Obras</h3>
+      <a class="nav" data-r="painel" href="#painel"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-grid"/></svg>Painel<span class="pill hot" aria-label="3 pendências">3</span></a>
+      <a class="nav" data-r="contratacoes" href="#painel"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-doc"/></svg>Contratações</a>
+      <a class="nav" data-r="panorama" href="#panorama"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-matrix"/></svg>Panorama das obras</a>
+    </nav>
+    <nav class="grp" aria-label="Terceiros"><h3>Terceiros</h3>
+      <a class="nav" data-r="empresas" href="#painel"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-build"/></svg>Empresas</a>
+      <a class="nav" data-r="pessoas" href="#pessoas"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-search"/></svg>Consultar pessoas</a>
+      <a class="nav" data-r="rh" href="#painel"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Análise do RH</a>
+      <a class="nav" data-r="integracao" href="#painel"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-shield"/></svg>Integração</a>
+    </nav>
+    <nav class="grp" aria-label="Sistema"><h3>Sistema</h3>
+      <a class="nav" data-r="admin" href="#painel"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-gear"/></svg>Administração</a>
+      <a class="nav" data-r="sistema" href="#sistema"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-pal"/></svg>Padrões visuais</a>
+      <a class="nav" href="#login"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-eye"/></svg>Ver tela de entrada</a>
+    </nav>
+    <div class="user"><div class="avatar">CD</div><div><b>Carlos Dupont</b><small>Coordenador de obra</small></div></div>
+  </aside>
+
+  <main class="main" id="conteudo" tabindex="-1">
+    <!-- PAINEL -->
+    <section id="v-painel" hidden>
+      <div class="head">
+        <div><h1>Bom dia, Carlos</h1><p>Quarta-feira, 11/11/2026. Três itens esperam por você.</p></div>
+        <button class="btn pri"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-doc"/></svg>Nova contratação</button>
+      </div>
+
+      <div class="today" aria-label="O que precisa de você hoje">
+        <div class="task"><span class="stripe"></span><div class="tx"><b>Autorizar contratação CT-2026-027</b><span>Instalações elétricas · Block Aparts · Tecnotel Energia · parada há 0 dia</span></div><span class="pill hot">Aguarda você</span><button class="btn pri sm">Autorizar contratação</button></div>
+        <div class="task"><span class="stripe info"></span><div class="tx"><b>Reunir 3 cotações para CT-2026-061</b><span>Mão de obra de instalações elétricas e telefônicas · Block Aparts · prazo a definir</span></div><span class="pill info">Em andamento</span><button class="btn sm">Abrir cotação</button></div>
+        <div class="task"><span class="stripe warn"></span><div class="tx"><b>Joãozinho (exemplo) aguarda a integração de quinta, 12/11</b><span>Pedreiro · Empresa Exemplo Engenharia · Block Aparts</span></div><span class="pill warn">Amanhã</span><button class="btn sm">Ver lista de integração</button></div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi hot"><b class="num">1</b><span>Para você autorizar</span></div>
+        <div class="kpi"><b class="num">3</b><span>Contratações em andamento</span></div>
+        <div class="kpi zero"><b class="num">0</b><span>Etapas atrasadas</span></div>
+        <div class="kpi zero"><b class="num">0</b><span>Pessoas bloqueadas</span></div>
+      </div>
+
+      <div class="cols">
+        <div class="card">
+          <header><h2>Contratações em andamento</h2><a href="#panorama">Ver panorama</a></header>
+          <ul class="list">
+            <li><div class="tx"><b>Elétrica, Automação e Telecomunicação</b><span>CT-2026-052 · Tecnotel · RH, 2 dias úteis restantes</span><div class="steps" aria-hidden="true"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="n"></i><i></i><i></i></div><span class="sn num">Etapa 10 de 12 · Documentação RH</span></div><span class="pill ok">No prazo</span></li>
+            <li><div class="tx"><b>Elétrica, Automação e Telecomunicação</b><span>CT-2026-027 · Tecnotel Energia · Gerente de suprimentos</span><div class="steps" aria-hidden="true"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="n"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span class="sn num">Etapa 5 de 12 · Autorização</span></div><span class="pill">Prazo a definir</span></li>
+            <li><div class="tx"><b>Mão de obra de instalações elétricas</b><span>CT-2026-061 · Coordenador de obra · cotação</span><div class="steps" aria-hidden="true"><i class="n"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span class="sn num">Etapa 1 de 12 · Cotação</span></div><span class="pill">Prazo a definir</span></li>
+          </ul>
+        </div>
+        <div class="card">
+          <header><h2>Documentos vencendo em 30 dias</h2></header>
+          <ul class="list">
+            <li><div class="tx"><b>PCMSO, PGR e LTCAT</b><span>Empresa Exemplo Engenharia</span></div><span class="pill warn num">09/12 · 28 dias</span></li>
+            <li><div class="tx"><b>CND federal</b><span>Empresa Exemplo Engenharia</span></div><span class="pill warn num">11/12 · 30 dias</span></li>
+          </ul>
+          <div class="empty" style="border-top:1px solid var(--line)">Nenhuma pessoa bloqueada por documento vencido.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANORAMA -->
+    <section id="v-panorama" hidden>
+      <div class="head">
+        <div><h1>Panorama das obras</h1><p>Cada linha é uma contratação. Cada coluna mostra a data em que a área liberou ou se ainda está com ela.</p></div>
+        <button class="btn">Ver como lista de contratações</button>
+      </div>
+      <div class="legend" aria-label="Legenda">
+        <span><svg class="i" aria-hidden="true" focusable="false" style="color:var(--ok)"><use href="#i-check"/></svg>Área liberou, com data</span>
+        <span><span class="now-tag">Agora</span>Está com esta área</span>
+        <span><span class="dash" style="width:14px;height:2px;background:var(--line);display:inline-block"></span>Ainda não chegou</span>
+      </div>
+      <div class="chips" role="group" aria-label="Filtrar situação">
+        <button class="chip" aria-pressed="true">Todas 3</button><button class="chip" aria-pressed="false">Em andamento 3</button><button class="chip" aria-pressed="false">Com atraso 0</button><button class="chip" aria-pressed="false">Liberadas 0</button>
+      </div>
+      <div class="card"><div class="scroll" tabindex="0" role="region" aria-label="Tabela do panorama, role para o lado para ver todas as etapas"><table>
+        <caption class="sr-only">Etapa de cada contratação por área</caption>
+        <thead><tr><th scope="col">Contratação</th><th scope="col">Obra</th><th scope="col">Suprimentos</th><th scope="col">Contrato e minuta</th><th scope="col">Assinaturas</th><th scope="col">Documentação RH</th><th scope="col">Integração</th><th scope="col">Liberação</th></tr></thead>
+        <tbody>
+          <tr><th scope="row"><b>Mão de obra de instalações elétricas e telefônicas</b><span>CT-2026-061 · aberta 11/11 · fornecedor a definir</span></th>
+            <td><span class="now-tag"><span class="sr-only">Está com esta área: </span>Agora</span></td><td><span class="cell"><i class="dash" aria-hidden="true"></i><span class="sr-only">Ainda não chegou</span></span></td><td><span class="cell"><i class="dash" aria-hidden="true"></i><span class="sr-only">Ainda não chegou</span></span></td><td><span class="cell"><i class="dash" aria-hidden="true"></i><span class="sr-only">Ainda não chegou</span></span></td><td><span class="cell"><i class="dash" aria-hidden="true"></i><span class="sr-only">Ainda não chegou</span></span></td><td><span class="cell"><i class="dash" aria-hidden="true"></i><span class="sr-only">Ainda não chegou</span></span></td><td><span class="cell"><i class="dash" aria-hidden="true"></i><span class="sr-only">Ainda não chegou</span></span></td></tr>
+          <tr><th scope="row"><b>Elétrica, Automação e Telecomunicação</b><span>CT-2026-052 · SS 1591 · Tecnotel</span></th>
+            <td><span class="cell done"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span class="sr-only">Liberado em </span>11/11</span></td><td><span class="cell done"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span class="sr-only">Liberado em </span>11/11</span></td><td><span class="cell done"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span class="sr-only">Liberado em </span>11/11</span></td><td><span class="cell done"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span class="sr-only">Liberado em </span>11/11</span></td>
+            <td><span class="now-tag"><span class="sr-only">Está com esta área: </span>Agora</span></td><td><span class="cell"><i class="dash" aria-hidden="true"></i><span class="sr-only">Ainda não chegou</span></span></td><td><span class="cell"><i class="dash" aria-hidden="true"></i><span class="sr-only">Ainda não chegou</span></span></td></tr>
+          <tr><th scope="row"><b>Instalações elétricas</b><span>CT-2026-027 · SS 1591 · Tecnotel Energia</span></th>
+            <td><span class="cell done"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span class="sr-only">Liberado em </span>11/11</span></td><td><span class="now-tag"><span class="sr-only">Está com esta área: </span>Agora</span></td><td><span class="cell"><i class="dash" aria-hidden="true"></i><span class="sr-only">Ainda não chegou</span></span></td><td><span class="cell"><i class="dash" aria-hidden="true"></i><span class="sr-only">Ainda não chegou</span></span></td><td><span class="cell"><i class="dash" aria-hidden="true"></i><span class="sr-only">Ainda não chegou</span></span></td><td><span class="cell"><i class="dash" aria-hidden="true"></i><span class="sr-only">Ainda não chegou</span></span></td><td><span class="cell"><i class="dash" aria-hidden="true"></i><span class="sr-only">Ainda não chegou</span></span></td></tr>
+        </tbody></table></div></div>
+    </section>
+
+    <!-- PESSOAS -->
+    <section id="v-pessoas" hidden>
+      <div class="head"><div><h1>Consultar pessoas</h1><p>Busque pelo nome ou pelo CPF completo para saber se a pessoa está liberada e em qual obra.</p></div></div>
+      <div class="search">
+        <label class="field" for="q"><span class="sr-only">Nome ou CPF</span><svg class="i" aria-hidden="true" focusable="false"><use href="#i-search"/></svg><input id="q" type="search" placeholder="Nome ou CPF" aria-describedby="qh"></label>
+      </div>
+      <p class="hint" id="qh" style="margin:-4px 0 12px">Para buscar pelo CPF, digite os 11 números.</p>
+      <p class="sr-only" id="rs" role="status" aria-live="polite"></p>
+      <div class="chips" role="group" aria-label="Filtrar situação" id="fp">
+        <button class="chip" data-f="" aria-pressed="true">Todas</button><button class="chip" data-f="ok" aria-pressed="false">Liberadas</button><button class="chip" data-f="warn" aria-pressed="false">Aguardando</button><button class="chip" data-f="bad" aria-pressed="false">Bloqueadas</button>
+      </div>
+      <div class="card" id="pl">
+        <div class="person" data-s="ok" data-n="mariana souza"><div class="tx"><b>Mariana Souza</b><span>Eletricista · Empresa Exemplo Engenharia · Block Aparts</span></div><span class="badge ok"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>LIBERADA</span><span class="docs">ASO válido até 03/2027 · NR-10 válida até 08/2028</span></div>
+        <div class="person" data-s="warn" data-n="joao exemplo joaozinho"><div class="tx"><b>Joãozinho (exemplo)</b><span>Pedreiro · Empresa Exemplo Engenharia · Block Aparts</span></div><span class="badge warn"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-clock"/></svg>INTEGRAÇÃO 12/11</span><span class="docs">Documentos aprovados pelo RH em 11/11</span></div>
+        <div class="person" data-s="bad" data-n="paulo exemplo"><div class="tx"><b>Paulo (exemplo)</b><span>Ajudante · Empresa Exemplo Engenharia · Block Aparts</span></div><span class="badge bad"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-block"/></svg>BLOQUEADO</span><span class="docs">ASO vencido em 05/11. A empresa precisa enviar um novo e o RH aprovar.</span></div>
+        <div class="empty" id="ne" hidden>Nenhuma pessoa encontrada. Confira a grafia ou digite o CPF completo.</div>
+      </div>
+    </section>
+
+    <!-- PADRÕES VISUAIS -->
+    <section id="v-sistema" hidden>
+      <div class="head"><div><h1>Padrões visuais</h1><p>Cores, tipografia, espaçamento e componentes do Nexo. Tudo o que aparece nas telas deve vir daqui.</p></div></div>
+      <div class="ds">
+        <div class="card"><header><h2>Cores</h2></header><div class="pad"><div class="scroll" tabindex="0" role="region" aria-label="Tabela de cores"><table>
+          <caption class="sr-only">Cores, uso e contraste medido no tema claro e no escuro</caption>
+          <thead><tr><th scope="col">Cor</th><th scope="col">Uso</th><th scope="col">Contraste claro</th><th scope="col">Contraste escuro</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><span class="sw" style="background:var(--fg)"></span>Texto</th><td>Títulos e corpo, sobre o fundo</td><td class="num">16,4:1</td><td class="num">16,2:1</td></tr>
+            <tr><th scope="row"><span class="sw" style="background:var(--muted)"></span>Texto de apoio</th><td>Descrições, rótulos secundários</td><td class="num">5,8:1</td><td class="num">7,0:1</td></tr>
+            <tr><th scope="row"><span class="sw" style="background:var(--accent)"></span>Destaque</th><td>Ação principal, item atual do menu, links</td><td class="num">5,6:1</td><td class="num">5,6:1</td></tr>
+            <tr><th scope="row"><span class="sw" style="background:var(--ok)"></span>Liberado</th><td>Aprovado, em dia, concluído</td><td class="num">4,6:1</td><td class="num">7,6:1</td></tr>
+            <tr><th scope="row"><span class="sw" style="background:var(--warn)"></span>Atenção</th><td>Vence em até 30 dias, aguardando</td><td class="num">5,0:1</td><td class="num">8,1:1</td></tr>
+            <tr><th scope="row"><span class="sw" style="background:var(--hot)"></span>Urgente</th><td>Vence em até 15 dias, sua vez de agir</td><td class="num">4,6:1</td><td class="num">7,3:1</td></tr>
+            <tr><th scope="row"><span class="sw" style="background:var(--bad)"></span>Bloqueado</th><td>Vencido, reprovado, erro</td><td class="num">5,3:1</td><td class="num">6,9:1</td></tr>
+            <tr><th scope="row"><span class="sw" style="background:var(--line-strong)"></span>Borda de campo</th><td>Campos, botões e filtros (mínimo 3:1)</td><td class="num">3,9:1</td><td class="num">3,7:1</td></tr>
+          </tbody></table></div>
+          <p class="hint">Cor nunca é o único sinal. Toda situação leva texto e, quando cabe, ícone.</p></div></div>
+
+        <div class="card"><header><h2>Tipografia</h2></header><div class="pad"><div class="tscale">
+          <div><small>Título de página · 28 px</small><span style="font:600 28px/1.15 var(--font-display)">Panorama das obras</span></div>
+          <div><small>Título de bloco · 16 px</small><span style="font:600 16px/1.3 var(--font-display)">Documentos vencendo em 30 dias</span></div>
+          <div><small>Corpo · 14 px</small><span>Instalações elétricas · Block Aparts · Tecnotel Energia</span></div>
+          <div><small>Apoio · 13 px</small><span style="font-size:13px;color:var(--muted)">Parada há 0 dia · prazo a definir</span></div>
+          <div><small>Rótulo · 11 px, maiúsculas</small><span style="font:600 11px/1 var(--font-body);text-transform:uppercase;letter-spacing:.09em;color:var(--muted)">Terceiros</span></div>
+        </div><p class="hint">Space Grotesk nos títulos, Inter no resto. Números em colunas usam algarismos de largura fixa.</p></div></div>
+
+        <div class="card"><header><h2>Espaçamento e cantos</h2></header><div class="pad">
+          <div class="row" aria-label="Escala de espaçamento">
+            <span class="pill info">4</span><span class="pill info">8</span><span class="pill info">12</span><span class="pill info">16</span><span class="pill info">24</span><span class="pill info">32</span>
+          </div>
+          <div class="row">
+            <span class="badge warn" style="border-radius:var(--r-sm)">10 px · campos e botões</span>
+            <span class="badge warn" style="border-radius:var(--r-md)">14 px · cartões</span>
+            <span class="badge warn" style="border-radius:var(--r-pill)">Pílula · etiquetas</span>
+          </div>
+        </div></div>
+
+        <div class="card"><header><h2>Componentes</h2></header><div class="pad">
+          <h3 style="font-size:14px">Botão</h3>
+          <div class="row"><button class="btn pri">Autorizar contratação</button><button class="btn">Ver como lista</button><button class="btn ok">Marcar presença</button><button class="btn sm">Abrir cotação</button></div>
+          <h3 style="font-size:14px">Etiqueta de situação</h3>
+          <div class="row"><span class="pill">Prazo a definir</span><span class="pill info">Em andamento</span><span class="pill ok">No prazo</span><span class="pill warn">Vence em 28 dias</span><span class="pill hot">Aguarda você</span><span class="pill bad">Vencido</span></div>
+          <h3 style="font-size:14px">Selo de liberação</h3>
+          <div class="row"><span class="badge ok"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>LIBERADA</span><span class="badge warn"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-clock"/></svg>INTEGRAÇÃO 12/11</span><span class="badge bad"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-block"/></svg>BLOQUEADO</span></div>
+          <div class="scroll" tabindex="0" role="region" aria-label="Estados dos componentes"><table>
+            <caption class="sr-only">Estados e acessibilidade de cada componente</caption>
+            <thead><tr><th scope="col">Componente</th><th scope="col">Estados</th><th scope="col">Teclado e leitor de tela</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Botão</th><td>Normal, passar o mouse, foco (anel azul de 2 px), pressionado, desativado, carregando</td><td>Tab para chegar, Enter ou Espaço para acionar. O nome diz a ação.</td></tr>
+              <tr><th scope="row">Filtro (chip)</th><td>Normal, selecionado, foco</td><td>Botão com "pressionado" anunciado. Mudar o filtro anuncia a quantidade de resultados.</td></tr>
+              <tr><th scope="row">Campo de texto</th><td>Normal, foco, preenchido, erro, desativado</td><td>Rótulo sempre visível. Erro aparece em texto, ligado ao campo, e recebe o foco.</td></tr>
+              <tr><th scope="row">Etiqueta e selo</th><td>Uma por situação</td><td>Texto próprio. Ícones são decorativos e ficam ocultos para leitor de tela.</td></tr>
+              <tr><th scope="row">Tabela do panorama</th><td>Etapa concluída, atual, ainda não chegou</td><td>Cabeçalhos de coluna e de linha. Cada célula tem texto, como "Liberado em 11/11".</td></tr>
+            </tbody></table></div>
+        </div></div>
+
+        <div class="dd">
+          <div class="card"><div class="pad"><h2 style="font-size:16px">Faça</h2><ul>
+            <li>Use verbo na ação: "Autorizar contratação", "Abrir cotação".</li>
+            <li>Mostre o que precisa de ação antes do resumo.</li>
+            <li>Escreva o motivo e o próximo passo em toda reprovação.</li></ul></div></div>
+          <div class="card"><div class="pad"><h2 style="font-size:16px">Não faça</h2><ul>
+            <li>Não use só cor para indicar situação.</li>
+            <li>Não use "OK", "Enviar" ou "Abrir" sozinhos como nome de botão.</li>
+            <li>Não mostre avisos técnicos, como falta de configuração de e-mail, para quem não administra.</li></ul></div></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function(){
+  var views={painel:'painel',panorama:'panorama',pessoas:'pessoas',sistema:'sistema',login:'login'};
+  var first=true;
+  var shell=document.getElementById('shell'),side=document.getElementById('side'),mn=document.getElementById('mn');
+  function route(){
+    var h=(location.hash||'#painel').slice(1); if(!views[h]) h='painel';
+    document.getElementById('v-login').hidden=h!=='login';
+    shell.hidden=h==='login';
+    ['painel','panorama','pessoas','sistema'].forEach(function(v){document.getElementById('v-'+v).hidden=h!==v});
+    document.querySelectorAll('.nav[data-r]').forEach(function(a){
+      if(a.getAttribute('data-r')===h) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current');
+    });
+    side.classList.remove('open'); mn.setAttribute('aria-expanded','false');
+    window.scrollTo(0,0);
+    if(!first){var t=document.querySelector(h==='login'?'#v-login h1':'#v-'+h+' h1');if(t){t.setAttribute('tabindex','-1');t.focus({preventScroll:true})}}
+    first=false;
+  }
+  window.addEventListener('hashchange',route); route();
+  function closeMenu(back){side.classList.remove('open');mn.setAttribute('aria-expanded','false');if(back)mn.focus()}
+  mn.addEventListener('click',function(){var o=side.classList.toggle('open');mn.setAttribute('aria-expanded',o);if(o){var a=side.querySelector('.nav');if(a)setTimeout(function(){a.focus()},30)}});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&side.classList.contains('open'))closeMenu(true)});
+  document.addEventListener('click',function(e){if(side.classList.contains('open')&&!side.contains(e.target)&&!mn.contains(e.target)){side.classList.remove('open');mn.setAttribute('aria-expanded','false')}});
+  document.getElementById('tg').addEventListener('click',function(){var p=document.getElementById('pw');var s=p.type==='password';p.type=s?'text':'password';this.setAttribute('aria-label',s?'Ocultar senha':'Mostrar senha');this.setAttribute('aria-pressed',s)});
+  document.getElementById('f-login').addEventListener('submit',function(e){
+    e.preventDefault();
+    var em=document.getElementById('em'),pw=document.getElementById('pw'),er=document.getElementById('err'),msg='',f=null;
+    if(!em.value.trim()||em.value.indexOf('@')<1){msg='Digite o e-mail cadastrado no convite, como nome@empresa.com.br.';f=em}
+    else if(!pw.value){msg='Digite sua senha. Se não lembra, use "Esqueci minha senha".';f=pw}
+    em.setAttribute('aria-invalid',f===em);pw.setAttribute('aria-invalid',f===pw);
+    if(f){er.textContent=msg;er.hidden=false;f.focus();return}
+    er.hidden=true;location.hash='painel';
+  });
+  document.querySelectorAll('.chips').forEach(function(g){g.addEventListener('click',function(e){var b=e.target.closest('.chip');if(!b)return;g.querySelectorAll('.chip').forEach(function(c){c.setAttribute('aria-pressed',c===b)});if(g.id==='fp')filter()})});
+  var q=document.getElementById('q');q.addEventListener('input',filter);
+  function filter(){
+    var t=q.value.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    var f=(document.querySelector('#fp .chip[aria-pressed="true"]')||{getAttribute:function(){return''}}).getAttribute('data-f')||'';
+    var n=0;
+    document.querySelectorAll('#pl .person').forEach(function(p){
+      var ok=(!f||p.getAttribute('data-s')===f)&&(!t||p.getAttribute('data-n').indexOf(t)>-1);
+      p.hidden=!ok; if(ok)n++;
+    });
+    document.getElementById('ne').hidden=n>0;
+    document.getElementById('rs').textContent=n===0?'Nenhuma pessoa encontrada.':n+(n===1?' pessoa encontrada.':' pessoas encontradas.');
+  }
+})();
+</script>
+
+</body>
+</html>
