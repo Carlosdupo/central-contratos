@@ -86,7 +86,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
           ["Serviço da EAP", c.pacote ?? "—"],
           ["Negociação", negociaObra ? "Pela obra" : "Pelo Suprimentos"],
           ["Orçado", c.valor_orcado == null ? "não informado" : formatarReais(Number(c.valor_orcado))],
-          ["Negociado", formatarReais(c.valor_negociado ? Number(c.valor_negociado) : null)],
+          ["Contratado", formatarReais(c.valor_negociado ? Number(c.valor_negociado) : null)],
           ["Sienge", [c.sienge_solicitacao && `SS ${c.sienge_solicitacao}`, c.sienge_contrato].filter(Boolean).join(" · ") || "—"],
         ].map(([r, v]) => (
           <div key={r as string}><div className="text-xs font-medium text-faint">{r}</div>{v}</div>
