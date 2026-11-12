@@ -40,7 +40,7 @@ export default async function PaginaNovaContratacao() {
           <Formulario acao={abrirContratacao} textoBotao="Abrir contratação">
             <CamposNovaContratacao obras={obrasComEap} limite={parametros.limiteEscolhaObra} />
             <fieldset className="flex flex-col gap-1.5">
-              <legend className="mb-1.5 text-[12.5px] font-medium text-muted-foreground">Tipo de contrato</legend>
+              <legend className="mb-1.5 text-[13px] font-semibold">Tipo de contrato</legend>
               <div className="lista-agrupada">
                 {Object.entries(TIPO_CONTRATACAO).map(([valor, rotulo], i) => (
                   <label key={valor} className="flex cursor-pointer items-center gap-3 px-3.5 py-2.5 hover:bg-fill-2">

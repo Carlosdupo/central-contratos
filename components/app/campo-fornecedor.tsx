@@ -17,7 +17,7 @@ export function CampoFornecedor({ empresas }: { empresas: EmpresaCadastrada[] })
   return (
     <>
       <label className="flex min-w-0 flex-col gap-1.5">
-        <span className="text-[12.5px] font-medium text-muted-foreground">Fornecedor</span>
+        <span className="text-[13px] font-semibold">Fornecedor</span>
         <input name="fornecedor" list="empresas-cadastradas" value={nome} onChange={(e) => aoDigitarNome(e.target.value)} className="campo" autoComplete="off" />
         <span className="text-xs text-faint">Digite para buscar nas empresas cadastradas</span>
         <datalist id="empresas-cadastradas">
@@ -25,7 +25,7 @@ export function CampoFornecedor({ empresas }: { empresas: EmpresaCadastrada[] })
         </datalist>
       </label>
       <label className="flex min-w-0 flex-col gap-1.5">
-        <span className="text-[12.5px] font-medium text-muted-foreground">CNPJ</span>
+        <span className="text-[13px] font-semibold">CNPJ</span>
         <input name="cnpj" value={cnpj} onChange={(e) => setCnpj(e.target.value)} className="campo" inputMode="numeric" />
       </label>
     </>

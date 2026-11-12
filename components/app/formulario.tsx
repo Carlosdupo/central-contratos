@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, type FormEvent, type ReactNode } from "react";
+import { useActionState, useId, type FormEvent, type ReactNode } from "react";
 import type { EstadoFormulario } from "@/lib/formulario";
 
 type Props = {
@@ -52,19 +52,29 @@ export function CampoTexto(props: {
   min?: number;
   max?: number;
 }) {
+  const id = useId();
   return (
-    <label className={`flex min-w-0 flex-col gap-1.5 ${props.className ?? ""}`}>
-      <span className="text-[12.5px] font-medium text-muted-foreground">{props.rotulo}</span>
-      <input name={props.nome} type={props.tipo ?? "text"} defaultValue={props.padrao ?? ""} min={props.min} max={props.max} className="campo" />
-      {props.dica && <span className="text-xs text-faint">{props.dica}</span>}
-    </label>
+    <div className={`flex min-w-0 flex-col gap-1.5 ${props.className ?? ""}`}>
+      <label htmlFor={id} className="text-[13px] font-semibold">{props.rotulo}</label>
+      <input
+        id={id}
+        name={props.nome}
+        type={props.tipo ?? "text"}
+        defaultValue={props.padrao ?? ""}
+        min={props.min}
+        max={props.max}
+        aria-describedby={props.dica ? `${id}-dica` : undefined}
+        className="campo"
+      />
+      {props.dica && <span id={`${id}-dica`} className="text-xs text-muted-foreground">{props.dica}</span>}
+    </div>
   );
 }
 
 export function Marcador(props: { nome: string; valor?: string; rotulo: ReactNode; marcado?: boolean }) {
   return (
     <label className="flex cursor-pointer items-center gap-3 px-3.5 py-2.5 hover:bg-fill-2">
-      <input type="checkbox" name={props.nome} value={props.valor ?? "on"} defaultChecked={props.marcado} className="size-[18px] accent-primary" />
+      <input type="checkbox" name={props.nome} value={props.valor ?? "on"} defaultChecked={props.marcado} className="size-5 shrink-0 accent-primary" />
       <span className="text-[14px]">{props.rotulo}</span>
     </label>
   );

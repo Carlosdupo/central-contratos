@@ -77,7 +77,7 @@ export function VerificacaoDuasEtapas() {
         </div>
       )}
       <label htmlFor="codigo" className="flex flex-col gap-1.5">
-        <span className="text-[12.5px] font-medium text-muted-foreground">Código de 6 dígitos</span>
+        <span className="text-[13px] font-semibold">Código de 6 dígitos</span>
         <input
           id="codigo"
           inputMode="numeric"

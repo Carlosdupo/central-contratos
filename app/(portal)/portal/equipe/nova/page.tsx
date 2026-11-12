@@ -23,7 +23,7 @@ export default async function PaginaNovaPessoa() {
       <section className="painel max-w-[640px]">
         <Formulario acao={cadastrarPessoa} textoBotao="Salvar e continuar">
           <fieldset className="flex flex-col gap-1.5">
-            <legend className="mb-1.5 text-[12.5px] font-medium text-muted-foreground">Tipo</legend>
+            <legend className="mb-1.5 text-[13px] font-semibold">Tipo</legend>
             <div className="lista-agrupada">
               {Object.entries(TIPO_VINCULO).map(([valor, rotulo], i) => (
                 <label key={valor} className="flex cursor-pointer items-start gap-3 px-3.5 py-2.5 hover:bg-fill-2">
@@ -51,7 +51,7 @@ export default async function PaginaNovaPessoa() {
             <span className="text-[14px]">Trabalha com eletricidade <span className="text-faint">(pede NR-10 e formação técnica)</span></span>
           </label>
           <label className="flex flex-col gap-1.5">
-            <span className="text-[12.5px] font-medium text-muted-foreground">Obra</span>
+            <span className="text-[13px] font-semibold">Obra</span>
             <select name="obra" className="campo" defaultValue={(obras ?? []).length === 1 ? obras![0].obra_id : ""}>
               <option value="" disabled>Escolha a obra</option>
               {(obras ?? []).map((o) => <option key={o.obra_id} value={o.obra_id}>{o.obras?.nome}</option>)}

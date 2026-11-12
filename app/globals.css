@@ -203,7 +203,8 @@
 
   .sr-only-foco:not(:focus) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
+  /* Alvos de toque de pelo menos 44 px em telas de toque (filtros, abas e itens com altura mínima de 40 px). */
   @media (pointer: coarse) {
-    .botao, .botao-pequeno, .campo { min-height: 44px; }
+    .botao, .botao-pequeno, .campo, .min-h-10 { min-height: 44px; }
   }
 }

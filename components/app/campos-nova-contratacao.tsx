@@ -26,7 +26,7 @@ export function CamposNovaContratacao({ obras, limite }: { obras: ObraComEap[]; 
   return (
     <>
       <label className="flex flex-col gap-1.5">
-        <span className="text-[12.5px] font-medium text-muted-foreground">Obra</span>
+        <span className="text-[13px] font-semibold">Obra</span>
         <select name="obra" className="campo" value={obraId} onChange={(e) => setObraId(e.target.value)}>
           <option value="" disabled>Escolha a obra</option>
           {obras.map((o) => <option key={o.id} value={o.id}>{o.nome}</option>)}
@@ -35,7 +35,7 @@ export function CamposNovaContratacao({ obras, limite }: { obras: ObraComEap[]; 
 
       {obra && obra.eap.length > 0 && (
         <label className="flex flex-col gap-1.5">
-          <span className="text-[12.5px] font-medium text-muted-foreground">Serviço da EAP</span>
+          <span className="text-[13px] font-semibold">Serviço da EAP</span>
           <select name="eap" className="campo" defaultValue="" key={obra.id}>
             <option value="" disabled>Escolha o serviço</option>
             {obra.eap.map(({ grupo, filhos }) => (
@@ -51,14 +51,14 @@ export function CamposNovaContratacao({ obras, limite }: { obras: ObraComEap[]; 
       )}
 
       <label className="flex flex-col gap-1.5">
-        <span className="text-[12.5px] font-medium text-muted-foreground">Descrição do serviço / escopo</span>
+        <span className="text-[13px] font-semibold">Descrição do serviço / escopo</span>
         <input name="servico" className="campo" />
         <span className="text-xs text-faint">Ex.: Alvenaria de vedação, torre B</span>
       </label>
 
       <div className="flex flex-col gap-1.5">
         <label className="flex flex-col gap-1.5">
-          <span className="text-[12.5px] font-medium text-muted-foreground">Valor orçado (R$)</span>
+          <span className="text-[13px] font-semibold">Valor orçado (R$)</span>
           <input name="valor" className="campo" value={semValor ? "" : valor} disabled={semValor} onChange={(e) => setValor(e.target.value)} placeholder={semValor ? "Não informado" : ""} />
         </label>
         <label className="flex cursor-pointer items-center gap-2 text-[13px]">
@@ -68,7 +68,7 @@ export function CamposNovaContratacao({ obras, limite }: { obras: ObraComEap[]; 
       </div>
 
       <fieldset className="flex flex-col gap-1.5">
-        <legend className="mb-1.5 text-[12.5px] font-medium text-muted-foreground">Quem negocia</legend>
+        <legend className="mb-1.5 text-[13px] font-semibold">Quem negocia</legend>
         <div className="lista-agrupada">
           <label className={`flex items-start gap-3 px-3.5 py-2.5 ${obraNaoPodeNegociar ? "opacity-50" : "cursor-pointer hover:bg-fill-2"}`}>
             <input type="radio" name="negociacao" value="obra" disabled={obraNaoPodeNegociar} checked={negociacaoEfetiva === "obra"} onChange={() => setNegociacao("obra")} className="mt-0.5 size-4 accent-primary" />
