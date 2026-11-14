@@ -1,3 +1,4 @@
+@layer ui-sdk;
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -207,4 +208,20 @@
   @media (pointer: coarse) {
     .botao, .botao-pequeno, .campo, .min-h-10 { min-height: 44px; }
   }
+}
+
+/* Componentes do UI SDK (sem web.css): o visual vem dos tokens do Nexo, pelos data-slot. */
+@layer components {
+  [data-slot="drawer-backdrop"] { background: rgb(0 0 0 / .45); }
+  [data-slot="drawer-content"] { background: var(--superficie); color: var(--texto); border-left: 1px solid var(--separador); height: 100%; width: min(100vw, 440px); display: flex; flex-direction: column; outline: none; }
+  [data-slot="tabs-list"] { display: flex; flex-wrap: wrap; gap: 8px; }
+  [data-slot="tabs-tab"] { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--separador-forte); background: var(--superficie); color: var(--texto); font-size: 13.5px; font-weight: 600; cursor: pointer; }
+  [data-slot="tabs-tab"]:hover { background: var(--preenchimento); }
+  [data-slot="tabs-tab"][data-selected] { background: var(--texto); border-color: var(--texto); color: var(--fundo); }
+  [data-slot="autocomplete-content"] { background: var(--superficie); border: 1px solid var(--separador); border-radius: var(--raio-campo); box-shadow: 0 8px 24px rgb(0 0 0 / .12); width: var(--anchor-width); max-height: min(320px, var(--available-height)); overflow-y: auto; padding: 4px; z-index: 50; }
+  [data-slot="autocomplete-item"] { display: flex; flex-direction: column; gap: 1px; padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+  [data-slot="autocomplete-item"][data-highlighted] { background: var(--azul-suave); }
+  [data-slot="autocomplete-content"][data-modality="keyboard"] [data-slot="autocomplete-item"][data-highlighted] { outline: 2px solid var(--azul); outline-offset: -2px; }
+  [data-slot="autocomplete-empty"] { padding: 8px 10px; color: var(--cinza); font-size: 13px; }
+  @media (pointer: coarse) { [data-slot="tabs-tab"] { min-height: 44px; } }
 }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import "./globals.css";
 
 // Toda página é renderizada a cada requisição: a CSP usa um nonce novo por requisição (proxy.ts),
@@ -12,9 +13,14 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // O UI SDK aplica este nonce no CSS que adiciona, para a CSP de style-src não bloquear.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="pt-BR">
+      <head>
+        <meta property="csp-nonce" nonce={nonce} />
+      </head>
       <body className="min-h-full">{children}</body>
     </html>
   );
