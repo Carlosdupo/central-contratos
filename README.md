@@ -1,4 +1,4 @@
-# Nexo
+# Nexus
 
 Contratação e liberação de terceiros: contratação de empreiteiros e gestão de terceiros (documentos, análise do RH e integração). O repositório e o pacote continuam com o nome técnico `central-contratos`.
 

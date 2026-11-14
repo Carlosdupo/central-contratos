@@ -11,7 +11,7 @@
   }
 }
 
-/* Tokens do Nexo (docs/design-system.md, maquete em docs/prototipo/nexo-maquete.html).
+/* Tokens do Nexus (docs/design-system.md, maquete em docs/prototipo/nexo-maquete.html).
    Nomes em português para não colidir com os do shadcn, que são mapeados logo abaixo.
    Verde, amarelo, laranja (hot) e vermelho são só de situação, e sempre vêm com texto. */
 :root {
@@ -210,7 +210,7 @@
   }
 }
 
-/* Componentes do UI SDK (sem web.css): o visual vem dos tokens do Nexo, pelos data-slot. */
+/* Componentes do UI SDK (sem web.css): o visual vem dos tokens do Nexus, pelos data-slot. */
 @layer components {
   [data-slot="drawer-backdrop"] { background: rgb(0 0 0 / .45); }
   [data-slot="drawer-content"] { background: var(--superficie); color: var(--texto); border-left: 1px solid var(--separador); height: 100%; width: min(100vw, 440px); display: flex; flex-direction: column; outline: none; }

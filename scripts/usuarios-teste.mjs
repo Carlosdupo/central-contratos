@@ -1,4 +1,4 @@
-// Usuários de teste do Nexo: um administrador e uma conta por fase, todos com a mesma senha.
+// Usuários de teste do Nexus: um administrador e uma conta por fase, todos com a mesma senha.
 // Cada conta recebe só o perfil da sua fase. Os e-mails usam o domínio reservado example.com:
 // não recebem e-mail (as contas já nascem confirmadas, sem convite).
 //
@@ -123,7 +123,7 @@ async function criar() {
 
   if (!SIMULAR) {
     console.log(`\nContas prontas. Senha de todas: ${SENHA}`);
-    console.log("Site: https://nexo-terceiros.vercel.app/login\n");
+    console.log("Site: https://nexus-terceiros.vercel.app/login\n");
     for (const c of CONTAS) console.log(`  ${c.email.padEnd(32)} ${c.papel ?? "empresa terceirizada (portal)"}${["admin", "rh", "sst"].includes(c.papel) ? " · pede autenticador no 1º login" : ""}`);
     if (obras.length) console.log(`\nCoordenador e empresa de teste ligados às obras: ${obras.map((o) => o.nome).join(", ")}`);
   }

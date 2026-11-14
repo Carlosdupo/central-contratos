@@ -1,4 +1,4 @@
-# Nexo: padrões visuais
+# Nexus: padrões visuais
 
 Referência visual: [docs/prototipo/nexo-maquete.html](prototipo/nexo-maquete.html) (tela "Padrões visuais"). Os tokens moram em `app/globals.css`; nenhum componente deve usar cor fixa.
 

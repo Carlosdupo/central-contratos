@@ -1,4 +1,4 @@
--- Dados de DEMONSTRAÇÃO do Nexo: uma obra, 3 empresas, pessoas e contratações em várias situações,
+-- Dados de DEMONSTRAÇÃO do Nexus: uma obra, 3 empresas, pessoas e contratações em várias situações,
 -- para cada área ver a própria tela "cheia". Tudo leva "(demo)" ou "[Demo]" no nome.
 -- Roda numa transação só e apaga a demonstração anterior antes (pode rodar de novo).
 -- Os arquivos de documento são só registros: não há PDF de verdade, então "Abrir arquivo" não abre.

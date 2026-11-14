@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 270 57" width="270" height="57" fill="none" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="NEXUS, contratação e liberação">
+  <defs>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Lexend+Exa:wght@500&amp;display=swap');</style>
+    <mask id="a" maskUnits="userSpaceOnUse" x="-5" y="-5" width="50" height="50"><rect x="-5" y="-5" width="50" height="50" fill="#fff"/><path d="M23 11H29A9 9 0 0 1 29 29H23A9 9 0 0 1 23 11Z" stroke="#000" stroke-width="5.6"/></mask>
+    <mask id="b" maskUnits="userSpaceOnUse" x="-5" y="-5" width="50" height="50"><rect x="-5" y="-5" width="50" height="50" fill="#fff"/><path d="M25.3 23.5A9 9 0 0 1 17 29" stroke="#000" stroke-width="5.6"/></mask>
+  </defs>
+  <g transform="translate(-1.25 -15) scale(1.75)" stroke-width="2.57">
+    <path d="M11 11H17A9 9 0 0 1 17 29H11A9 9 0 0 1 11 11Z" stroke="#111827" mask="url(#a)"/>
+    <path d="M23 11H29A9 9 0 0 1 29 29H23A9 9 0 0 1 23 11Z" stroke="#1F61E3" mask="url(#b)"/>
+    <path d="M25.3 23.5A9 9 0 0 1 17 29" stroke="#111827"/>
+  </g>
+  <g transform="translate(80 0)" stroke="#111827" stroke-width="4.5">
+    <path d="M4 36V4L30 36V4"/><path d="M64 4H42V36H64M42 20H60"/><path d="M78 4L106 36M106 4L78 36"/><path d="M120 4V23A13 13 0 0 0 146 23V4"/><path d="M186 4H168A8 8 0 0 0 168 20H178A8 8 0 0 1 178 36H160"/>
+    <text x="1.75" y="54" textLength="186.5" lengthAdjust="spacing" fill="#4B5563" stroke="none" font-family="'Lexend Exa', sans-serif" font-size="9" font-weight="500">CONTRATAÇÃO E LIBERAÇÃO</text>
+  </g>
+</svg>

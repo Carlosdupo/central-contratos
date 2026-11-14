@@ -18,8 +18,8 @@ import { Radio, RadioGroup, RadioIndicator } from "@ui-sdk/react/radio";
 import { Select, SelectContent, SelectGroup, SelectGroupLabel, SelectItem, SelectTrigger, SelectValue } from "@ui-sdk/react/select";
 import type { EstadoFormulario } from "@/lib/formulario";
 
-// Peças de formulário do Nexo sobre o UI SDK: o comportamento (teclado, foco, ARIA, agentes) vem do UI SDK,
-// o visual vem dos tokens do Nexo (app/globals.css, pelos data-slot).
+// Peças de formulário do Nexus sobre o UI SDK: o comportamento (teclado, foco, ARIA, agentes) vem do UI SDK,
+// o visual vem dos tokens do Nexus (app/globals.css, pelos data-slot).
 
 type Variante = "primario" | "perigo" | "neutro" | "ok" | "discreto";
 const CLASSE_BOTAO: Record<Variante, string> = {

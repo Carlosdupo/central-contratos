@@ -1,4 +1,4 @@
--- Apaga os dados de demonstração do Nexo (criados por supabase/demo/criar-demo.sql).
+-- Apaga os dados de demonstração do Nexus (criados por supabase/demo/criar-demo.sql).
 -- Só mexe no que é da demonstração: obra DEMO-01, as 3 empresas "(demo)" e as pessoas de CPF 900000....
 -- Uso: npx supabase db query --remote --yes -f supabase/demo/apagar-demo.sql
 begin;

@@ -16,7 +16,7 @@ export default async function PaginaLogin({ searchParams }: PageProps<"/login">)
 
   return (
     <>
-      <div>
+      <div className="text-center">
         <h1 className="titulo">Acesse sua conta</h1>
         <p className="mt-1.5 text-[13.5px] text-muted-foreground">Use o e-mail cadastrado no convite. Depois da senha, o sistema pede o código de verificação em duas etapas.</p>
       </div>
@@ -29,7 +29,7 @@ export default async function PaginaLogin({ searchParams }: PageProps<"/login">)
       <Link href="/recuperar-senha" className="-mt-2 py-3 text-center text-[13.5px] font-medium text-primary">
         Esqueci minha senha
       </Link>
-      <p className="text-[13px] text-muted-foreground">Sua empresa foi convidada e ainda não tem acesso? Peça ao contato de Suprimentos para reenviar o convite.</p>
+      <p className="text-center text-[13px] text-muted-foreground">Sua empresa foi convidada e ainda não tem acesso? Peça ao contato de Suprimentos para reenviar o convite.</p>
     </>
   );
 }

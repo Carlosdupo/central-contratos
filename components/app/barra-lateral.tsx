@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { Drawer, DrawerBackdrop, DrawerContent, DrawerTitle, DrawerTrigger } from "@ui-sdk/react/drawer";
-import { Logo, Marca } from "./logo";
+import { Marca } from "./logo";
 
 export type ItemMenu = { href: string; rotulo: string; icone: ReactNode; contador?: number };
 export type GrupoMenu = { titulo: string; itens: ItemMenu[] };
@@ -44,7 +44,7 @@ function Itens({ grupos, caminho }: { grupos: GrupoMenu[]; caminho: string }) {
   );
 }
 
-// Menu do Nexo. Os grupos chegam já filtrados pelos papéis (no servidor).
+// Menu do Nexus. Os grupos chegam já filtrados pelos papéis (no servidor).
 // Desktop (≥ 860 px): fixo à esquerda. Celular: barra no topo e o menu num Drawer do UI SDK
 // (prende o foco, Esc fecha e devolve o foco ao botão, fecha ao trocar de página).
 export function BarraLateral({ grupos, rodape }: { grupos: GrupoMenu[]; rodape: ReactNode }) {
@@ -59,10 +59,7 @@ export function BarraLateral({ grupos, rodape }: { grupos: GrupoMenu[]; rodape: 
   return (
     <>
       <div className="sticky top-0 z-20 hidden items-center justify-between gap-3 border-b border-sep bg-card px-4 py-2.5 max-[859px]:flex">
-        <span className="flex items-center gap-2.5">
-          <Logo tamanho={30} />
-          <span className="font-heading text-[18px] font-bold tracking-[.14em]">NEXO</span>
-        </span>
+        <Marca altura={20} subtitulo={false} />
         <Drawer side="left" open={aberto} onOpenChange={setAberto}>
           <DrawerTrigger className="botao botao-pequeno">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">

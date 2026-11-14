@@ -18,7 +18,7 @@ export default async function LayoutPortal({ children }: LayoutProps<"/">) {
             <Logo tamanho={32} />
             <div className="min-w-0 leading-tight">
               <div className="truncate text-[15px] font-semibold tracking-tight">{empresa?.razao_social ?? "Portal da empresa"}</div>
-              <div className="truncate text-xs text-muted-foreground">Nexo · Portal da empresa · {usuario.email}</div>
+              <div className="truncate text-xs text-muted-foreground">Nexus · Portal da empresa · {usuario.email}</div>
             </div>
           </div>
           <form action={sair}><Button type="submit" className="text-[13px] text-primary">Sair</Button></form>

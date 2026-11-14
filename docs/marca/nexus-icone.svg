@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="512" height="512" fill="none" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="NEXUS">
+  <defs>
+    <mask id="a" maskUnits="userSpaceOnUse" x="-5" y="-5" width="50" height="50"><rect x="-5" y="-5" width="50" height="50" fill="#fff"/><path d="M23 11H29A9 9 0 0 1 29 29H23A9 9 0 0 1 23 11Z" stroke="#000" stroke-width="9"/></mask>
+    <mask id="b" maskUnits="userSpaceOnUse" x="-5" y="-5" width="50" height="50"><rect x="-5" y="-5" width="50" height="50" fill="#fff"/><path d="M25.3 23.5A9 9 0 0 1 17 29" stroke="#000" stroke-width="9"/></mask>
+  </defs>
+  <rect width="40" height="40" rx="9" fill="#1F61E3"/>
+  <g transform="translate(5 5) scale(0.75)" stroke-width="4.4">
+    <path d="M11 11H17A9 9 0 0 1 17 29H11A9 9 0 0 1 11 11Z" stroke="#FFFFFF" mask="url(#a)"/>
+    <path d="M23 11H29A9 9 0 0 1 29 29H23A9 9 0 0 1 23 11Z" stroke="#A9C5F8" mask="url(#b)"/>
+    <path d="M25.3 23.5A9 9 0 0 1 17 29" stroke="#FFFFFF"/>
+  </g>
+</svg>
