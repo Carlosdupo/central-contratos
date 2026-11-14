@@ -18,7 +18,7 @@ import { CampoFornecedor } from "@/components/app/campo-fornecedor";
 import { ChecklistEtapa } from "@/components/app/checklist-etapa";
 import { CamposCondicoesGerente } from "@/components/app/campos-condicoes-gerente";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { CampoTexto, Formulario } from "@/components/app/formulario";
+import {CampoEmLinha,CampoSelecao,CampoTexto,Formulario} from "@/components/app/formulario";
 import { ListaEquipe } from "@/components/app/lista-equipe";
 
 export const metadata: Metadata = { title: "Contratação" };
@@ -187,7 +187,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                           <details className="mt-1.5">
                             <summary className="cursor-pointer text-[12.5px] font-medium text-primary">Nova proposta</summary>
                             <Formulario acao={novaProposta.bind(null, id, q.id)} textoBotao="Registrar proposta" className="mt-1.5 flex flex-wrap items-center gap-2">
-                              <input name="valor" placeholder="Novo valor (R$)" aria-label={`Nova proposta de ${q.fornecedor}`} className="campo max-w-[180px] py-1.5" />
+                              <CampoEmLinha nome="valor" placeholder="Novo valor (R$)" rotulo={`Nova proposta de ${q.fornecedor}`} className="max-w-[180px]" />
                             </Formulario>
                           </details>
                         )}
@@ -206,13 +206,13 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                 {pode && podeEscolher && cotacoes.length > 0 && (
                   <Formulario acao={definirFornecedor.bind(null, id)} textoBotao="Salvar fornecedor e valor final" className="flex flex-col gap-3 rounded-xl border-[.5px] border-sep p-3.5">
                     <div className="grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-2 max-sm:grid-cols-1">
-                      <label className="flex min-w-0 flex-col gap-1.5">
-                        <span className="text-[13px] font-semibold">{fornecedorTravado ? "Fornecedor escolhido pela obra" : "Escolher a empresa"}</span>
-                        <select name="cotacao" className="campo" defaultValue={cotacoes.find((q) => q.escolhida)?.id ?? ""}>
-                          <option value="" disabled>Escolha</option>
-                          {opcoes.map((q) => <option key={q.id} value={q.id}>{q.fornecedor} · {formatarReais(Number(q.valor))}</option>)}
-                        </select>
-                      </label>
+                      <CampoSelecao
+                        nome="cotacao"
+                        rotulo={fornecedorTravado ? "Fornecedor escolhido pela obra" : "Escolher a empresa"}
+                        padrao={cotacoes.find((q) => q.escolhida)?.id ?? null}
+                        placeholder="Escolha a empresa"
+                        opcoes={opcoes.map((q) => ({ value: q.id, label: `${q.fornecedor} · ${formatarReais(Number(q.valor))}` }))}
+                      />
                       <CampoTexto nome="valor" rotulo="Valor final (R$)" padrao={c.valor_negociado ? String(c.valor_negociado).replace(".", ",") : null} />
                     </div>
                   </Formulario>
@@ -235,7 +235,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                       {a.assinadoEm ? (
                         <span className="selo selo-ok">Assinado {formatarData(a.assinadoEm).slice(0, 5)}</span>
                       ) : a.ordem === proxAssinante?.ordem && ativa && podeComo(a.papel as Papel) ? (
-                        <Formulario acao={assinarContrato.bind(null, id, a.ordem)} textoBotao={a.papel === "contratos" ? "Registrar assinatura do fornecedor" : "Assinar contrato"} className="flex" />
+                        <Formulario acao={assinarContrato.bind(null, id, a.ordem)} textoBotao={a.papel === "contratos" ? "Registrar assinatura do fornecedor" : "Assinar contrato"} sensivel="Registra a assinatura do contrato." className="flex" />
                       ) : (
                         <span className={`selo ${a.ordem === proxAssinante?.ordem ? "selo-alerta" : "selo-neutro"}`}>{a.ordem === proxAssinante?.ordem ? "Aguardando" : "Na fila"}</span>
                       )}
@@ -298,7 +298,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
             )}
             {ehAdmin && (sel.situacao === "concluida" || sel.situacao === "pulada") && c.situacao === "em_andamento" && (
               <Formulario acao={reabrirEtapa.bind(null, id, sel.etapa)} textoBotao="Reabrir etapa" variante="neutro" confirmar="Reabrir esta etapa? O motivo fica registrado na auditoria." className="flex flex-wrap items-center gap-2 border-t-[.5px] border-sep pt-4">
-                <input name="motivo" placeholder="Motivo da reabertura" aria-label="Motivo da reabertura" className="campo max-w-[280px] py-1.5" />
+                <CampoEmLinha nome="motivo" placeholder="Motivo da reabertura" rotulo="Motivo da reabertura" className="max-w-[280px]" />
               </Formulario>
             )}
           </section>
@@ -317,7 +317,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
             <section className="painel">
               <h2 className="subtitulo">Cancelar contratação</h2>
               <Formulario acao={cancelarContratacao.bind(null, id)} textoBotao="Cancelar contratação" variante="perigo" confirmar="Cancelar esta contratação? Não dá para desfazer." className="flex flex-wrap items-center gap-2">
-                <input name="motivo" placeholder="Motivo" aria-label="Motivo do cancelamento" className="campo max-w-[320px] py-1.5" />
+                <CampoEmLinha nome="motivo" placeholder="Motivo" rotulo="Motivo do cancelamento" className="max-w-[320px]" />
               </Formulario>
             </section>
           )}

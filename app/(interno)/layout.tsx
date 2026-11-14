@@ -1,4 +1,5 @@
 import { exigirInterno } from "@/modules/acesso/sessao";
+import { Button } from "@ui-sdk/react/button";
 import { sair } from "@/modules/acesso/acoes";
 import { ROTULO_PAPEL } from "@/modules/acesso/papeis";
 import { contarPendencias } from "@/modules/painel/pendencias";
@@ -50,7 +51,7 @@ export default async function LayoutInterno({ children }: LayoutProps<"/">) {
         </span>
       </div>
       <form action={sair}>
-        <button type="submit" className="min-h-9 text-[13px] font-medium text-primary">Sair da conta</button>
+        <Button type="submit" className="min-h-9 text-[13px] font-medium text-primary">Sair da conta</Button>
       </form>
     </div>
   );

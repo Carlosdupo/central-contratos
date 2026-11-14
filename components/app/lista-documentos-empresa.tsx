@@ -3,7 +3,7 @@ import { formatarCompetencia } from "@/modules/terceiros/dominio/documentos";
 import type { ItemDocumentoEmpresa } from "@/modules/terceiros/consultas";
 import { salvarTextoEmpresa } from "@/modules/terceiros/acoes";
 import { BotaoAbrirArquivo, EnviarArquivo, SeloEstado } from "./documentos";
-import { Formulario } from "./formulario";
+import {CampoEmLinha,Formulario} from "./formulario";
 
 const diasAte = (data: string) => diasCorridosEntre(agoraNoFuso().data, data);
 
@@ -36,7 +36,7 @@ export function ListaDocumentosEmpresa({ itens, editavel, podeAbrir }: { itens: 
             {aceitaNovo &&
               (item.tipo.aceita_texto ? (
                 <Formulario acao={salvarTextoEmpresa.bind(null, item.tipo.codigo)} textoBotao="Salvar informação" className="flex flex-wrap items-center gap-2">
-                  <input name="texto" defaultValue={item.valorTexto ?? ""} placeholder="Nome da contabilidade e telefone" aria-label={item.tipo.nome} className="campo max-w-[360px] py-1.5" />
+                  <CampoEmLinha nome="texto" padrao={item.valorTexto} placeholder="Nome da contabilidade e telefone" rotulo={item.tipo.nome} className="max-w-[360px]" />
                 </Formulario>
               ) : (
                 <EnviarArquivo dono={{ tipo: "empresa" }} tipoDoc={item.tipo.codigo} regra={item.tipo.regra_validade} competencia={item.competencia} />

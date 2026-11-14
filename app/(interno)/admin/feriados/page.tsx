@@ -3,7 +3,7 @@ import { exigirPapel } from "@/modules/acesso/sessao";
 import { criarFeriado, excluirFeriado } from "@/modules/admin/acoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarData, agoraNoFuso } from "@/lib/datas";
-import { CampoTexto, Formulario } from "@/components/app/formulario";
+import { CampoSelecao, CampoTexto, Formulario } from "@/components/app/formulario";
 
 export const metadata: Metadata = { title: "Feriados" };
 
@@ -55,14 +55,7 @@ export default async function PaginaFeriados() {
         <Formulario acao={criarFeriado} textoBotao="Cadastrar feriado">
           <CampoTexto nome="data" rotulo="Data" tipo="date" />
           <CampoTexto nome="descricao" rotulo="Descrição" />
-          <label className="flex flex-col gap-1.5">
-            <span className="text-[13px] font-semibold">Abrangência</span>
-            <select name="abrangencia" defaultValue="municipal" className="campo">
-              <option value="nacional">Nacional</option>
-              <option value="estadual">Estadual</option>
-              <option value="municipal">Municipal</option>
-            </select>
-          </label>
+          <CampoSelecao nome="abrangencia" rotulo="Abrangência" padrao="municipal" opcoes={[{ value: "nacional", label: "Nacional" }, { value: "estadual", label: "Estadual" }, { value: "municipal", label: "Municipal" }]} />
           <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,3fr)] gap-3">
             <CampoTexto nome="uf" rotulo="UF" padrao="SC" />
             <CampoTexto nome="cidade" rotulo="Cidade" dica="Só para feriado municipal" />

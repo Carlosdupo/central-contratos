@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CampoTexto, GrupoOpcoes } from "@/components/app/formulario";
 
 export type Condicoes = {
   permuta: boolean | null; permuta_valor: number | null; permuta_formato: string | null;
@@ -11,17 +12,11 @@ export type Condicoes = {
 
 const texto = (v: number | null) => (v == null ? "" : String(v).replace(".", ","));
 
-function SimNao({ nome, valor, aoMudar }: { nome: string; valor: boolean | null; aoMudar: (v: boolean) => void }) {
-  return (
-    <span className="flex gap-1.5">
-      {[["sim", true], ["nao", false]].map(([v, b]) => (
-        <label key={v as string} className={`cursor-pointer rounded-full px-3 py-1 text-[13px] font-medium ${valor === b ? "bg-primary text-primary-foreground" : "bg-fill-2"}`}>
-          <input type="radio" name={nome} value={v as string} checked={valor === b} onChange={() => aoMudar(b as boolean)} className="sr-only" />
-          {b ? "Sim" : "Não"}
-        </label>
-      ))}
-    </span>
-  );
+const SIM_NAO = [{ value: "sim", label: "Sim" }, { value: "nao", label: "Não" }];
+const paraTexto = (v: boolean | null) => (v === null ? null : v ? "sim" : "nao");
+
+function SimNao({ nome, rotulo, valor, aoMudar }: { nome: string; rotulo: string; valor: boolean | null; aoMudar: (v: boolean) => void }) {
+  return <GrupoOpcoes nome={nome} rotulo={rotulo} estilo="pilula" opcoes={SIM_NAO} valor={paraTexto(valor)} aoMudar={(v) => v && aoMudar(v === "sim")} />;
 }
 
 function Linha({ titulo, children, detalhe }: { titulo: string; children: React.ReactNode; detalhe?: React.ReactNode }) {
@@ -37,10 +32,7 @@ function Linha({ titulo, children, detalhe }: { titulo: string; children: React.
 }
 
 const Campo = ({ nome, rotulo, padrao }: { nome: string; rotulo: string; padrao: string }) => (
-  <label className="flex min-w-[140px] flex-1 flex-col gap-1">
-    <span className="text-xs font-medium text-muted-foreground">{rotulo}</span>
-    <input name={nome} defaultValue={padrao} className="campo py-1.5" />
-  </label>
+  <CampoTexto nome={nome} rotulo={rotulo} padrao={padrao} className="min-w-[140px] flex-1" />
 );
 
 // Condições do gerente de suprimentos (etapa 6): permuta, faturamento direto, sinal e caução.
@@ -53,34 +45,27 @@ export function CamposCondicoesGerente({ inicial }: { inicial: Condicoes }) {
     <div className="lista-agrupada">
       <Linha titulo="Permuta" detalhe={permuta && (
         <div className="flex flex-wrap gap-2">
-          <Campo nome="permuta_valor" rotulo="Valor (R$)" padrao={texto(inicial.permuta_valor)} />
-          <Campo nome="permuta_formato" rotulo="Formato" padrao={inicial.permuta_formato ?? ""} />
+          <Campo nome="permuta_valor" rotulo="Valor da permuta (R$)" padrao={texto(inicial.permuta_valor)} />
+          <Campo nome="permuta_formato" rotulo="Formato da permuta" padrao={inicial.permuta_formato ?? ""} />
         </div>
       )}>
-        <SimNao nome="permuta" valor={permuta} aoMudar={setPermuta} />
+        <SimNao nome="permuta" rotulo="Permuta" valor={permuta} aoMudar={setPermuta} />
       </Linha>
       <Linha titulo="Faturamento direto" detalhe={fat && (
         <div className="flex flex-wrap gap-2">
-          <Campo nome="fat_direto_valor" rotulo="Valor (R$)" padrao={texto(inicial.fat_direto_valor)} />
-          <Campo nome="fat_direto_percentual" rotulo="Percentual (%)" padrao={texto(inicial.fat_direto_percentual)} />
+          <Campo nome="fat_direto_valor" rotulo="Valor do faturamento direto (R$)" padrao={texto(inicial.fat_direto_valor)} />
+          <Campo nome="fat_direto_percentual" rotulo="Percentual do faturamento direto (%)" padrao={texto(inicial.fat_direto_percentual)} />
         </div>
       )}>
-        <SimNao nome="fat_direto" valor={fat} aoMudar={setFat} />
+        <SimNao nome="fat_direto" rotulo="Faturamento direto" valor={fat} aoMudar={setFat} />
       </Linha>
       <Linha titulo="Sinal" detalhe={sinal && (
-        <div className="flex flex-wrap gap-2"><Campo nome="sinal_valor" rotulo="Valor (R$)" padrao={texto(inicial.sinal_valor)} /></div>
+        <div className="flex flex-wrap gap-2"><Campo nome="sinal_valor" rotulo="Valor do sinal (R$)" padrao={texto(inicial.sinal_valor)} /></div>
       )}>
-        <SimNao nome="sinal" valor={sinal} aoMudar={setSinal} />
+        <SimNao nome="sinal" rotulo="Sinal" valor={sinal} aoMudar={setSinal} />
       </Linha>
       <Linha titulo="Caução">
-        <span className="flex gap-1.5">
-          {[["3", "3%"], ["5", "5%"], ["na", "N.A."]].map(([v, r]) => (
-            <label key={v} className={`cursor-pointer rounded-full px-3 py-1 text-[13px] font-medium ${caucao === v ? "bg-primary text-primary-foreground" : "bg-fill-2"}`}>
-              <input type="radio" name="caucao" value={v} checked={caucao === v} onChange={() => setCaucao(v)} className="sr-only" />
-              {r}
-            </label>
-          ))}
-        </span>
+        <GrupoOpcoes nome="caucao" rotulo="Caução" estilo="pilula" valor={caucao} aoMudar={setCaucao} opcoes={[{ value: "3", label: "3%" }, { value: "5", label: "5%" }, { value: "na", label: "N.A." }]} />
       </Linha>
     </div>
   );

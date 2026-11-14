@@ -214,6 +214,7 @@
 @layer components {
   [data-slot="drawer-backdrop"] { background: rgb(0 0 0 / .45); }
   [data-slot="drawer-content"] { background: var(--superficie); color: var(--texto); border-left: 1px solid var(--separador); height: 100%; width: min(100vw, 440px); display: flex; flex-direction: column; outline: none; }
+  [data-slot="drawer-content"].menu-gaveta { width: min(86vw, 300px); border-left: 0; border-right: 1px solid var(--separador); }
   [data-slot="tabs-list"] { display: flex; flex-wrap: wrap; gap: 8px; }
   [data-slot="tabs-tab"] { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--separador-forte); background: var(--superficie); color: var(--texto); font-size: 13.5px; font-weight: 600; cursor: pointer; }
   [data-slot="tabs-tab"]:hover { background: var(--preenchimento); }
@@ -223,5 +224,22 @@
   [data-slot="autocomplete-item"][data-highlighted] { background: var(--azul-suave); }
   [data-slot="autocomplete-content"][data-modality="keyboard"] [data-slot="autocomplete-item"][data-highlighted] { outline: 2px solid var(--azul); outline-offset: -2px; }
   [data-slot="autocomplete-empty"] { padding: 8px 10px; color: var(--cinza); font-size: 13px; }
-  @media (pointer: coarse) { [data-slot="tabs-tab"] { min-height: 44px; } }
+  [data-slot="checkbox"] { display: inline-grid; place-items: center; width: 20px; height: 20px; flex-shrink: 0; border: 1.5px solid var(--separador-forte); border-radius: 6px; background: var(--superficie); color: var(--azul-tinta); cursor: pointer; }
+  [data-slot="checkbox"][data-checked] { background: var(--azul); border-color: var(--azul); }
+  [data-slot="checkbox"][data-disabled] { opacity: .5; cursor: not-allowed; }
+  [data-slot="radio"] { display: inline-grid; place-items: center; width: 18px; height: 18px; margin-top: 2px; flex-shrink: 0; border: 1.5px solid var(--separador-forte); border-radius: 50%; background: var(--superficie); cursor: pointer; }
+  [data-slot="radio"][data-checked] { border-color: var(--azul); }
+  [data-slot="radio-indicator"] { width: 9px; height: 9px; border-radius: 50%; background: var(--azul); }
+  .opcao-pilula { display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--separador-forte); background: var(--superficie); font-size: 13px; font-weight: 600; cursor: pointer; }
+  .opcao-pilula:has([data-checked]) { background: var(--azul); border-color: var(--azul); color: var(--azul-tinta); }
+  .opcao-pilula:has(:focus-visible) { outline: 2px solid var(--azul); outline-offset: 2px; }
+  [data-slot="select-trigger"][data-placeholder], [data-slot="select-value"][data-placeholder] { color: var(--cinza); }
+  [data-slot="select-content"] { background: var(--superficie); border: 1px solid var(--separador); border-radius: var(--raio-campo); box-shadow: 0 8px 24px rgb(0 0 0 / .12); min-width: var(--anchor-width); max-height: min(360px, var(--available-height)); overflow-y: auto; padding: 4px; z-index: 50; }
+  [data-slot="select-item"] { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+  [data-slot="select-item"][data-highlighted] { background: var(--azul-suave); }
+  [data-slot="select-item"][data-selected] { font-weight: 600; color: var(--azul); }
+  [data-slot="select-group-label"] { padding: 8px 10px 4px; font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--cinza); }
+  [data-slot="alert-dialog-backdrop"] { position: fixed; inset: 0; background: rgb(0 0 0 / .45); z-index: 60; }
+  [data-slot="alert-dialog-content"] { position: fixed; left: 50%; top: 50%; translate: -50% -50%; z-index: 61; width: min(calc(100vw - 32px), 440px); display: flex; flex-direction: column; gap: 10px; padding: 20px; border-radius: var(--raio-cartao); background: var(--superficie); color: var(--texto); border: 1px solid var(--separador); box-shadow: 0 16px 48px rgb(0 0 0 / .2); }
+  @media (pointer: coarse) { [data-slot="tabs-tab"], .opcao-pilula { min-height: 44px; } [data-slot="checkbox"] { width: 24px; height: 24px; } }
 }

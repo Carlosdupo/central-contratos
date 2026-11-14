@@ -8,7 +8,7 @@ import { aprovarDocumento, concluirAnalise, reprovarDocumento } from "@/modules/
 import { formatarCompetencia } from "@/modules/terceiros/dominio/documentos";
 import { agoraNoFuso, formatarData } from "@/lib/datas";
 import { BotaoAbrirArquivo } from "@/components/app/documentos";
-import { Formulario } from "@/components/app/formulario";
+import {CampoEmLinha,Formulario} from "@/components/app/formulario";
 
 export const metadata: Metadata = { title: "Analisar documentos" };
 
@@ -56,9 +56,9 @@ export default async function PaginaAnaliseEnvio({ params }: PageProps<"/terceir
               </div>
               {aberto && !item.decisao && (
                 <div className="flex flex-wrap items-start gap-3">
-                  <Formulario acao={aprovarDocumento.bind(null, item.id)} textoBotao="Aprovar documento" className="flex" />
-                  <Formulario acao={reprovarDocumento.bind(null, item.id)} textoBotao="Devolver documento" variante="perigo" className="flex flex-wrap items-center gap-2">
-                    <input name="motivo" placeholder="Motivo (a empresa vai ver)" aria-label="Motivo da reprovação" className="campo max-w-[300px] py-1.5" />
+                  <Formulario acao={aprovarDocumento.bind(null, item.id)} textoBotao="Aprovar documento" sensivel="Aprova este documento da empresa terceirizada." className="flex" />
+                  <Formulario acao={reprovarDocumento.bind(null, item.id)} textoBotao="Devolver documento" variante="perigo" sensivel="Devolve o documento para a empresa corrigir, com o motivo." className="flex flex-wrap items-center gap-2">
+                    <CampoEmLinha nome="motivo" placeholder="Motivo (a empresa vai ver)" rotulo="Motivo da devolução" className="max-w-[300px]" />
                   </Formulario>
                 </div>
               )}
@@ -68,7 +68,7 @@ export default async function PaginaAnaliseEnvio({ params }: PageProps<"/terceir
         {aberto && (
           <div className="flex flex-wrap items-center justify-between gap-3 border-t-[.5px] border-sep pt-4">
             <p className="text-[13px] text-muted-foreground">Ao concluir, a empresa recebe o resultado e, se aprovado, a data da integração.</p>
-            {faltam === 0 ? <Formulario acao={concluirAnalise.bind(null, envioId)} textoBotao="Concluir análise" /> : <button className="botao botao-primario" disabled>Concluir análise</button>}
+            <Formulario acao={concluirAnalise.bind(null, envioId)} textoBotao="Concluir análise" desabilitado={faltam > 0} sensivel="Conclui a análise e avisa a empresa; quem foi aprovado entra na integração." />
           </div>
         )}
       </section>

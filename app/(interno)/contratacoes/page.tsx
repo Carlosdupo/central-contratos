@@ -5,6 +5,8 @@ import { carregarFluxo, etapasEmAberto } from "@/modules/contratacoes/consultas"
 import { TIPO_CONTRATACAO, formatarReais } from "@/modules/contratacoes/rotulos";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { SeloPrazo } from "@/components/app/selo-prazo";
+import { CampoSelecao, CampoTexto } from "@/components/app/formulario";
+import { Button } from "@ui-sdk/react/button";
 
 export const metadata: Metadata = { title: "Contratações" };
 
@@ -64,33 +66,12 @@ export default async function PaginaContratacoes({ searchParams }: PageProps<"/c
       </div>
 
       <form method="get" role="search" aria-label="Buscar e filtrar contratações" className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
-        <label className="flex min-w-0 flex-col gap-1.5">
-          <span className="text-[13px] font-semibold">Buscar</span>
-          <input name="q" type="search" defaultValue={busca} placeholder="Serviço, código, fornecedor ou obra" className="campo" />
-        </label>
-        <label className="flex min-w-0 flex-col gap-1.5">
-          <span className="text-[13px] font-semibold">Obra</span>
-          <select name="obra" defaultValue={obraFiltro} className="campo">
-            <option value="">Todas as obras</option>
-            {obras.map(([id, nome]) => <option key={id} value={id}>{nome}</option>)}
-          </select>
-        </label>
-        <label className="flex min-w-0 flex-col gap-1.5">
-          <span className="text-[13px] font-semibold">Etapa atual</span>
-          <select name="etapa" defaultValue={etapaFiltro || ""} className="campo">
-            <option value="">Todas as etapas</option>
-            {fluxo.map((f) => <option key={f.etapa} value={f.etapa}>{f.etapa}. {f.nome}</option>)}
-          </select>
-        </label>
-        <label className="flex min-w-0 flex-col gap-1.5">
-          <span className="text-[13px] font-semibold">Ordenar</span>
-          <select name="ordem" defaultValue={ordem} className="campo">
-            <option value="recentes">Mais recentes</option>
-            <option value="prazo">Prazo mais urgente</option>
-          </select>
-        </label>
+        <CampoTexto nome="q" rotulo="Buscar" tipo="search" padrao={busca} placeholder="Serviço, código, fornecedor ou obra" />
+        <CampoSelecao nome="obra" rotulo="Obra" placeholder="Todas as obras" padrao={obraFiltro || null} opcoes={obras.map(([id, nome]) => ({ value: id, label: nome }))} />
+        <CampoSelecao nome="etapa" rotulo="Etapa atual" placeholder="Todas as etapas" padrao={etapaFiltro ? String(etapaFiltro) : null} opcoes={fluxo.map((f) => ({ value: String(f.etapa), label: `${f.etapa}. ${f.nome}` }))} />
+        <CampoSelecao nome="ordem" rotulo="Ordenar" padrao={ordem} opcoes={[{ value: "recentes", label: "Mais recentes" }, { value: "prazo", label: "Prazo mais urgente" }]} />
         <span className="flex gap-2">
-          <button type="submit" className="botao botao-primario">Aplicar filtros</button>
+          <Button type="submit" className="botao botao-primario">Aplicar filtros</Button>
           {filtrando && <Link href="/contratacoes" className="botao">Limpar</Link>}
         </span>
       </form>

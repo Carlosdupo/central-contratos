@@ -1,5 +1,8 @@
 "use client";
 
+import { Button } from "@ui-sdk/react/button";
+import { Field, FieldLabel } from "@ui-sdk/react/field";
+import { Input } from "@ui-sdk/react/input";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { criarClienteNavegador } from "@/lib/supabase/browser";
@@ -76,10 +79,9 @@ export function VerificacaoDuasEtapas() {
           </p>
         </div>
       )}
-      <label htmlFor="codigo" className="flex flex-col gap-1.5">
-        <span className="text-[13px] font-semibold">Código de 6 dígitos</span>
-        <input
-          id="codigo"
+      <Field className="flex flex-col gap-1.5">
+        <FieldLabel className="text-[13px] font-semibold">Código de 6 dígitos</FieldLabel>
+        <Input
           inputMode="numeric"
           autoComplete="one-time-code"
           maxLength={6}
@@ -87,11 +89,11 @@ export function VerificacaoDuasEtapas() {
           onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ""))}
           className="campo text-center font-mono text-lg tracking-[.4em]"
         />
-      </label>
+      </Field>
       {erro && <p role="alert" className="text-[13px] text-bad">{erro}</p>}
-      <button type="submit" className="botao botao-primario" disabled={enviando}>
+      <Button type="submit" className="botao botao-primario" disabled={enviando}>
         {enviando ? "Verificando…" : "Confirmar"}
-      </button>
+      </Button>
     </form>
   );
 }

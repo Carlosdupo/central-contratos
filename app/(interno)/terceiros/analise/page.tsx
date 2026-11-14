@@ -8,7 +8,7 @@ import { lerParametros } from "@/lib/configuracao";
 import { formatarData } from "@/lib/datas";
 import { SeloPrazo } from "@/components/app/selo-prazo";
 import { BotaoAbrir } from "@/components/app/documentos";
-import { Formulario } from "@/components/app/formulario";
+import {CampoEmLinha,Formulario} from "@/components/app/formulario";
 
 export const metadata: Metadata = { title: "Análise do RH" };
 
@@ -80,9 +80,9 @@ export default async function PaginaFilaRh() {
                   <BotaoAbrir acao={abrirDocumentoDaVisita.bind(null, v.id)} texto="Ver documento com foto" />
                 </div>
                 <div className="flex flex-wrap items-start gap-3">
-                  <Formulario acao={decidirVisita.bind(null, v.id, true)} textoBotao="Aprovar visita" className="flex" />
-                  <Formulario acao={decidirVisita.bind(null, v.id, false)} textoBotao="Recusar visita" variante="perigo" className="flex flex-wrap items-center gap-2">
-                    <input name="motivo" placeholder="Motivo da recusa" aria-label="Motivo da recusa" className="campo max-w-[260px] py-1.5" />
+                  <Formulario acao={decidirVisita.bind(null, v.id, true)} textoBotao="Aprovar visita" sensivel="Aprova a visita do sócio à obra." className="flex" />
+                  <Formulario acao={decidirVisita.bind(null, v.id, false)} textoBotao="Recusar visita" variante="perigo" sensivel="Recusa a visita do sócio, com o motivo." className="flex flex-wrap items-center gap-2">
+                    <CampoEmLinha nome="motivo" placeholder="Motivo da recusa" rotulo="Motivo da recusa" className="max-w-[260px]" />
                   </Formulario>
                 </div>
               </div>

@@ -4,6 +4,8 @@ import { exigirInterno } from "@/modules/acesso/sessao";
 import { TIPO_VINCULO } from "@/modules/terceiros/rotulos";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarData } from "@/lib/datas";
+import { CampoTexto } from "@/components/app/formulario";
+import { Button } from "@ui-sdk/react/button";
 
 export const metadata: Metadata = { title: "Consultar pessoas" };
 
@@ -111,14 +113,10 @@ export default async function PaginaConsultaPessoas({ searchParams }: PageProps<
         <h1 className="titulo">Consultar pessoas</h1>
         <p className="mt-1 max-w-[66ch] text-muted-foreground">Busque pelo nome ou pelo CPF completo para saber se a pessoa está liberada e em qual obra.</p>
       </div>
-      <form className="flex max-w-[640px] flex-wrap items-end gap-2" role="search" aria-label="Buscar pessoas">
-        <label className="flex min-w-[240px] flex-1 flex-col gap-1.5">
-          <span className="text-[13px] font-semibold">Nome ou CPF</span>
-          <input name="q" type="search" defaultValue={termo} aria-describedby="dica-busca" className="campo" />
-        </label>
+      <form className="flex max-w-[640px] flex-wrap items-start gap-2" role="search" aria-label="Buscar pessoas">
+        <CampoTexto nome="q" rotulo="Nome ou CPF" tipo="search" padrao={termo} dica="Para buscar pelo CPF, digite os 11 números." className="min-w-[240px] flex-1" />
         {filtro && <input type="hidden" name="f" value={filtro} />}
-        <button type="submit" className="botao botao-primario">Buscar pessoa</button>
-        <p id="dica-busca" className="w-full text-[13px] text-muted-foreground">Para buscar pelo CPF, digite os 11 números.</p>
+        <Button type="submit" className="botao botao-primario mt-[26px]">Buscar pessoa</Button>
       </form>
 
       <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por situação">

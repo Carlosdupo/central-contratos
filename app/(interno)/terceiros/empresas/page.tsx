@@ -5,7 +5,7 @@ import { temAlgumPapel } from "@/modules/acesso/papeis";
 import { convidarEmpresa } from "@/modules/terceiros/acoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarCnpj } from "@/lib/documentos-br";
-import { CampoTexto, Formulario } from "@/components/app/formulario";
+import { CampoSelecao, CampoTexto, Formulario } from "@/components/app/formulario";
 import { JanelaLateral } from "@/components/app/janela-lateral";
 import { CampoCnpj, CampoTelefone } from "@/components/app/campos-mascara";
 import { SITUACAO_EMPRESA } from "@/modules/terceiros/rotulos";
@@ -42,13 +42,7 @@ export default async function PaginaEmpresas() {
                 <CampoCnpj />
                 <CampoTexto nome="email" rotulo="E-mail do responsável" tipo="email" />
                 <CampoTelefone />
-                <label className="flex flex-col gap-1.5">
-                  <span className="text-[13px] font-semibold">Obra</span>
-                  <select name="obra" className="campo" defaultValue="">
-                    <option value="" disabled>Escolha a obra</option>
-                    {(obras ?? []).map((o) => <option key={o.id} value={o.id}>{o.nome}</option>)}
-                  </select>
-                </label>
+                <CampoSelecao nome="obra" rotulo="Obra" placeholder="Escolha a obra" opcoes={(obras ?? []).map((o) => ({ value: o.id, label: o.nome }))} />
               </Formulario>
             )}
           </JanelaLateral>

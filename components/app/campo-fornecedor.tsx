@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Autocomplete, AutocompleteContent, AutocompleteEmpty, AutocompleteInput, AutocompleteItem, AutocompleteLabel, AutocompleteList } from "@ui-sdk/react/autocomplete";
+import { Field, FieldLabel } from "@ui-sdk/react/field";
+import { Input } from "@ui-sdk/react/input";
 import { formatarCnpj } from "@/lib/documentos-br";
 
 export type EmpresaCadastrada = { razao: string; cnpj: string };
@@ -36,10 +38,10 @@ export function CampoFornecedor({ empresas }: { empresas: EmpresaCadastrada[] })
           </AutocompleteList>
         </AutocompleteContent>
       </Autocomplete>
-      <label className="flex min-w-0 flex-col gap-1.5">
-        <span className="text-[13px] font-semibold">CNPJ</span>
-        <input name="cnpj" value={cnpj} onChange={(e) => setCnpj(e.target.value)} className="campo" inputMode="numeric" />
-      </label>
+      <Field className="flex min-w-0 flex-col gap-1.5">
+        <FieldLabel className="text-[13px] font-semibold">CNPJ</FieldLabel>
+        <Input name="cnpj" value={cnpj} onChange={(e) => setCnpj(e.target.value)} className="campo" inputMode="numeric" />
+      </Field>
     </>
   );
 }

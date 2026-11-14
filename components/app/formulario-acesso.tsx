@@ -1,6 +1,10 @@
 "use client";
 
 import { useActionState, type ReactNode } from "react";
+import { Button } from "@ui-sdk/react/button";
+import { Field, FieldLabel } from "@ui-sdk/react/field";
+import { Input } from "@ui-sdk/react/input";
+import { PasswordInput, PasswordInputControl, PasswordInputToggle } from "@ui-sdk/react/password-input";
 import type { EstadoFormulario } from "@/lib/formulario";
 
 type Props = {
@@ -17,26 +21,27 @@ export function FormularioAcesso({ acao, textoBotao, children }: Props) {
       {children}
       {estado.erro && <p role="alert" className="rounded-[10px] bg-bad-soft px-3 py-2 text-[13px] font-medium text-bad">{estado.erro}</p>}
       {estado.ok && <p role="status" className="rounded-[10px] bg-ok-soft px-3.5 py-2.5 text-[13px] text-ok">{estado.ok}</p>}
-      <button type="submit" className="botao botao-primario mt-1" disabled={enviando}>
+      <Button type="submit" className="botao botao-primario mt-1" disabled={enviando}>
         {enviando ? "Aguarde…" : textoBotao}
-      </button>
+      </Button>
     </form>
   );
 }
 
 export function Campo(props: { id: string; rotulo: string; tipo?: string; autoComplete?: string; padrao?: string }) {
   return (
-    <label htmlFor={props.id} className="flex flex-col gap-1.5">
-      <span className="text-[13px] font-semibold">{props.rotulo}</span>
-      <input
-        id={props.id}
-        name={props.id}
-        type={props.tipo ?? "text"}
-        autoComplete={props.autoComplete}
-        defaultValue={props.padrao}
-        required
-        className="campo"
-      />
-    </label>
+    <Field name={props.id} className="flex flex-col gap-1.5">
+      <FieldLabel className="text-[13px] font-semibold">{props.rotulo}</FieldLabel>
+      {props.tipo === "password" ? (
+        <PasswordInput required autoComplete={props.autoComplete as "current-password" | "new-password" | undefined} defaultValue={props.padrao} className="relative block">
+          <PasswordInputControl className="campo pr-12" />
+          <PasswordInputToggle aria-label={`Mostrar ${props.rotulo.toLowerCase()}`} className="absolute top-1/2 right-1 grid size-10 -translate-y-1/2 place-items-center rounded-lg text-muted-foreground hover:bg-fill hover:text-foreground">
+            {(s) => (s.visible ? "Ocultar" : "Ver")}
+          </PasswordInputToggle>
+        </PasswordInput>
+      ) : (
+        <Input type={props.tipo ?? "text"} autoComplete={props.autoComplete} defaultValue={props.padrao} required className="campo" />
+      )}
+    </Field>
   );
 }

@@ -1,6 +1,8 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useState } from "react";
+import { Field, FieldDescription, FieldError, FieldLabel } from "@ui-sdk/react/field";
+import { Input } from "@ui-sdk/react/input";
 import { cnpjValido, somenteDigitos } from "@/lib/documentos-br";
 
 // Campos com máscara e validação no navegador. A validação de verdade continua na Server Action (Zod).
@@ -30,21 +32,16 @@ function CampoMascarado(props: {
   inputMode?: "numeric" | "tel";
   autoComplete?: string;
 }) {
-  const id = useId();
   const [valor, setValor] = useState("");
   const [erro, setErro] = useState<string | null>(null);
-  const descritores = [props.dica ? `${id}-dica` : null, erro ? `${id}-erro` : null].filter(Boolean).join(" ") || undefined;
   return (
-    <div className="flex min-w-0 flex-col gap-1.5">
-      <label htmlFor={id} className="text-[13px] font-semibold">{props.rotulo}</label>
-      <input
-        id={id}
+    <Field invalid={!!erro} className="flex min-w-0 flex-col gap-1.5">
+      <FieldLabel className="text-[13px] font-semibold">{props.rotulo}</FieldLabel>
+      <Input
         name={props.nome}
         value={valor}
         inputMode={props.inputMode}
         autoComplete={props.autoComplete}
-        aria-invalid={erro ? true : undefined}
-        aria-describedby={descritores}
         onChange={(e) => {
           setValor(props.mascara(e.target.value));
           if (erro) setErro(null);
@@ -52,9 +49,9 @@ function CampoMascarado(props: {
         onBlur={() => setErro(valor ? props.validar(valor) : null)}
         className="campo"
       />
-      {props.dica && <span id={`${id}-dica`} className="text-xs text-muted-foreground">{props.dica}</span>}
-      {erro && <span id={`${id}-erro`} role="alert" className="text-[13px] font-medium text-bad">{erro}</span>}
-    </div>
+      {props.dica && <FieldDescription className="text-xs text-muted-foreground">{props.dica}</FieldDescription>}
+      <FieldError match={!!erro} className="text-[13px] font-medium text-bad">{erro}</FieldError>
+    </Field>
   );
 }
 

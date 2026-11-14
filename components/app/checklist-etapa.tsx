@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { marcarItem } from "@/modules/contratacoes/acoes";
-import { Formulario } from "@/components/app/formulario";
+import { Formulario, Marcador } from "@/components/app/formulario";
 import type { EstadoFormulario } from "@/lib/formulario";
 
 type Props = {
@@ -44,23 +44,20 @@ export function ChecklistEtapa({ contratacao, etapa, itens, marcados, editavel, 
     <div className="flex flex-col gap-3">
       <div className="lista-agrupada">
         {itens.map((texto, i) => (
-          <label key={i} className={`flex items-center gap-3 px-3.5 py-2.5 ${editavel ? "cursor-pointer hover:bg-fill-2" : ""}`}>
-            <input
-              type="checkbox"
-              checked={valores[i]}
-              disabled={!editavel}
-              onChange={(e) => alternar(i, e.target.checked)}
-              className="size-[20px] shrink-0 accent-primary"
-            />
-            <span className={`text-[14px] ${valores[i] ? "text-muted-foreground line-through decoration-1" : ""}`}>{texto}</span>
-          </label>
+          <Marcador
+            key={texto}
+            rotulo={<span className={valores[i] ? "text-muted-foreground line-through decoration-1" : ""}>{texto}</span>}
+            marcadoAgora={valores[i]}
+            aoMudar={(novo) => alternar(i, novo)}
+            desabilitado={!editavel}
+          />
         ))}
       </div>
       {erro && <p role="alert" className="text-[13px] text-bad">{erro}</p>}
       {concluir && (
         <div className="flex flex-wrap items-center justify-end gap-3">
           <span className="mr-auto text-[12.5px] text-muted-foreground">
-            {gravando > 0 ? "Salvando…" : faltam > 0 ? `Marque ${faltam === 1 ? "o item que falta" : `os ${faltam} itens que faltam`} para ${textoBotao === "Autorizar" ? "autorizar" : "concluir"}.` : "Tudo certo."}
+            {gravando > 0 ? "Salvando…" : faltam > 0 ? `Marque ${faltam === 1 ? "o item que falta" : `os ${faltam} itens que faltam`} para ${textoBotao.startsWith("Autorizar") ? "autorizar" : "concluir"}.` : "Tudo certo."}
           </span>
           <Formulario
             acao={async (estado, dados) => {

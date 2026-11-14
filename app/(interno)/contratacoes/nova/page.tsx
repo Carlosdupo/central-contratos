@@ -4,7 +4,7 @@ import { exigirPapel } from "@/modules/acesso/sessao";
 import { abrirContratacao } from "@/modules/contratacoes/acoes";
 import { TIPO_CONTRATACAO } from "@/modules/contratacoes/rotulos";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { Formulario } from "@/components/app/formulario";
+import {Formulario,GrupoOpcoes} from "@/components/app/formulario";
 import { CamposNovaContratacao, type ObraComEap } from "@/components/app/campos-nova-contratacao";
 import { agruparEap } from "@/lib/eap";
 import { lerParametros } from "@/lib/configuracao";
@@ -39,17 +39,7 @@ export default async function PaginaNovaContratacao() {
         ) : (
           <Formulario acao={abrirContratacao} textoBotao="Abrir contratação">
             <CamposNovaContratacao obras={obrasComEap} limite={parametros.limiteEscolhaObra} />
-            <fieldset className="flex flex-col gap-1.5">
-              <legend className="mb-1.5 text-[13px] font-semibold">Tipo de contrato</legend>
-              <div className="lista-agrupada">
-                {Object.entries(TIPO_CONTRATACAO).map(([valor, rotulo], i) => (
-                  <label key={valor} className="flex cursor-pointer items-center gap-3 px-3.5 py-2.5 hover:bg-fill-2">
-                    <input type="radio" name="tipo" value={valor} className="size-4 accent-primary" />
-                    <span className="text-[14px]">{i + 1}. {rotulo}</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
+            <GrupoOpcoes nome="tipo" rotulo="Tipo de contrato" opcoes={Object.entries(TIPO_CONTRATACAO).map(([value, rotulo], i) => ({ value, label: `${i + 1}. ${rotulo}` }))} />
           </Formulario>
         )}
       </section>

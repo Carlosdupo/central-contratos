@@ -1,4 +1,5 @@
 import { exigirExterno } from "@/modules/acesso/sessao";
+import { Button } from "@ui-sdk/react/button";
 import { sair } from "@/modules/acesso/acoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { Logo } from "@/components/app/logo";
@@ -20,7 +21,7 @@ export default async function LayoutPortal({ children }: LayoutProps<"/">) {
               <div className="truncate text-xs text-muted-foreground">Nexo · Portal da empresa · {usuario.email}</div>
             </div>
           </div>
-          <form action={sair}><button type="submit" className="text-[13px] text-primary">Sair</button></form>
+          <form action={sair}><Button type="submit" className="text-[13px] text-primary">Sair</Button></form>
         </div>
       </header>
       <main className="mx-auto flex w-full max-w-[1100px] flex-col gap-6 px-6 pt-8 pb-16 max-sm:px-4">{children}</main>

@@ -75,8 +75,8 @@ export default async function PaginaIntegracao() {
                 <div key={a.id} className="flex flex-wrap items-center gap-3 px-3.5 py-2.5">
                   <Pessoa a={a} fotos={fotos} />
                   <span className="flex flex-wrap items-center gap-2">
-                    <Formulario acao={registrarIntegracao.bind(null, a.id, false)} textoBotao="Não compareceu" variante="discreto" className="flex" />
-                    <Formulario acao={registrarIntegracao.bind(null, a.id, true)} textoBotao="Marcar presente" variante="ok" className="flex" />
+                    <Formulario acao={registrarIntegracao.bind(null, a.id, false)} textoBotao="Não compareceu" variante="discreto" sensivel="Registra a falta e remarca a integração." className="flex" />
+                    <Formulario acao={registrarIntegracao.bind(null, a.id, true)} textoBotao="Marcar presente" variante="ok" sensivel="Marca a presença e libera a pessoa para entrar na obra." className="flex" />
                   </span>
                 </div>
               ))}

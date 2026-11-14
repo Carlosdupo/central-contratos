@@ -4,7 +4,7 @@ import { salvarParametro } from "@/modules/admin/acoes";
 import { ESQUEMAS, ROTULO_PARAMETRO, ehChaveParametro, type ChaveParametro } from "@/modules/admin/parametros";
 import { ETAPAS_CONTRATACAO } from "@/modules/contratacoes/etapas";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { CampoTexto, Formulario, Marcador } from "@/components/app/formulario";
+import {CampoEmLinha,CampoTexto,Formulario,Marcador} from "@/components/app/formulario";
 
 export const metadata: Metadata = { title: "Parâmetros" };
 
@@ -92,10 +92,8 @@ function Editor({ chave, valor }: { chave: ChaveParametro; valor: unknown }) {
                 <div key={e.numero} className="grid grid-cols-[28px_minmax(0,1fr)_96px_auto] items-center gap-3 px-3.5 py-2.5 max-sm:grid-cols-[28px_minmax(0,1fr)]">
                   <span className="grid size-6 place-items-center rounded-full border border-input text-xs font-semibold text-muted-foreground">{e.numero}</span>
                   <span className="min-w-0 text-[14px]">{e.nome} <span className="text-faint">· {e.area}</span></span>
-                  <input name={`dias_${e.numero}`} type="number" min={1} defaultValue={atual?.dias ?? ""} placeholder="sem prazo" aria-label={`Dias da etapa ${e.numero}`} className="campo py-1.5 max-sm:col-start-2" />
-                  <label className="flex items-center gap-2 text-[13px] text-muted-foreground max-sm:col-start-2">
-                    <input type="checkbox" name={`uteis_${e.numero}`} defaultChecked={atual?.uteis} className="size-4 accent-primary" /> úteis
-                  </label>
+                  <CampoEmLinha nome={`dias_${e.numero}`} tipo="number" min={1} padrao={atual?.dias} placeholder="sem prazo" rotulo={`Dias da etapa ${e.numero}`} className="max-sm:col-start-2" />
+                  <Marcador nome={`uteis_${e.numero}`} marcado={atual?.uteis} rotulo={<>úteis<span className="sr-only"> (etapa {e.numero})</span></>} className="flex items-center gap-2 text-[13px] text-muted-foreground max-sm:col-start-2" />
                 </div>
               );
             })}

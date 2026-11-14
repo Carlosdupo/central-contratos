@@ -1,5 +1,10 @@
 "use client";
 
+import { Button } from "@ui-sdk/react/button";
+import { Field, FieldLabel } from "@ui-sdk/react/field";
+import { Input } from "@ui-sdk/react/input";
+import { CampoSelecao } from "@/components/app/formulario";
+
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { criarClienteNavegador } from "@/lib/supabase/browser";
@@ -26,7 +31,7 @@ export function BotaoAbrirArquivo({ arquivoId }: { arquivoId: string }) {
   const [abrindo, setAbrindo] = useState(false);
   return (
     <span className="inline-flex items-center gap-2">
-      <button
+      <Button
         type="button"
         className="text-[13px] text-primary disabled:opacity-50"
         disabled={abrindo}
@@ -39,7 +44,7 @@ export function BotaoAbrirArquivo({ arquivoId }: { arquivoId: string }) {
         }}
       >
         {abrindo ? "Abrindo…" : "Abrir arquivo"}
-      </button>
+      </Button>
       {erro && <span className="text-xs text-bad">{erro}</span>}
     </span>
   );
@@ -73,7 +78,7 @@ export function EnviarArquivo({ dono, tipoDoc, regra = "sem_validade", competenc
     const form = e.currentTarget;
     const arquivo = (form.elements.namedItem("arquivo") as HTMLInputElement).files?.[0];
     const data = (form.elements.namedItem("data") as HTMLInputElement | null)?.value || undefined;
-    const obra = (form.elements.namedItem("obra") as HTMLSelectElement | null)?.value || undefined;
+    const obra = (form.querySelector<HTMLInputElement>('input[name="obra"], select[name="obra"]'))?.value || undefined;
     if (!arquivo) return setErro("Escolha o arquivo.");
     if (!ehMime(arquivo.type) || (somenteImagem && arquivo.type === "application/pdf")) return setErro(somenteImagem ? "Envie uma foto JPG ou PNG." : "Envie PDF, JPG ou PNG.");
     if (arquivo.size > 10 * 1024 * 1024) return setErro("O arquivo passa de 10 MB.");
@@ -115,18 +120,15 @@ export function EnviarArquivo({ dono, tipoDoc, regra = "sem_validade", competenc
     <form onSubmit={enviar} className="flex flex-wrap items-end gap-2" noValidate>
       <input name="arquivo" type="file" accept={somenteImagem ? ".jpg,.jpeg,.png,image/jpeg,image/png" : ".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"} aria-label="Arquivo" className="max-w-[220px] text-[13px] text-muted-foreground file:mr-2 file:rounded-full file:border-0 file:bg-fill-2 file:px-3 file:py-1.5 file:text-[13px] file:text-foreground" />
       {visita && (
-        <select name="obra" defaultValue="" aria-label="Obra" className="rounded-lg border border-border bg-card px-2 py-1 text-[13px]">
-          <option value="" disabled>Obra</option>
-          {visita.obras.map((o) => <option key={o.id} value={o.id}>{o.nome}</option>)}
-        </select>
+        <CampoSelecao nome="obra" rotulo="Obra da visita" placeholder="Escolha a obra" className="min-w-[180px]" opcoes={visita.obras.map((o) => ({ value: o.id, label: o.nome }))} />
       )}
       {pedeData && (
-        <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          {pedeData}
-          <input name="data" type="date" min={visita?.dataMinima} className="rounded-lg border border-border bg-card px-2 py-1 text-[13px] text-foreground" />
-        </label>
+        <Field className="flex flex-col gap-1">
+          <FieldLabel className="text-xs font-semibold">{pedeData}</FieldLabel>
+          <Input name="data" type="date" min={visita?.dataMinima} className="campo py-1 text-[13px]" />
+        </Field>
       )}
-      <button type="submit" className="botao botao-primario botao-pequeno" disabled={enviando}>{enviando ? "Enviando…" : textoBotao}</button>
+      <Button type="submit" className="botao botao-primario botao-pequeno" disabled={enviando}>{enviando ? "Enviando…" : textoBotao}</Button>
       {erro && <span role="alert" className="basis-full text-xs text-bad">{erro}</span>}
       {ok && <span role="status" className="basis-full text-xs text-ok">{ok}</span>}
     </form>
@@ -139,7 +141,7 @@ export function BotaoAbrir({ acao, texto = "Abrir arquivo" }: { acao: () => Prom
   const [abrindo, setAbrindo] = useState(false);
   return (
     <span className="inline-flex items-center gap-2">
-      <button
+      <Button
         type="button"
         className="text-[13px] text-primary disabled:opacity-50"
         disabled={abrindo}
@@ -152,7 +154,7 @@ export function BotaoAbrir({ acao, texto = "Abrir arquivo" }: { acao: () => Prom
         }}
       >
         {abrindo ? "Abrindo…" : texto}
-      </button>
+      </Button>
       {erro && <span className="text-xs text-bad">{erro}</span>}
     </span>
   );

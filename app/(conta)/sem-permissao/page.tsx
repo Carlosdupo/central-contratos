@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Button } from "@ui-sdk/react/button";
 import { sair } from "@/modules/acesso/acoes";
 
 export const metadata: Metadata = { title: "Sem permissão" };
@@ -13,7 +14,7 @@ export default function PaginaSemPermissao() {
         </p>
       </div>
       <form action={sair}>
-        <button type="submit" className="botao w-full">Sair</button>
+        <Button type="submit" className="botao w-full">Sair</Button>
       </form>
     </>
   );
