@@ -1,4 +1,3 @@
--- migration: 20261115230000_fase_5_calendario_e_planilha.sql
 -- Fase 5: calendário de suprimentos, planilha de planejamento (datas calculadas), indicadores e abertura com item da planilha.
 begin;
 create extension if not exists pgtap with schema extensions;
