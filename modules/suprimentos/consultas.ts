@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/tipos";
+import type { SituacaoDoLado } from "@/lib/planilha";
 
 type Linha = Database["public"]["Views"]["planejamento_calculado"]["Row"];
 
@@ -27,6 +28,8 @@ export type ItemPlanejamento = {
   siengeSolicitacao: string | null;
   dataRealObra: string | null;
   dataRealCompras: string | null;
+  situacaoObra: SituacaoDoLado;
+  situacaoCompras: SituacaoDoLado;
   observacao: string | null;
   contratacaoId: string | null;
 };
@@ -48,12 +51,13 @@ const paraItem = (r: {
   id: string; obra_id: string; tipo: string; fase: string | null; id_pacote: string | null; pacote_vinculado: string | null; responsavel: string | null; descricao: string;
   prazo_compras_dias: number | null; prazo_chegada_dias: number | null; inicio_manual: string | null; inicio_pacote: string | null; data_estudo: string | null;
   data_solicitar: string | null; data_compras_fechar: string | null; data_deveria_fechar: string | null; sienge_solicitacao: string | null; data_real_obra: string | null;
-  data_real_compras: string | null; observacao: string | null; contratacao_id: string | null;
+  data_real_compras: string | null; situacao_obra: string; situacao_compras: string; observacao: string | null; contratacao_id: string | null;
 }): ItemPlanejamento => ({
   id: r.id, obraId: r.obra_id, tipo: r.tipo as "MO" | "MAT", fase: r.fase, idPacote: r.id_pacote, pacoteVinculado: r.pacote_vinculado, responsavel: r.responsavel, descricao: r.descricao,
   prazoCompras: r.prazo_compras_dias, prazoChegada: r.prazo_chegada_dias, inicioManual: r.inicio_manual, inicioPacote: r.inicio_pacote, dataEstudo: r.data_estudo,
   dataSolicitar: r.data_solicitar, dataComprasFechar: r.data_compras_fechar, dataDeveriaFechar: r.data_deveria_fechar, siengeSolicitacao: r.sienge_solicitacao,
-  dataRealObra: r.data_real_obra, dataRealCompras: r.data_real_compras, observacao: r.observacao, contratacaoId: r.contratacao_id,
+  dataRealObra: r.data_real_obra, dataRealCompras: r.data_real_compras,
+  situacaoObra: r.situacao_obra as SituacaoDoLado, situacaoCompras: r.situacao_compras as SituacaoDoLado, observacao: r.observacao, contratacaoId: r.contratacao_id,
 });
 
 /** Itens da planilha (com as datas calculadas) de uma obra e de um tipo. A RLS limita às obras que a pessoa vê. */
@@ -68,7 +72,7 @@ export async function itensLivres(obraIds: string[]): Promise<{ id: string; obra
   if (obraIds.length === 0) return [];
   const supabase = await criarClienteServidor();
   const { data } = await supabase.from("planejamento_calculado").select("*").in("obra_id", obraIds).order("ordem").limit(2000);
-  return ((data ?? []) as unknown as Linha[]).filter((r) => !r.contratacao_id).map((r) => ({ id: r.id, obraId: r.obra_id, tipo: r.tipo as "MO" | "MAT", descricao: r.descricao, idPacote: r.id_pacote, dataSolicitar: r.data_solicitar }));
+  return ((data ?? []) as unknown as Linha[]).filter((r) => !r.contratacao_id && r.situacao_obra === "pendente").map((r) => ({ id: r.id, obraId: r.obra_id, tipo: r.tipo as "MO" | "MAT", descricao: r.descricao, idPacote: r.id_pacote, dataSolicitar: r.data_solicitar }));
 }
 
 export async function indicadoresDoMes(ano: number, mes: number) {
