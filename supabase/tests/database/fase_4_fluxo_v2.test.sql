@@ -1,4 +1,3 @@
--- migration: 20261115210000_fase_4_fluxo_v2.sql
 -- Fase 4: fluxo versão 2 (normal e aditivo). As contratações antigas (fluxo 1) são cobertas pelos testes das fases anteriores.
 begin;
 create extension if not exists pgtap with schema extensions;

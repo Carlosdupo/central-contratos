@@ -106,6 +106,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
             <h1 className="titulo">{c.servico}</h1>
           </div>
           {c.urgente && <SeloUrgente data={c.urgente_data} />}
+          {c.fora_do_prazo && <span className="selo selo-alerta" title="A obra solicitou depois da data que a planilha previa">Pedido fora do prazo</span>}
           {c.situacao === "liberada" && <span className="selo selo-ok">Liberada para a obra</span>}
           {c.situacao === "cancelada" && <span className="selo selo-neutro">Cancelada: {c.cancelamento_motivo}</span>}
           {podeCancelar && <MaisAcoes cancelar={cancelarContratacao.bind(null, id)} />}
@@ -123,6 +124,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
           ["Orçamento", c.valor_orcado == null ? "não informado" : formatarReais(Number(c.valor_orcado))],
           ["Contratado", formatarReais(c.valor_negociado ? Number(c.valor_negociado) : null)],
           ...(c.contrato_original ? [["Contrato original", c.contrato_original]] : []),
+          ...(c.negociacao_a_partir_de ? [[c.planejamento_item_id ? "Datas da planilha desde" : "Negociação a partir de", formatarData(c.negociacao_a_partir_de)]] : []),
           ["Sienge", [c.sienge_solicitacao && `SS ${c.sienge_solicitacao}`, c.sienge_contrato].filter(Boolean).join(" · ") || "—"],
         ].map(([r, v]) => (
           <div key={r as string}><div className="text-xs font-medium text-faint">{r}</div>{v}</div>

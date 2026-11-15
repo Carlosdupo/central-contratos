@@ -8,6 +8,8 @@ import { agruparEap } from "@/lib/eap";
 import { formatarData, agoraNoFuso } from "@/lib/datas";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { CampoTexto, Formulario, Marcador } from "@/components/app/formulario";
+import { CampoArquivo } from "@/components/app/campo-arquivo";
+import { importarCronograma } from "@/modules/suprimentos/acoes";
 
 export const metadata: Metadata = { title: "Obra" };
 
@@ -44,6 +46,18 @@ export default async function PaginaObra({ params }: PageProps<"/admin/obras/[id
           <div className="lista-agrupada">
             <Marcador nome="ativa" marcado={obra.ativa} rotulo="Obra ativa (desmarque quando a obra terminar; o histórico continua guardado)" />
           </div>
+        </Formulario>
+      </section>
+
+      <section className="painel">
+        <div>
+          <h3 className="subtitulo">Cronograma da obra (planilha de suprimentos)</h3>
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            Envie o cronograma (aba PREVISION) salvo como CSV, com as colunas ID do pacote e Início. Ele substitui o anterior e as datas da planilha de suprimentos são recalculadas. Reimporte sempre que o cronograma mudar.
+          </p>
+        </div>
+        <Formulario acao={importarCronograma.bind(null, obra.id)} textoBotao="Importar cronograma" className="flex flex-wrap items-end gap-3">
+          <CampoArquivo rotulo="CSV do cronograma" aceita=".csv,text/csv" className="min-w-[260px] flex-1" />
         </Formulario>
       </section>
 

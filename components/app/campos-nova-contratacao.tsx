@@ -4,16 +4,18 @@ import { useState } from "react";
 import { CampoReais } from "@/components/app/campos-mascara";
 import { lerValor } from "@/lib/valor-reais";
 import { CampoAtividadeMatriz } from "@/components/app/campo-atividade-matriz";
+import { CampoItemPlanilha, type ItemLivre } from "@/components/app/campo-item-planilha";
 import type { AtividadeMatriz } from "@/modules/matriz/consultas";
 import { dicaCodigoSienge } from "@/lib/sienge";
 import { CampoSelecao, CampoTexto, GrupoOpcoes, Marcador } from "@/components/app/formulario";
 
 export type ObraAbertura = { id: string; nome: string; prefixoSienge: string | null };
+export type ItemLivreDaObra = ItemLivre & { obraId: string };
 
 const reais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 // Campos da abertura: obra, atividade da matriz, Valor Orçamento (opcional) e quem negocia.
 // As regras são conferidas de novo no banco (abrir_contratacao).
-export function CamposNovaContratacao({ obras, limite, matriz }: { obras: ObraAbertura[]; limite: number; matriz: AtividadeMatriz[] }) {
+export function CamposNovaContratacao({ obras, limite, matriz, itens = [], ciclos = [], hoje = new Date().toISOString().slice(0, 10) }: { obras: ObraAbertura[]; limite: number; matriz: AtividadeMatriz[]; itens?: ItemLivreDaObra[]; ciclos?: { limite: string; inicio: string }[]; hoje?: string }) {
   const [obraId, setObraId] = useState<string | null>(obras.length === 1 ? obras[0].id : null);
   const [semValor, setSemValor] = useState(false);
   const [valor, setValor] = useState("");
@@ -30,6 +32,8 @@ export function CamposNovaContratacao({ obras, limite, matriz }: { obras: ObraAb
       <CampoSelecao nome="obra" rotulo="Obra da contratação" placeholder="Escolha a obra" valor={obraId} aoMudar={setObraId} opcoes={obras.map((o) => ({ value: o.id, label: o.nome }))} />
 
       <CampoAtividadeMatriz atividades={matriz} />
+
+      <CampoItemPlanilha key={obraId ?? "sem-obra"} itens={itens.filter((i) => i.obraId === obraId)} ciclos={ciclos} hoje={hoje} />
 
       <CampoTexto nome="servico" rotulo="Descrição do escopo" dica="Ex.: Alvenaria de vedação, torre B" />
 

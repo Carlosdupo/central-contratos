@@ -303,6 +303,117 @@ export type Database = {
         }
         Relationships: []
       }
+      calendario_suprimentos: {
+        Row: {
+          ano: number
+          ciclo: number
+          id: string
+          inicio: string
+          limite: string
+          mes: number
+        }
+        Insert: {
+          ano: number
+          ciclo: number
+          id?: string
+          inicio: string
+          limite: string
+          mes: number
+        }
+        Update: {
+          ano?: number
+          ciclo?: number
+          id?: string
+          inicio?: string
+          limite?: string
+          mes?: number
+        }
+        Relationships: []
+      }
+      cronograma_pacotes: {
+        Row: {
+          id: string
+          id_pacote: string
+          inicio: string
+          obra_id: string
+        }
+        Insert: {
+          id?: string
+          id_pacote: string
+          inicio: string
+          obra_id: string
+        }
+        Update: {
+          id?: string
+          id_pacote?: string
+          inicio?: string
+          obra_id?: string
+        }
+        Relationships: []
+      }
+      planejamento_itens: {
+        Row: {
+          contratacao_id: string | null
+          descricao: string
+          fase: string | null
+          id: string
+          id_pacote: string | null
+          inicio_manual: string | null
+          local: string | null
+          data_real_compras: string | null
+          data_real_obra: string | null
+          obra_id: string
+          observacao: string | null
+          ordem: number
+          pacote_vinculado: string | null
+          prazo_chegada_dias: number | null
+          prazo_compras_dias: number | null
+          responsavel: string | null
+          sienge_solicitacao: string | null
+          tipo: string
+        }
+        Insert: {
+          contratacao_id?: string | null
+          descricao: string
+          fase?: string | null
+          id?: string
+          id_pacote?: string | null
+          inicio_manual?: string | null
+          local?: string | null
+          data_real_compras?: string | null
+          data_real_obra?: string | null
+          obra_id: string
+          observacao?: string | null
+          ordem?: number
+          pacote_vinculado?: string | null
+          prazo_chegada_dias?: number | null
+          prazo_compras_dias?: number | null
+          responsavel?: string | null
+          sienge_solicitacao?: string | null
+          tipo: string
+        }
+        Update: {
+          contratacao_id?: string | null
+          descricao?: string
+          fase?: string | null
+          id?: string
+          id_pacote?: string | null
+          inicio_manual?: string | null
+          local?: string | null
+          data_real_compras?: string | null
+          data_real_obra?: string | null
+          obra_id?: string
+          observacao?: string | null
+          ordem?: number
+          pacote_vinculado?: string | null
+          prazo_chegada_dias?: number | null
+          prazo_compras_dias?: number | null
+          responsavel?: string | null
+          sienge_solicitacao?: string | null
+          tipo?: string
+        }
+        Relationships: []
+      }
       contratacao_devolucoes: {
         Row: {
           contratacao_id: string
@@ -403,6 +514,9 @@ export type Database = {
           matriz_id: string | null
           aditivo_destino: string | null
           empresa_ja_liberada: boolean
+          fora_do_prazo: boolean
+          negociacao_a_partir_de: string | null
+          planejamento_item_id: string | null
           urgente: boolean
           urgente_data: string | null
           urgente_em: string | null
@@ -449,6 +563,9 @@ export type Database = {
           matriz_id?: string | null
           aditivo_destino?: string | null
           empresa_ja_liberada?: boolean
+          fora_do_prazo?: boolean
+          negociacao_a_partir_de?: string | null
+          planejamento_item_id?: string | null
           urgente?: boolean
           urgente_data?: string | null
           urgente_em?: string | null
@@ -495,6 +612,9 @@ export type Database = {
           matriz_id?: string | null
           aditivo_destino?: string | null
           empresa_ja_liberada?: boolean
+          fora_do_prazo?: boolean
+          negociacao_a_partir_de?: string | null
+          planejamento_item_id?: string | null
           urgente?: boolean
           urgente_data?: string | null
           urgente_em?: string | null
@@ -1788,12 +1908,40 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      planejamento_calculado: {
+        Row: {
+          contratacao_id: string | null
+          descricao: string
+          fase: string | null
+          id: string
+          id_pacote: string | null
+          inicio_manual: string | null
+          local: string | null
+          data_real_compras: string | null
+          data_real_obra: string | null
+          obra_id: string
+          observacao: string | null
+          ordem: number
+          pacote_vinculado: string | null
+          prazo_chegada_dias: number | null
+          prazo_compras_dias: number | null
+          responsavel: string | null
+          sienge_solicitacao: string | null
+          tipo: string
+          inicio_pacote: string | null
+          data_solicitar: string | null
+          data_estudo: string | null
+          data_compras_fechar: string | null
+          data_deveria_fechar: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       abrir_contratacao: {
         Args: {
           p_contrato_original?: string
+          p_planejamento_item?: string
           p_aditivo: boolean
           p_matriz: string
           p_negociacao: string
@@ -1872,6 +2020,39 @@ export type Database = {
       definir_fornecedor_aditivo: {
         Args: { p_cnpj: string; p_contratacao: string; p_nome: string; p_valor: number }
         Returns: undefined
+      }
+      ciclo_do_pedido: {
+        Args: { p_dia: string }
+        Returns: { inicio: string; limite: string }[]
+      }
+      editar_planejamento_item: {
+        Args: { p_id: string; p_inicio_manual: string; p_observacao: string; p_prazo_chegada: number; p_prazo_compras: number; p_responsavel: string }
+        Returns: undefined
+      }
+      importar_cronograma: {
+        Args: { p_obra: string; p_pacotes: Json }
+        Returns: number
+      }
+      importar_planejamento: {
+        Args: { p_itens: Json; p_obra: string; p_tipo: string }
+        Returns: number
+      }
+      indicadores_planejamento: {
+        Args: { p_ano: number; p_mes: number }
+        Returns: {
+          compras_atrasada: number
+          compras_no_prazo: number
+          obra: string
+          obra_atrasada: number
+          obra_id: string
+          obra_no_prazo: number
+          previstos_compras: number
+          previstos_obra: number
+        }[]
+      }
+      salvar_calendario: {
+        Args: { p_ano: number; p_ciclos: Json }
+        Returns: number
       }
       devolver_etapa: {
         Args: { p_contratacao: string; p_de: number; p_motivo: string; p_para: number }
