@@ -2,7 +2,7 @@
 -- Fase 1A: cancelar (admin e coordenador da obra), código do Sienge, contrato original no aditivo, botão único da etapa 6.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(24);
+select plan(25);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-0000000001a1', 'adm1a@teste.local', '{}'),
@@ -97,6 +97,8 @@ select is((select permuta from public.contratacoes where id = (select id from id
 select lives_ok(format($$ select public.autorizar_contratacao(%L, false, null, null, true, 500, 10, false, null, '5') $$, (select id from ids where nome = 'g1')), 'Gerente autoriza com um botão só');
 select is((select fat_direto_valor from public.contratacoes where id = (select id from ids where nome = 'g1')), 500.00, 'Condições gravadas junto');
 select is((select situacao::text from public.contratacao_etapas where etapa = 6 and contratacao_id = (select id from ids where nome = 'g1')), 'concluida', 'Etapa 6 concluída na mesma ação');
+
+select ok(not has_function_privilege('authenticated', 'app.ligar_fornecedor(uuid)', 'execute'), 'authenticated não executa app.ligar_fornecedor (continua fechada)');
 
 select * from finish();
 rollback;
