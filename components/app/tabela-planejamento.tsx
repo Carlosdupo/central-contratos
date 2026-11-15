@@ -13,6 +13,8 @@ type Editar = (id: string, tipo: "MO" | "MAT", estado: EstadoFormulario, dados: 
 
 const semAcento = (t: string) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 const data = (d: string | null) => (d ? formatarData(d).slice(0, 5) : "—");
+// "ok" na planilha = feito sem a data; "NA" = não se aplica; "_" = pendente.
+const feito = (d: string | null, situacao: ItemPlanejamento["situacaoObra"]) => (d ? data(d) : situacao === "feito_sem_data" ? "feito (sem data)" : situacao === "nao_se_aplica" ? "não se aplica" : "—");
 
 function EditarItem({ item, editar }: { item: ItemPlanejamento; editar: Editar }) {
   return (
@@ -69,8 +71,8 @@ export function TabelaPlanejamento({ itens, podeEditar, editar }: { itens: ItemP
                   <div><dt className="inline text-muted-foreground">Estudo: </dt><dd className="inline">{data(i.dataEstudo)}</dd></div>
                   <div><dt className="inline text-muted-foreground">Obra solicita até: </dt><dd className="inline">{data(i.dataSolicitar)}</dd></div>
                   <div><dt className="inline text-muted-foreground">Compras fecha até: </dt><dd className="inline">{data(i.dataComprasFechar)}</dd></div>
-                  <div><dt className="inline text-muted-foreground">Obra pediu em: </dt><dd className="inline">{data(i.dataRealObra)}</dd></div>
-                  <div><dt className="inline text-muted-foreground">Compras fechou em: </dt><dd className="inline">{data(i.dataRealCompras)}</dd></div>
+                  <div><dt className="inline text-muted-foreground">Obra pediu em: </dt><dd className="inline">{feito(i.dataRealObra, i.situacaoObra)}</dd></div>
+                  <div><dt className="inline text-muted-foreground">Compras fechou em: </dt><dd className="inline">{feito(i.dataRealCompras, i.situacaoCompras)}</dd></div>
                 </dl>
                 {!i.idPacote && !i.inicioManual && <p className="mt-1 text-[12.5px] text-hot">Sem data: digite o início do pacote na edição.</p>}
                 {i.observacao && <p className="mt-1 text-[12.5px] text-muted-foreground">{i.observacao}</p>}

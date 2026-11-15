@@ -1,0 +1,16 @@
+;;;;CRONOGRAMA SUPRIMENTOS OBRA EXEMPLO MÃO DE OBRA;;;;;;;;;;;;;Data;31/10/2026
+;;;;;;;;;;;;;;;;;;;46326
+;;;;INICIO DE OBRA + FUNDAÇAO
+ID;TIPO;PACOTE VINCULADO;;Responsável;Principais Mão de obra  do Projeto;Início Pacote atual;Início Pacote Base;Data para obra iniciar orçamentos/estudos;Prazo que o compras precisa ;Prazo até chegar na obra;Data que a obra deve solicitar;coluna auxiliar para filtro  ordem;Data real Obra;Data para compras fechar;Data que compras deveria fechar pedido de acordo com  PEDIDO OBRA;Data real Compras;Causa do atraso/observação 
+9001;Fundação;Bloco A;;Ana;Contrato de estacas;15/07/2025;15/07/2025;17/03/2025;60;30;16/04/2025;45763;ok;15/06/2025;#REF!;ok;fechado com a empresa X
+9001;Fundação;Bloco A;;;Contrato de escavação;15/07/2025;15/07/2025;16/04/2025;60;0;16/05/2025;45793;13/05/2025;15/07/2025;#REF!;_;
+;;;;;Layout de canteiro (item sem ID de pacote);;;;;;;;ok;;;ok;
+;;;;;Item que não se aplica;01/09/2025;;;30;30;;;NA;;#VALUE!;não tem ;
+
+;;;;INICIO SUPRA + EMBASAMENTO 
+ID;TIPO;PACOTE VINCULADO;;Responsável;Principais Mão de obra  do Projeto;Início Pacote atual;Início Pacote Base;Data para obra iniciar orçamentos/estudos;Prazo que o compras precisa ;Prazo até chegar na obra;Data que a obra deve solicitar;Número da solicitação sienge material;Data real Obra;Data para compras fechar;Data que compras deveria fechar pedido de acordo com  PEDIDO OBRA;Data real Compras;Causa do atraso/observação ;Causa do atraso compras
+9002;Supra;Laje 1;;Bia;Contrato de fôrmas;01/09/2025;01/09/2025;01/06/2025;30;30;01/07/2025;55123;02/07/2025;#N/A;#REF!;_;;;TOTAL 99
+9003;Supra;Laje 2;;Bia;;;;;;;;;;;;;
+;;;;TORRE E GERAL 
+;TIPO;PACOTE VINCULADO;;Responsável;Principais Insumos do Projeto;Início Pacote atual;Início Pacote Base;Data para obra iniciar orçamentos/estudos;Prazo que o compras precisa ;Prazo até chegar na obra;Data que a obra deve solicitar;Número da solicitação sienge material;Data real Obra;Data para compras fechar;Data que compras deveria fechar pedido de acordo com  PEDIDO OBRA;Data real Compras;Causa do atraso/observação ;Causa do atraso compras
+9004;Torre;Pavimento 3;;Caio;Contrato de alvenaria;10/11/2026;10/11/2026;;60;30;;;_;;#REF!;_;aguardando projeto

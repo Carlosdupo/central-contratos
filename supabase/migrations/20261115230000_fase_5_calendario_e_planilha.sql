@@ -86,6 +86,9 @@ create table public.planejamento_itens (
   sienge_solicitacao text check (sienge_solicitacao is null or length(sienge_solicitacao) <= 40),
   data_real_obra date,
   data_real_compras date,
+  -- Na planilha, "ok" na data real quer dizer feito (sem a data) e "NA"/"não tem" quer dizer que não se aplica; "_" é pendente.
+  situacao_obra text not null default 'pendente' check (situacao_obra in ('pendente', 'feito', 'feito_sem_data', 'nao_se_aplica')),
+  situacao_compras text not null default 'pendente' check (situacao_compras in ('pendente', 'feito', 'feito_sem_data', 'nao_se_aplica')),
   observacao text check (observacao is null or length(observacao) <= 500),
   contratacao_id uuid unique references public.contratacoes (id) on delete set null
 );
@@ -135,13 +138,16 @@ begin
   begin
     delete from public.planejamento_itens where obra_id = p_obra and tipo = p_tipo and contratacao_id is null;
     insert into public.planejamento_itens (obra_id, tipo, ordem, fase, id_pacote, pacote_vinculado, local, responsavel, descricao,
-      prazo_compras_dias, prazo_chegada_dias, inicio_manual, sienge_solicitacao, data_real_obra, data_real_compras, observacao)
+      prazo_compras_dias, prazo_chegada_dias, inicio_manual, sienge_solicitacao, data_real_obra, data_real_compras, situacao_obra, situacao_compras, observacao)
     select p_obra, p_tipo, (row_number() over ())::int, nullif(btrim(t.fase), ''), nullif(btrim(t.id_pacote), ''), nullif(btrim(t.pacote_vinculado), ''), nullif(btrim(t.local), ''),
       nullif(btrim(t.responsavel), ''), btrim(t.descricao), t.prazo_compras_dias, t.prazo_chegada_dias,
       case when nullif(btrim(t.id_pacote), '') is null then t.inicio_manual end,
-      nullif(btrim(t.sienge_solicitacao), ''), t.data_real_obra, t.data_real_compras, nullif(btrim(t.observacao), '')
+      nullif(btrim(t.sienge_solicitacao), ''), t.data_real_obra, t.data_real_compras,
+      case when t.data_real_obra is not null then 'feito' else coalesce(nullif(btrim(t.situacao_obra), ''), 'pendente') end,
+      case when t.data_real_compras is not null then 'feito' else coalesce(nullif(btrim(t.situacao_compras), ''), 'pendente') end,
+      nullif(btrim(t.observacao), '')
     from jsonb_to_recordset(p_itens) as t(fase text, id_pacote text, pacote_vinculado text, local text, responsavel text, descricao text,
-      prazo_compras_dias int, prazo_chegada_dias int, inicio_manual date, sienge_solicitacao text, data_real_obra date, data_real_compras date, observacao text)
+      prazo_compras_dias int, prazo_chegada_dias int, inicio_manual date, sienge_solicitacao text, data_real_obra date, data_real_compras date, situacao_obra text, situacao_compras text, observacao text)
     where nullif(btrim(t.descricao), '') is not null;
   exception when check_violation or invalid_text_representation or datetime_field_overflow or invalid_datetime_format or numeric_value_out_of_range then
     raise exception 'Confira a planilha: há data, prazo ou texto fora do formato.' using errcode = 'P0001';
@@ -196,24 +202,30 @@ exception when check_violation then
 end $$;
 
 -- Indicadores do mês (obra pediu no prazo; Suprimentos fechou no prazo), uma linha por obra.
+-- "Feito sem data" conta como feito (no prazo); "não se aplica" fica fora da conta.
 create function public.indicadores_planejamento(p_ano int, p_mes int) returns table (
   obra_id uuid, obra text, previstos_obra int, obra_no_prazo int, obra_atrasada int, previstos_compras int, compras_no_prazo int, compras_atrasada int
 )
 language sql stable set search_path = '' as $$
-  with hoje as (select (now() at time zone 'America/Sao_Paulo')::date as d)
+  with hoje as (select (now() at time zone 'America/Sao_Paulo')::date as d),
+  base as (
+    select p.*,
+      (p.situacao_obra <> 'nao_se_aplica' and extract(year from p.data_solicitar) = p_ano and extract(month from p.data_solicitar) = p_mes) as conta_obra,
+      (p.situacao_compras <> 'nao_se_aplica' and extract(year from p.data_deveria_fechar) = p_ano and extract(month from p.data_deveria_fechar) = p_mes) as conta_compras
+    from public.planejamento_calculado p
+  )
   select o.id, o.nome,
-    count(*) filter (where extract(year from p.data_solicitar) = p_ano and extract(month from p.data_solicitar) = p_mes)::int,
-    count(*) filter (where extract(year from p.data_solicitar) = p_ano and extract(month from p.data_solicitar) = p_mes and p.data_real_obra <= p.data_solicitar)::int,
-    count(*) filter (where extract(year from p.data_solicitar) = p_ano and extract(month from p.data_solicitar) = p_mes
-      and (p.data_real_obra > p.data_solicitar or (p.data_real_obra is null and p.data_solicitar < (select d from hoje))))::int,
-    count(*) filter (where extract(year from p.data_deveria_fechar) = p_ano and extract(month from p.data_deveria_fechar) = p_mes)::int,
-    count(*) filter (where extract(year from p.data_deveria_fechar) = p_ano and extract(month from p.data_deveria_fechar) = p_mes and p.data_real_compras <= p.data_deveria_fechar)::int,
-    count(*) filter (where extract(year from p.data_deveria_fechar) = p_ano and extract(month from p.data_deveria_fechar) = p_mes
-      and (p.data_real_compras > p.data_deveria_fechar or (p.data_real_compras is null and p.data_deveria_fechar < (select d from hoje))))::int
-  from public.planejamento_calculado p join public.obras o on o.id = p.obra_id
+    count(*) filter (where b.conta_obra)::int,
+    count(*) filter (where b.conta_obra and (b.situacao_obra = 'feito_sem_data' or b.data_real_obra <= b.data_solicitar))::int,
+    count(*) filter (where b.conta_obra and b.situacao_obra <> 'feito_sem_data'
+      and (b.data_real_obra > b.data_solicitar or (b.data_real_obra is null and b.data_solicitar < (select d from hoje))))::int,
+    count(*) filter (where b.conta_compras)::int,
+    count(*) filter (where b.conta_compras and (b.situacao_compras = 'feito_sem_data' or b.data_real_compras <= b.data_deveria_fechar))::int,
+    count(*) filter (where b.conta_compras and b.situacao_compras <> 'feito_sem_data'
+      and (b.data_real_compras > b.data_deveria_fechar or (b.data_real_compras is null and b.data_deveria_fechar < (select d from hoje))))::int
+  from base b join public.obras o on o.id = b.obra_id
   group by o.id, o.nome
-  having count(*) filter (where extract(year from p.data_solicitar) = p_ano and extract(month from p.data_solicitar) = p_mes) > 0
-      or count(*) filter (where extract(year from p.data_deveria_fechar) = p_ano and extract(month from p.data_deveria_fechar) = p_mes) > 0
+  having count(*) filter (where b.conta_obra) > 0 or count(*) filter (where b.conta_compras) > 0
   order by o.nome
 $$;
 
@@ -233,7 +245,7 @@ begin
     select 1 from public.contratacoes c join public.etapas_fluxo f on f.versao = c.fluxo_versao and f.etapa = new.etapa
     where c.id = new.contratacao_id and f.chave = 'autorizacao'
   ) then
-    update public.planejamento_itens set data_real_compras = (now() at time zone 'America/Sao_Paulo')::date
+    update public.planejamento_itens set data_real_compras = (now() at time zone 'America/Sao_Paulo')::date, situacao_compras = 'feito'
     where contratacao_id = new.contratacao_id;
   end if;
   return null;
@@ -292,8 +304,8 @@ begin
   end if;
   -- Item da planilha: segue as datas dela (marca "fora do prazo" se a obra pediu depois da data que deveria). Sem item: calendário.
   if p_planejamento_item is not null then
-    perform 1 from public.planejamento_itens where id = p_planejamento_item and obra_id = p_obra and contratacao_id is null for update;
-    if not found then raise exception 'Item da planilha inválido ou já usado em outra contratação.' using errcode = 'P0001'; end if;
+    perform 1 from public.planejamento_itens where id = p_planejamento_item and obra_id = p_obra and contratacao_id is null and situacao_obra = 'pendente' for update;
+    if not found then raise exception 'Item da planilha inválido, já usado em outra contratação ou já atendido.' using errcode = 'P0001'; end if;
     select data_solicitar into v_solicitar from public.planejamento_calculado where id = p_planejamento_item;
     v_inicio := v_hoje;
     v_fora := v_solicitar is not null and v_hoje > v_solicitar;
@@ -312,7 +324,7 @@ begin
     v_limite, v_versao, p_planejamento_item, v_inicio, v_fora
   ) returning id into v_id;
   if p_planejamento_item is not null then
-    update public.planejamento_itens set contratacao_id = v_id, data_real_obra = v_hoje where id = p_planejamento_item;
+    update public.planejamento_itens set contratacao_id = v_id, data_real_obra = v_hoje, situacao_obra = 'feito' where id = p_planejamento_item;
   end if;
   insert into public.contratacao_etapas (contratacao_id, etapa) select v_id, etapa from public.etapas_fluxo where versao = v_versao;
   update public.contratacao_etapas set situacao = 'concluida', iniciada_em = now(), concluida_em = now(), concluida_por = auth.uid()

@@ -370,6 +370,8 @@ export type Database = {
           prazo_compras_dias: number | null
           responsavel: string | null
           sienge_solicitacao: string | null
+          situacao_compras: string
+          situacao_obra: string
           tipo: string
         }
         Insert: {
@@ -390,6 +392,8 @@ export type Database = {
           prazo_compras_dias?: number | null
           responsavel?: string | null
           sienge_solicitacao?: string | null
+          situacao_compras?: string
+          situacao_obra?: string
           tipo: string
         }
         Update: {
@@ -410,6 +414,8 @@ export type Database = {
           prazo_compras_dias?: number | null
           responsavel?: string | null
           sienge_solicitacao?: string | null
+          situacao_compras?: string
+          situacao_obra?: string
           tipo?: string
         }
         Relationships: []
@@ -1933,6 +1939,8 @@ export type Database = {
           data_estudo: string | null
           data_compras_fechar: string | null
           data_deveria_fechar: string | null
+          situacao_compras: string
+          situacao_obra: string
         }
         Relationships: []
       }

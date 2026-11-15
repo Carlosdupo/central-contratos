@@ -5,6 +5,7 @@ import { z } from "zod";
 import { exigirInterno } from "@/modules/acesso/sessao";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { mensagemDeErro, type EstadoFormulario } from "@/lib/formulario";
+import { decodificarCsv } from "@/lib/csv";
 import { lerCronograma, lerData, lerPlanilha } from "@/lib/planilha";
 
 // Calendário e planilhas de Suprimentos. Quem pode o quê é conferido no banco (gerente define o calendário;
@@ -20,7 +21,7 @@ async function lerArquivoCsv(dados: FormData, campo: string): Promise<{ texto: s
   const nome = arquivo.name.toLowerCase();
   if (!/\.(csv|txt)$/.test(nome) || /\.(xlsx?|ods)$/.test(nome)) return { erro: "Salve a planilha como CSV no Excel (Arquivo > Salvar como > CSV) e envie o arquivo .csv." };
   if (arquivo.type && !/^(text\/|application\/(vnd\.ms-excel|csv))/.test(arquivo.type)) return { erro: "O arquivo não parece ser um CSV." };
-  return { texto: await arquivo.text() };
+  return { texto: decodificarCsv(await arquivo.arrayBuffer()) };
 }
 
 export async function salvarCalendario(ano: number, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {

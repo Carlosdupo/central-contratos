@@ -81,7 +81,7 @@ describe("Planilha de suprimentos", () => {
   const item = (extra: Partial<ItemPlanejamento>): ItemPlanejamento => ({
     id: "x", obraId: "o", tipo: "MO", fase: "Fundação", idPacote: "P1", pacoteVinculado: null, responsavel: "Ana", descricao: "Estacas", prazoCompras: 30, prazoChegada: 30,
     inicioManual: null, inicioPacote: "2026-06-01", dataEstudo: "2026-03-03", dataSolicitar: "2026-04-02", dataComprasFechar: "2026-05-02", dataDeveriaFechar: null,
-    siengeSolicitacao: null, dataRealObra: null, dataRealCompras: null, observacao: null, contratacaoId: null, ...extra,
+    siengeSolicitacao: null, dataRealObra: null, dataRealCompras: null, situacaoObra: "pendente", situacaoCompras: "pendente", observacao: null, contratacaoId: null, ...extra,
   });
   const editar = vi.fn(async () => ({ ok: "Item salvo." }));
 
