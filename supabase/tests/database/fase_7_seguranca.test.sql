@@ -1,4 +1,3 @@
--- migration: 20261116100000_fase_7_endurecimento.sql
 -- Fase 7: revisão de segurança do conjunto. Vigia o que não pode voltar a acontecer nas próximas migrations.
 begin;
 create extension if not exists pgtap with schema extensions;
