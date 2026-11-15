@@ -71,7 +71,7 @@ export default async function PaginaObra({ params }: PageProps<"/admin/obras/[id
           </p>
         </div>
         <Formulario acao={importarEap.bind(null, obra.id)} textoBotao={obra.eap_importada_em ? "Importar EAP atualizada" : "Importar EAP"} className="flex flex-wrap items-center gap-3">
-          <input type="file" name="arquivo" accept="application/pdf" aria-label="PDF da EAP" className="text-[13px]" />
+          <CampoArquivo rotulo="PDF da EAP" aceita="application/pdf,.pdf" className="min-w-[260px] flex-1" />
         </Formulario>
         {grupos.length > 0 && (
           <div className="lista-agrupada">
