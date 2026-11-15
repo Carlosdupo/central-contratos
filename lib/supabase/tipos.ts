@@ -249,6 +249,60 @@ export type Database = {
           },
         ]
       }
+      avisos_internos: {
+        Row: {
+          chave: string | null
+          contratacao_id: string | null
+          criado_em: string
+          id: string
+          lido_em: string | null
+          texto: string | null
+          tipo: string
+          titulo: string
+          usuario_id: string
+        }
+        Insert: {
+          chave?: string | null
+          contratacao_id?: string | null
+          criado_em?: string
+          id?: string
+          lido_em?: string | null
+          texto?: string | null
+          tipo: string
+          titulo: string
+          usuario_id: string
+        }
+        Update: {
+          chave?: string | null
+          contratacao_id?: string | null
+          criado_em?: string
+          id?: string
+          lido_em?: string | null
+          texto?: string | null
+          tipo?: string
+          titulo?: string
+          usuario_id?: string
+        }
+        Relationships: []
+      }
+      preferencias_aviso: {
+        Row: {
+          email: boolean
+          som: boolean
+          usuario_id: string
+        }
+        Insert: {
+          email?: boolean
+          som?: boolean
+          usuario_id: string
+        }
+        Update: {
+          email?: boolean
+          som?: boolean
+          usuario_id?: string
+        }
+        Relationships: []
+      }
       contratacao_devolucoes: {
         Row: {
           contratacao_id: string
@@ -347,6 +401,11 @@ export type Database = {
           contrato_original: string | null
           forma_legal: string | null
           matriz_id: string | null
+          urgente: boolean
+          urgente_data: string | null
+          urgente_em: string | null
+          urgente_motivo: string | null
+          urgente_por: string | null
           created_at: string
           criado_por: string
           eap_item_id: string | null
@@ -386,6 +445,11 @@ export type Database = {
           contrato_original?: string | null
           forma_legal?: string | null
           matriz_id?: string | null
+          urgente?: boolean
+          urgente_data?: string | null
+          urgente_em?: string | null
+          urgente_motivo?: string | null
+          urgente_por?: string | null
           created_at?: string
           criado_por?: string
           eap_item_id?: string | null
@@ -425,6 +489,11 @@ export type Database = {
           contrato_original?: string | null
           forma_legal?: string | null
           matriz_id?: string | null
+          urgente?: boolean
+          urgente_data?: string | null
+          urgente_em?: string | null
+          urgente_motivo?: string | null
+          urgente_por?: string | null
           created_at?: string
           criado_por?: string
           eap_item_id?: string | null
@@ -1771,6 +1840,22 @@ export type Database = {
           p_tipo: Database["public"]["Enums"]["tipo_vinculo"]
         }
         Returns: string
+      }
+      gerar_aviso_prazo: {
+        Args: { p_contratacao: string; p_dia: string; p_etapa: number; p_tipo: string }
+        Returns: undefined
+      }
+      marcar_avisos_lidos: {
+        Args: { p_ids?: string[] }
+        Returns: number
+      }
+      marcar_urgencia: {
+        Args: { p_contratacao: string; p_data: string; p_motivo: string; p_urgente: boolean }
+        Returns: undefined
+      }
+      salvar_preferencias_aviso: {
+        Args: { p_email: boolean; p_som: boolean }
+        Returns: undefined
       }
       devolver_etapa: {
         Args: { p_contratacao: string; p_de: number; p_motivo: string; p_para: number }

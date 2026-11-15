@@ -1,4 +1,3 @@
--- migration: 20261115170000_fase_2_auxiliar_e_devolucao.sql
 -- Fase 2: auxiliar de obra (etapas 1 a 3) e devolução de etapa.
 begin;
 create extension if not exists pgtap with schema extensions;

@@ -3,6 +3,8 @@ import { Button } from "@ui-sdk/react/button";
 import { sair } from "@/modules/acesso/acoes";
 import { ROTULO_PAPEL } from "@/modules/acesso/papeis";
 import { contarPendencias } from "@/modules/painel/pendencias";
+import { carregarAvisos, marcarAvisosLidos, salvarPreferenciasAviso } from "@/modules/notificacoes/avisos-acoes";
+import { CentralDeAvisos } from "@/components/app/central-de-avisos";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { rotuloDoUsuario } from "@/lib/rotulo-usuario";
 import { BarraLateral, type GrupoMenu } from "@/components/app/barra-lateral";
@@ -20,7 +22,7 @@ const iniciais = (nome: string) =>
 // Área interna. Itens do menu conforme os papéis do usuário (mesma regra de antes; nenhuma permissão nova).
 export default async function LayoutInterno({ children }: LayoutProps<"/">) {
   const usuario = await exigirInterno();
-  const pendencias = await contarPendencias(usuario.papeis).catch(() => 0);
+  const [pendencias, avisos] = await Promise.all([contarPendencias(usuario.papeis).catch(() => 0), carregarAvisos().catch(() => null)]);
 
   const terceiros: GrupoMenu["itens"] = [
     { href: "/terceiros/empresas", rotulo: "Empresas", icone: <IconeEmpresas /> },
@@ -70,6 +72,11 @@ export default async function LayoutInterno({ children }: LayoutProps<"/">) {
         <BarraLateral grupos={grupos} rodape={rodape} />
         <main id="conteudo" tabIndex={-1} className="mx-auto flex w-full max-w-[1280px] min-w-0 flex-col gap-6 px-8 pt-7 pb-16 outline-none max-[859px]:px-4 max-[859px]:pt-5">
           <FocoNoTitulo />
+          {avisos && (
+            <div className="flex justify-end">
+              <CentralDeAvisos inicial={avisos} carregar={carregarAvisos} marcarLidos={marcarAvisosLidos} salvarPreferencias={salvarPreferenciasAviso} />
+            </div>
+          )}
           {children}
         </main>
       </div>

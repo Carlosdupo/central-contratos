@@ -7,7 +7,7 @@ import { temAlgumPapel, type Papel } from "@/modules/acesso/papeis";
 import { detalheDaContratacao } from "@/modules/contratacoes/consultas";
 import { TIPO_CONTRATACAO, TRILHAS, formatarReais } from "@/modules/contratacoes/rotulos";
 import {
-  assinarContrato, autorizarContratoGerente, cancelarContratacao, concluirEtapa, definirFornecedor, devolverEtapa, novaProposta, pularNegociacao, reabrirEtapa, registrarCotacao, salvarCampoEtapa, salvarEmailFornecedor,
+  assinarContrato, autorizarContratoGerente, cancelarContratacao, concluirEtapa, definirFornecedor, devolverEtapa, marcarUrgencia, novaProposta, pularNegociacao, reabrirEtapa, registrarCotacao, salvarCampoEtapa, salvarEmailFornecedor,
 } from "@/modules/contratacoes/acoes";
 import { equipeDaEmpresa } from "@/modules/terceiros/consultas";
 import { linksDasFotos } from "@/modules/terceiros/fotos";
@@ -23,6 +23,7 @@ import { CampoReais } from "@/components/app/campos-mascara";
 import { MaisAcoes } from "@/components/app/mais-acoes";
 import { DevolverEtapa } from "@/components/app/devolver-etapa";
 import { LinhaDoTempo } from "@/components/app/linha-do-tempo";
+import { SeloUrgente } from "@/components/app/selo-urgente";
 import { dicaCodigoSienge } from "@/lib/sienge";
 import { ListaEquipe } from "@/components/app/lista-equipe";
 
@@ -69,6 +70,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
   const fotos = await linksDasFotos(equipe.map((m) => m.fotoPath));
   const ehAdmin = usuario.papeis.includes("admin");
   // Cancelar: administrador e coordenador (a RLS limita o coordenador às obras dele; o banco confere de novo).
+  const podeMarcarUrgencia = usuario.papeis.includes("coordenador_obra");
   const podeCancelar = c.situacao === "em_andamento" && (ehAdmin || (usuario.papeis.includes("coordenador_obra") && !ehAuxiliar));
   const prefixoSienge = c.obras?.prefixo_sienge ?? null;
 
@@ -91,6 +93,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
             <div className="font-mono text-[13px] text-muted-foreground">{c.codigo}</div>
             <h1 className="titulo">{c.servico}</h1>
           </div>
+          {c.urgente && <SeloUrgente data={c.urgente_data} />}
           {c.situacao === "liberada" && <span className="selo selo-ok">Liberada para a obra</span>}
           {c.situacao === "cancelada" && <span className="selo selo-neutro">Cancelada: {c.cancelamento_motivo}</span>}
           {podeCancelar && <MaisAcoes cancelar={cancelarContratacao.bind(null, id)} />}
@@ -334,6 +337,27 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
               </Formulario>
             )}
           </section>
+
+          {(c.urgente || (podeMarcarUrgencia && c.situacao === "em_andamento")) && (
+            <section className="painel">
+              <h2 className="subtitulo">Urgência</h2>
+              {c.urgente ? (
+                <p className="text-[13px]">
+                  <span className="font-semibold">Necessária até {formatarData(c.urgente_data as string)}:</span> {c.urgente_motivo}
+                </p>
+              ) : (
+                <p className="text-[13px] text-muted-foreground">Marque quando a obra precisa antes do prazo normal. Todos veem o selo e o gerente de suprimentos é avisado; o prazo do Suprimentos não muda.</p>
+              )}
+              {podeMarcarUrgencia && c.situacao === "em_andamento" && (c.urgente ? (
+                <Formulario acao={marcarUrgencia.bind(null, id, false)} textoBotao="Tirar urgência" variante="neutro" />
+              ) : (
+                <Formulario acao={marcarUrgencia.bind(null, id, true)} textoBotao="Marcar como urgente" sensivel="Marca a contratação como urgente e avisa o gerente de suprimentos.">
+                  <CampoTexto nome="motivo" rotulo="Motivo da urgência" />
+                  <CampoTexto nome="data" rotulo="Data de necessidade" tipo="date" />
+                </Formulario>
+              ))}
+            </section>
+          )}
 
           <section className="painel">
             <h2 className="subtitulo">Linha do tempo</h2>

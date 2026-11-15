@@ -34,6 +34,7 @@ export type EtapaAberta = {
   servico: string;
   obra: string;
   obraId: string;
+  urgente: boolean;
   etapa: EtapaFluxo;
   desde: string;
   prazo: SituacaoPrazo;
@@ -51,7 +52,7 @@ export const etapasEmAberto = cache(async (): Promise<EtapaAberta[]> => {
     carregarFeriados(),
     supabase
       .from("contratacao_etapas")
-      .select("etapa, iniciada_em, contratacoes!inner(id, codigo, servico, prazos, situacao, obra_id, obras(nome))")
+      .select("etapa, iniciada_em, contratacoes!inner(id, codigo, servico, prazos, situacao, obra_id, urgente, obras(nome))")
       .eq("situacao", "em_andamento")
       .eq("contratacoes.situacao", "em_andamento"),
   ]);
@@ -68,13 +69,14 @@ export const etapasEmAberto = cache(async (): Promise<EtapaAberta[]> => {
         servico: l.contratacoes.servico,
         obra: l.contratacoes.obras?.nome ?? "—",
         obraId: l.contratacoes.obra_id,
+        urgente: l.contratacoes.urgente,
         etapa,
         desde,
         prazo: situacaoPrazo({ inicio: desde, hoje, prazo, feriados }),
         uteis: !!prazo?.uteis,
       };
     })
-    .sort((a, b) => ORDEM[a.prazo.tipo] - ORDEM[b.prazo.tipo] || (b.prazo.usados - a.prazo.usados));
+    .sort((a, b) => Number(b.urgente) - Number(a.urgente) || ORDEM[a.prazo.tipo] - ORDEM[b.prazo.tipo] || (b.prazo.usados - a.prazo.usados));
 });
 
 export async function detalheDaContratacao(id: string) {
@@ -174,6 +176,8 @@ export type LinhaPanorama = {
   pacote: string | null;
   obraId: string;
   obra: string;
+  urgente: boolean;
+  urgenteData: string | null;
   situacao: "em_andamento" | "liberada" | "cancelada";
   comQuem: string[];
   atrasada: boolean;
@@ -188,7 +192,7 @@ export async function panoramaDasContratacoes(obraId?: string): Promise<LinhaPan
   const supabase = await criarClienteServidor();
   let consulta = supabase
     .from("contratacoes")
-    .select("id, codigo, created_at, servico, pacote, obra_id, situacao, prazos, sienge_solicitacao, sienge_contrato, fornecedor_nome, valor_negociado, obras(nome), contratacao_etapas(etapa, situacao, iniciada_em, concluida_em)")
+    .select("id, codigo, created_at, servico, pacote, obra_id, urgente, urgente_data, situacao, prazos, sienge_solicitacao, sienge_contrato, fornecedor_nome, valor_negociado, obras(nome), contratacao_etapas(etapa, situacao, iniciada_em, concluida_em)")
     .order("created_at", { ascending: false });
   if (obraId) consulta = consulta.eq("obra_id", obraId);
   const [{ data }, fluxo, feriados] = await Promise.all([consulta, carregarFluxo(), carregarFeriados()]);
@@ -220,6 +224,8 @@ export async function panoramaDasContratacoes(obraId?: string): Promise<LinhaPan
     return {
       id: c.id,
       codigo: c.codigo,
+      urgente: c.urgente,
+      urgenteData: c.urgente_data,
       abertaEm: dataNoFuso(c.created_at),
       servico: c.servico,
       pacote: c.pacote,

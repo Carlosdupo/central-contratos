@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { exigirInterno, exigirPapel } from "@/modules/acesso/sessao";
@@ -8,6 +9,7 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { cnpjValido, somenteDigitos } from "@/lib/documentos-br";
 import { lerValor, numeroOuNulo } from "@/lib/valor-reais";
 import { mensagemDeErro, type EstadoFormulario } from "@/lib/formulario";
+import { despacharPendentes } from "@/modules/notificacoes/enviar";
 import { liberarPortalDaContratacao } from "@/modules/terceiros/acesso-portal";
 
 // Ações do fluxo de contratação. Quem pode agir em cada etapa é conferido no banco (app.pode_agir_como),
@@ -17,6 +19,7 @@ const uuid = z.uuid();
 const simNao = (v: FormDataEntryValue | null) => (v === "sim" ? true : v === "nao" ? false : null);
 const etapa = z.number().int().min(1).max(12);
 const recarregar = (id: string) => {
+  after(() => despacharPendentes(10).catch(() => undefined)); // os avisos por e-mail geram-se no banco; sai depois da resposta
   revalidatePath(`/contratacoes/${id}`);
   revalidatePath("/contratacoes");
   revalidatePath("/painel");
@@ -30,7 +33,16 @@ const esquemaAbertura = z.object({
   aditivo: z.boolean(),
   negociacao: z.enum(["obra", "suprimentos"], { message: "Escolha quem negocia." }),
   contrato_original: z.string().trim().max(40, "Nº do contrato original grande demais.").optional(),
+  urgente: z.boolean(),
+  urgente_motivo: z.string().trim().max(300, "Motivo da urgência grande demais.").optional(),
+  urgente_data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Informe a data de necessidade.").optional(),
 }).refine(
+  (data) => !data.urgente || (data.urgente_motivo ?? "").length >= 5,
+  { message: "Explique o motivo da urgência.", path: ["urgente_motivo"] },
+).refine(
+  (data) => !data.urgente || !!data.urgente_data,
+  { message: "Informe a data de necessidade.", path: ["urgente_data"] },
+).refine(
   (data) => !data.aditivo || !!data.contrato_original,
   { message: "Informe o nº do contrato original no Sienge.", path: ["contrato_original"] },
 );
@@ -48,6 +60,9 @@ export async function abrirContratacao(_: EstadoFormulario, dados: FormData): Pr
     aditivo: dados.get("aditivo") === "on",
     negociacao: dados.get("negociacao"),
     contrato_original: dados.get("contrato_original") ?? undefined,
+    urgente: dados.get("urgente") === "on",
+    urgente_motivo: String(dados.get("urgente_motivo") ?? "") || undefined,
+    urgente_data: String(dados.get("urgente_data") ?? "") || undefined,
   });
   if (!lido.success) return { erro: lido.error.issues[0].message };
   const supabase = await criarClienteServidor();
@@ -61,6 +76,10 @@ export async function abrirContratacao(_: EstadoFormulario, dados: FormData): Pr
     p_contrato_original: lido.data.aditivo ? lido.data.contrato_original : undefined,
   });
   if (error || !data) return { erro: mensagemDeErro(error, error?.message ?? "Não foi possível abrir a contratação.") };
+  if (lido.data.urgente) {
+    // Os campos já foram conferidos acima; se mesmo assim falhar, a pessoa marca de novo na tela da contratação.
+    await supabase.rpc("marcar_urgencia", { p_contratacao: data, p_urgente: true, p_motivo: lido.data.urgente_motivo as string, p_data: lido.data.urgente_data as string });
+  }
   recarregar(data);
   redirect(`/contratacoes/${data}`);
 }
@@ -224,6 +243,21 @@ export async function devolverEtapa(contratacao: string, de: number, _: EstadoFo
   if (error) return { erro: mensagemDeErro(error, error.message ?? "Não foi possível devolver.") };
   recarregar(contratacao);
   return { ok: "Etapa devolvida para ajuste." };
+}
+
+export async function marcarUrgencia(contratacao: string, urgente: boolean, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
+  await exigirInterno();
+  if (!uuid.safeParse(contratacao).success) return { erro: "Dados inválidos." };
+  const supabase = await criarClienteServidor();
+  const { error } = await supabase.rpc("marcar_urgencia", {
+    p_contratacao: contratacao,
+    p_urgente: urgente,
+    p_motivo: urgente ? String(dados.get("motivo") ?? "") : "",
+    p_data: urgente ? String(dados.get("data") ?? "") : (null as unknown as string),
+  });
+  if (error) return { erro: mensagemDeErro(error, error.message ?? "Não foi possível salvar a urgência.") };
+  recarregar(contratacao);
+  return { ok: urgente ? "Marcada como urgente. O gerente de suprimentos foi avisado." : "Urgência retirada." };
 }
 
 export async function reabrirEtapa(contratacao: string, numeroEtapa: number, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {

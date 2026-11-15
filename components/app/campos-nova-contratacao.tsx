@@ -18,6 +18,7 @@ export function CamposNovaContratacao({ obras, limite, matriz }: { obras: ObraAb
   const [semValor, setSemValor] = useState(false);
   const [valor, setValor] = useState("");
   const [aditivo, setAditivo] = useState(false);
+  const [urgente, setUrgente] = useState(false);
   const [negociacao, setNegociacao] = useState<string | null>(null);
   const obra = obras.find((o) => o.id === obraId);
   const valorNum = semValor ? NaN : lerValor(valor);
@@ -63,6 +64,13 @@ export function CamposNovaContratacao({ obras, limite, matriz }: { obras: ObraAb
       <Marcador nome="aditivo" rotulo="É aditivo de contrato (o fornecedor já tem contrato nesta obra)" marcadoAgora={aditivo} aoMudar={setAditivo} className="flex cursor-pointer items-center gap-2 text-[13px]" />
       {aditivo && (
         <CampoTexto nome="contrato_original" rotulo="Nº do contrato original no Sienge" dica={`Obrigatório no aditivo. ${dicaCodigoSienge(obra?.prefixoSienge)}`} />
+      )}
+      <Marcador nome="urgente" rotulo="Marcar como urgente (todos veem o selo; o prazo do Suprimentos não muda)" marcadoAgora={urgente} aoMudar={setUrgente} className="flex cursor-pointer items-center gap-2 text-[13px]" />
+      {urgente && (
+        <>
+          <CampoTexto nome="urgente_motivo" rotulo="Motivo da urgência" dica="Explique por que a obra precisa antes do prazo." />
+          <CampoTexto nome="urgente_data" rotulo="Data de necessidade" tipo="date" />
+        </>
       )}
     </>
   );

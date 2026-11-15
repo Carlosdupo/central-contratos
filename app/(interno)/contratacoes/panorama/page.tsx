@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SeloUrgente } from "@/components/app/selo-urgente";
 import Link from "next/link";
 import { exigirInterno } from "@/modules/acesso/sessao";
 import { COLUNAS_PANORAMA, panoramaDasContratacoes, type CelulaPanorama, type LinhaPanorama } from "@/modules/contratacoes/consultas";
@@ -132,6 +133,7 @@ export default async function PaginaPanorama({ searchParams }: PageProps<"/contr
                   <tr key={l.id} className={l.situacao === "cancelada" ? "opacity-55" : ""}>
                     <th scope="row" className="sticky left-0 z-10 w-[260px] max-w-[260px] min-w-[260px] border-b border-sep bg-card py-3 pr-3 pl-[18px] text-left align-top text-[14px] font-normal tracking-normal text-foreground normal-case">
                       <Link href={`/contratacoes/${l.id}`} className="line-clamp-2 font-semibold whitespace-normal hover:text-primary">{l.servico}</Link>
+                      {l.urgente && <SeloUrgente data={l.urgenteData} />}
                       <span className="block text-[12px] whitespace-normal text-muted-foreground">
                         <span className="font-mono">{l.codigo}</span>{l.siengeSolicitacao ? ` · SS ${l.siengeSolicitacao}` : ""} · aberta {formatarData(l.abertaEm).slice(0, 5)}
                       </span>

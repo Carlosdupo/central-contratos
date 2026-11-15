@@ -53,7 +53,7 @@ export async function resumoSuprimentos() {
   }
 
   return {
-    fila: [...autorizar, ...negociar],
+    fila: [...autorizar, ...negociar].sort((a, b) => Number(b.urgente) - Number(a.urgente)),
     negociar: negociar.length,
     autorizar: autorizar.length,
     atrasadas: [...negociar, ...autorizar].filter((a) => a.prazo.tipo === "atrasada").length,
