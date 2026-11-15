@@ -1,3 +1,5 @@
+-- migration: 20261115113848_fase_1a_ajustes_rapidos.sql
+-- migration: 20261115150000_fase_1b_matriz.sql
 -- F6: fluxo de contratação (12 etapas, regra dos R$ 4.000, pular, assinaturas em ordem, visibilidade A8).
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -30,13 +32,13 @@ grant all on ids to authenticated;
 set local role authenticated;
 -- Abertura
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000c02", "role": "authenticated", "aal": "aal1"}', true);
-select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-00000000000b', 'Alvenaria', null, 100000, 'contrato', 'suprimentos') $$, '42501', null, 'Coordenador de outra obra não abre contratação aqui');
+select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-00000000000b', 'Alvenaria', (select id from public.matriz_contratacao order by ordem limit 1), 100000, false, 'suprimentos') $$, '42501', null, 'Coordenador de outra obra não abre contratação aqui');
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000c01", "role": "authenticated", "aal": "aal1"}', true);
-insert into ids select 'grande', public.abrir_contratacao('00000000-0000-0000-0000-00000000000b', 'Alvenaria de vedação', null, 100000, 'contrato', 'suprimentos');
-insert into ids select 'pequena', public.abrir_contratacao('00000000-0000-0000-0000-00000000000b', 'Soleiras', null, null, 'unico', 'obra');
+insert into ids select 'grande', public.abrir_contratacao('00000000-0000-0000-0000-00000000000b', 'Alvenaria de vedação', (select id from public.matriz_contratacao order by ordem limit 1), 100000, false, 'suprimentos');
+insert into ids select 'pequena', public.abrir_contratacao('00000000-0000-0000-0000-00000000000b', 'Soleiras', (select id from public.matriz_contratacao order by ordem limit 1), null, false, 'obra');
 select ok((select codigo from public.contratacoes where id = (select id from ids where nome = 'grande')) ~ '^CT-\d{4}-\d{3,}$', 'Código no formato CT-AAAA-NNN');
 select is((select situacao::text from public.contratacao_etapas where contratacao_id = (select id from ids where nome = 'grande') and etapa = 1), 'em_andamento', 'Etapa 1 começa ao abrir');
-select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-00000000000b', 'Fundação', null, 50000, 'contrato', 'obra') $$,
+select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-00000000000b', 'Fundação', (select id from public.matriz_contratacao order by ordem limit 1), 50000, false, 'obra') $$,
   'P0001', 'A partir de R$ 4.000 do orçamento, a negociação é de Suprimentos.', 'Orçamento acima do limite: a obra não negocia');
 select is((select valor_orcado from public.contratacoes where id = (select id from ids where nome = 'pequena')), null, 'Valor orçado pode ficar sem informar');
 select throws_ok(format($$ select public.concluir_etapa(%L, 1::smallint) $$, (select id from ids where nome = 'grande')), 'P0001', 'Marque todos os itens da etapa.', 'Itens começam desmarcados: não conclui');

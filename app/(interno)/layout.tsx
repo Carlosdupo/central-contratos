@@ -37,6 +37,7 @@ export default async function LayoutInterno({ children }: LayoutProps<"/">) {
       ],
     },
     { titulo: "Terceiros", itens: terceiros },
+    { titulo: "Apoio", itens: [{ href: "/apoio/matriz", rotulo: "Matriz de contratação", icone: <IconeContratos /> }] },
   ];
   if (usuario.papeis.includes("admin")) grupos.push({ titulo: "Sistema", itens: [{ href: "/admin", rotulo: "Administração", icone: <IconeAdmin /> }] });
 

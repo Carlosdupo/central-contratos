@@ -1,3 +1,5 @@
+-- migration: 20261115113848_fase_1a_ajustes_rapidos.sql
+-- migration: 20261115150000_fase_1b_matriz.sql
 -- Acesso do fornecedor: ao autorizar (etapa 6), a empresa é cadastrada/ligada à obra da contratação.
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -23,8 +25,8 @@ grant all on ids to authenticated;
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000e01", "role": "authenticated", "aal": "aal1"}', true);
-insert into ids select 'um', public.abrir_contratacao('00000000-0000-0000-0000-0000000000a1', 'Pintura', null, 50000, 'contrato', 'suprimentos');
-insert into ids select 'dois', public.abrir_contratacao('00000000-0000-0000-0000-0000000000a2', 'Pintura torre 2', null, null, 'contrato', 'suprimentos');
+insert into ids select 'um', public.abrir_contratacao('00000000-0000-0000-0000-0000000000a1', 'Pintura', (select id from public.matriz_contratacao order by ordem limit 1), 50000, false, 'suprimentos');
+insert into ids select 'dois', public.abrir_contratacao('00000000-0000-0000-0000-0000000000a2', 'Pintura torre 2', (select id from public.matriz_contratacao order by ordem limit 1), null, false, 'suprimentos');
 
 -- Pula direto para a etapa 6 (como postgres), com fornecedor novo escolhido.
 reset role;

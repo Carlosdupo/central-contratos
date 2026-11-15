@@ -24,14 +24,14 @@ const recarregar = (id: string) => {
 
 const esquemaAbertura = z.object({
   obra: z.uuid("Escolha a obra."),
-  eap: z.uuid().nullable(),
-  servico: z.string().trim().min(3, "Descreva o serviço ou escopo.").max(200),
+  matriz: z.uuid("Escolha a atividade da matriz."),
+  servico: z.string().trim().min(3, "Descreva o escopo.").max(200),
   valor: z.number().positive("Informe o Valor Orçamento ou marque \"Não informar\".").max(1e11).nullable(),
-  tipo: z.enum(["unico", "contrato", "aditivo"], { message: "Escolha o tipo de contrato." }),
+  aditivo: z.boolean(),
   negociacao: z.enum(["obra", "suprimentos"], { message: "Escolha quem negocia." }),
   contrato_original: z.string().trim().max(40, "Nº do contrato original grande demais.").optional(),
 }).refine(
-  (data) => data.tipo !== "aditivo" || !!data.contrato_original,
+  (data) => !data.aditivo || !!data.contrato_original,
   { message: "Informe o nº do contrato original no Sienge.", path: ["contrato_original"] },
 );
 
@@ -40,26 +40,25 @@ export async function abrirContratacao(_: EstadoFormulario, dados: FormData): Pr
   const semValor = dados.get("sem_valor") === "on";
   const valor = semValor ? null : lerValor(dados.get("valor"));
   if (!semValor && Number.isNaN(valor)) return { erro: "Informe o Valor Orçamento ou marque \"Não informar\"." };
-  const eap = dados.get("eap");
   const lido = esquemaAbertura.safeParse({
     obra: dados.get("obra"),
-    eap: typeof eap === "string" && eap ? eap : null,
+    matriz: dados.get("matriz"),
     servico: dados.get("servico"),
     valor,
-    tipo: dados.get("tipo"),
+    aditivo: dados.get("aditivo") === "on",
     negociacao: dados.get("negociacao"),
-    contrato_original: dados.get("contrato_original"),
+    contrato_original: dados.get("contrato_original") ?? undefined,
   });
   if (!lido.success) return { erro: lido.error.issues[0].message };
   const supabase = await criarClienteServidor();
   const { data, error } = await supabase.rpc("abrir_contratacao", {
     p_obra: lido.data.obra,
     p_servico: lido.data.servico,
-    p_eap_item: lido.data.eap as string,
+    p_matriz: lido.data.matriz,
     p_valor: lido.data.valor as number,
-    p_tipo: lido.data.tipo,
+    p_aditivo: lido.data.aditivo,
     p_negociacao: lido.data.negociacao,
-    p_contrato_original: lido.data.tipo === "aditivo" ? lido.data.contrato_original : undefined,
+    p_contrato_original: lido.data.aditivo ? lido.data.contrato_original : undefined,
   });
   if (error || !data) return { erro: mensagemDeErro(error, error?.message ?? "Não foi possível abrir a contratação.") };
   recarregar(data);

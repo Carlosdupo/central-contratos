@@ -297,6 +297,8 @@ export type Database = {
           caucao: string | null
           codigo: string
           contrato_original: string | null
+          forma_legal: string | null
+          matriz_id: string | null
           created_at: string
           criado_por: string
           eap_item_id: string | null
@@ -334,6 +336,8 @@ export type Database = {
           caucao?: string | null
           codigo: string
           contrato_original?: string | null
+          forma_legal?: string | null
+          matriz_id?: string | null
           created_at?: string
           criado_por?: string
           eap_item_id?: string | null
@@ -371,6 +375,8 @@ export type Database = {
           caucao?: string | null
           codigo?: string
           contrato_original?: string | null
+          forma_legal?: string | null
+          matriz_id?: string | null
           created_at?: string
           criado_por?: string
           eap_item_id?: string | null
@@ -1160,6 +1166,57 @@ export type Database = {
           },
         ]
       }
+      matriz_contratacao: {
+        Row: {
+          atividade: string
+          criterio_apropriacao: string | null
+          forma_legal: string
+          grupo: string
+          grupo_codigo: string
+          id: string
+          lotes: string | null
+          observacoes: string | null
+          ordem: number
+          subgrupo: string | null
+          subgrupo_codigo: string | null
+          tipo: string | null
+          unidade_medicao: string | null
+          unidade_negociacao: string | null
+        }
+        Insert: {
+          atividade: string
+          criterio_apropriacao?: string | null
+          forma_legal: string
+          grupo: string
+          grupo_codigo: string
+          id?: string
+          lotes?: string | null
+          observacoes?: string | null
+          ordem: number
+          subgrupo?: string | null
+          subgrupo_codigo?: string | null
+          tipo?: string | null
+          unidade_medicao?: string | null
+          unidade_negociacao?: string | null
+        }
+        Update: {
+          atividade?: string
+          criterio_apropriacao?: string | null
+          forma_legal?: string
+          grupo?: string
+          grupo_codigo?: string
+          id?: string
+          lotes?: string | null
+          observacoes?: string | null
+          ordem?: number
+          subgrupo?: string | null
+          subgrupo_codigo?: string | null
+          tipo?: string | null
+          unidade_medicao?: string | null
+          unidade_negociacao?: string | null
+        }
+        Relationships: []
+      }
       obra_eap: {
         Row: {
           descricao: string
@@ -1609,11 +1666,11 @@ export type Database = {
       abrir_contratacao: {
         Args: {
           p_contrato_original?: string
-          p_eap_item: string
+          p_aditivo: boolean
+          p_matriz: string
           p_negociacao: string
           p_obra: string
           p_servico: string
-          p_tipo: Database["public"]["Enums"]["tipo_contratacao"]
           p_valor: number
         }
         Returns: string
