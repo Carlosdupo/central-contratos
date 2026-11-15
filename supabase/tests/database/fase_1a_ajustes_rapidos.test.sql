@@ -1,5 +1,3 @@
--- migration: 20261115113848_fase_1a_ajustes_rapidos.sql
--- migration: 20261115150000_fase_1b_matriz.sql
 -- Fase 1A: cancelar (admin e coordenador da obra), código do Sienge, contrato original no aditivo, botão único da etapa 6.
 begin;
 create extension if not exists pgtap with schema extensions;

@@ -7,7 +7,7 @@ import { temAlgumPapel, type Papel } from "@/modules/acesso/papeis";
 import { detalheDaContratacao } from "@/modules/contratacoes/consultas";
 import { TIPO_CONTRATACAO, TRILHAS, formatarReais } from "@/modules/contratacoes/rotulos";
 import {
-  assinarContrato, autorizarContratoGerente, cancelarContratacao, concluirEtapa, definirFornecedor, novaProposta, pularNegociacao, reabrirEtapa, registrarCotacao, salvarCampoEtapa, salvarEmailFornecedor,
+  assinarContrato, autorizarContratoGerente, cancelarContratacao, concluirEtapa, definirFornecedor, devolverEtapa, novaProposta, pularNegociacao, reabrirEtapa, registrarCotacao, salvarCampoEtapa, salvarEmailFornecedor,
 } from "@/modules/contratacoes/acoes";
 import { equipeDaEmpresa } from "@/modules/terceiros/consultas";
 import { linksDasFotos } from "@/modules/terceiros/fotos";
@@ -21,6 +21,8 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { CampoEmLinha, CampoSelecao, CampoTexto, Formulario } from "@/components/app/formulario";
 import { CampoReais } from "@/components/app/campos-mascara";
 import { MaisAcoes } from "@/components/app/mais-acoes";
+import { DevolverEtapa } from "@/components/app/devolver-etapa";
+import { LinhaDoTempo } from "@/components/app/linha-do-tempo";
 import { dicaCodigoSienge } from "@/lib/sienge";
 import { ListaEquipe } from "@/components/app/lista-equipe";
 
@@ -38,16 +40,26 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
   if (!z.uuid().safeParse(id).success) notFound();
   const d = await detalheDaContratacao(id);
   if (!d) notFound();
-  const { c, etapas, cotacoes, assinantes } = d;
+  const { c, etapas, cotacoes, assinantes, eventos, devolucoes } = d;
+  // Nível da pessoa nesta obra: o auxiliar age só até a etapa 3 e não cancela.
+  const supabaseNivel = await criarClienteServidor();
+  const { data: vinculo } = await supabaseNivel.from("usuario_obras").select("nivel").eq("usuario_id", usuario.id).eq("obra_id", c.obra_id).maybeSingle();
+  const ehAuxiliar = vinculo?.nivel === "auxiliar";
 
   // Mesmas regras de app.pode_agir_como (o banco confere de novo). Coordenador: a RLS já limita às obras dele.
-  const podeComo = (papel: Papel | null) =>
-    !!papel && (papel === "suprimentos" ? temAlgumPapel(usuario.papeis, ["suprimentos", "gerente_suprimentos"]) : usuario.papeis.includes(papel));
+  const podeComo = (papel: Papel | null, numeroEtapa: number) =>
+    !!papel && (papel === "suprimentos" ? temAlgumPapel(usuario.papeis, ["suprimentos", "gerente_suprimentos"]) : usuario.papeis.includes(papel)) &&
+    !(papel === "coordenador_obra" && ehAuxiliar && numeroEtapa > 3);
   const emAndamento = etapas.filter((e) => e.situacao === "em_andamento");
-  const numero = Number(etapaParam) || (emAndamento.find((e) => podeComo(e.papel)) ?? emAndamento[0] ?? etapas[11]).etapa;
+  const numero = Number(etapaParam) || (emAndamento.find((e) => podeComo(e.papel, e.etapa)) ?? emAndamento[0] ?? etapas[11]).etapa;
   const sel = etapas.find((e) => e.etapa === numero) ?? etapas[0];
   const ativa = c.situacao === "em_andamento" && sel.situacao === "em_andamento";
-  const pode = ativa && podeComo(sel.papel);
+  const pode = ativa && podeComo(sel.papel, sel.etapa);
+  const anteriores = new Set<number>();
+  const subir = (n: number) => etapas.find((e) => e.etapa === n)?.dependencias.forEach((d) => { if (!anteriores.has(d)) { anteriores.add(d); subir(d); } });
+  subir(sel.etapa);
+  const devolvivel = etapas.filter((e) => anteriores.has(e.etapa) && e.situacao === "concluida");
+  const ultimaDevolucao = sel.situacao === "em_andamento" ? [...devolucoes].reverse().find((x) => x.tipo === "devolucao" && x.para === sel.etapa) : undefined;
   const negociaObra = c.negociacao === "obra" && !c.negociacao_pulada;
   // Negociação pela obra: em 5, Suprimentos só ajusta o valor do fornecedor que a obra escolheu.
   const fornecedorTravado = sel.etapa === 5 && negociaObra && !!c.fornecedor_cnpj;
@@ -57,7 +69,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
   const fotos = await linksDasFotos(equipe.map((m) => m.fotoPath));
   const ehAdmin = usuario.papeis.includes("admin");
   // Cancelar: administrador e coordenador (a RLS limita o coordenador às obras dele; o banco confere de novo).
-  const podeCancelar = c.situacao === "em_andamento" && (ehAdmin || usuario.papeis.includes("coordenador_obra"));
+  const podeCancelar = c.situacao === "em_andamento" && (ehAdmin || (usuario.papeis.includes("coordenador_obra") && !ehAuxiliar));
   const prefixoSienge = c.obras?.prefixo_sienge ?? null;
 
   const podeEscolher = (sel.etapa === 3 && c.negociacao === "obra") || sel.etapa === 5;
@@ -147,6 +159,12 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                 {sel.prazo && <SeloPrazo prazo={sel.prazo} uteis={!!sel.prazoConfig?.uteis} />}
               </div>
             </div>
+
+            {ultimaDevolucao && (
+              <p role="status" className="rounded-xl bg-primary-soft px-3.5 py-2.5 text-[13px]">
+                <span className="font-semibold">Devolvida por {ultimaDevolucao.por}:</span> {ultimaDevolucao.motivo}
+              </p>
+            )}
 
             {sel.situacao === "pendente" && (
               <p className="rounded-xl bg-fill px-3.5 py-2.5 text-[13px] text-muted-foreground">
@@ -243,7 +261,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                       <span className="min-w-0 flex-1 text-[14px]">{a.rotulo}</span>
                       {a.assinadoEm ? (
                         <span className="selo selo-ok">Assinado {formatarData(a.assinadoEm).slice(0, 5)}</span>
-                      ) : a.ordem === proxAssinante?.ordem && ativa && podeComo(a.papel as Papel) ? (
+                      ) : a.ordem === proxAssinante?.ordem && ativa && podeComo(a.papel as Papel, 9) ? (
                         <Formulario acao={assinarContrato.bind(null, id, a.ordem)} textoBotao={a.papel === "contratos" ? "Registrar assinatura do fornecedor" : "Assinar contrato"} sensivel="Registra a assinatura do contrato." className="flex" />
                       ) : (
                         <span className={`selo ${a.ordem === proxAssinante?.ordem ? "selo-alerta" : "selo-neutro"}`}>{a.ordem === proxAssinante?.ordem ? "Aguardando" : "Na fila"}</span>
@@ -305,11 +323,21 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                 </span>
               </div>
             )}
+            {pode && sel.papel && devolvivel.length > 0 && (
+              <div className="flex justify-end border-t-[.5px] border-sep pt-4">
+                <DevolverEtapa acao={devolverEtapa.bind(null, id, sel.etapa)} etapas={devolvivel.map((e) => ({ etapa: e.etapa, nome: e.nome }))} etapaAtual={`A etapa ${sel.etapa}`} />
+              </div>
+            )}
             {ehAdmin && (sel.situacao === "concluida" || sel.situacao === "pulada") && c.situacao === "em_andamento" && (
               <Formulario acao={reabrirEtapa.bind(null, id, sel.etapa)} textoBotao="Reabrir etapa" variante="neutro" confirmar="Reabrir esta etapa? O motivo fica registrado na auditoria." className="flex flex-wrap items-center gap-2 border-t-[.5px] border-sep pt-4">
                 <CampoEmLinha nome="motivo" placeholder="Motivo da reabertura" rotulo="Motivo da reabertura" className="max-w-[280px]" />
               </Formulario>
             )}
+          </section>
+
+          <section className="painel">
+            <h2 className="subtitulo">Linha do tempo</h2>
+            <LinhaDoTempo eventos={eventos} />
           </section>
 
           {empresa && (

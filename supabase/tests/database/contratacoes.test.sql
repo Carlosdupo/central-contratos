@@ -1,5 +1,3 @@
--- migration: 20261115113848_fase_1a_ajustes_rapidos.sql
--- migration: 20261115150000_fase_1b_matriz.sql
 -- F6: fluxo de contratação (12 etapas, regra dos R$ 4.000, pular, assinaturas em ordem, visibilidade A8).
 begin;
 create extension if not exists pgtap with schema extensions;

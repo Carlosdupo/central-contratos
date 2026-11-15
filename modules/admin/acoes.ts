@@ -92,23 +92,27 @@ export async function salvarPerfis(usuarioId: string, _: EstadoFormulario, dados
 export async function salvarObrasDoUsuario(usuarioId: string, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
   await exigirPapel("admin");
   if (!uuid.safeParse(usuarioId).success) return { erro: "Usuário inválido." };
-  const desejadas = new Set(dados.getAll("obras").filter((o): o is string => typeof o === "string" && uuid.safeParse(o).success));
+  const uuids = (campo: string) => dados.getAll(campo).filter((o): o is string => typeof o === "string" && uuid.safeParse(o).success);
+  const auxiliares = new Set(uuids("auxiliar"));
+  // obra -> nível: marcada na lista de obras; "Auxiliar" marcado vira nível auxiliar (só vale com a obra marcada).
+  const desejadas = new Map(uuids("obras").map((o) => [o, auxiliares.has(o) ? "auxiliar" : "coordenador"] as const));
 
   const supabase = await criarClienteServidor();
-  const { data: atuais, error } = await supabase.from("usuario_obras").select("obra_id").eq("usuario_id", usuarioId);
+  const { data: atuais, error } = await supabase.from("usuario_obras").select("obra_id, nivel").eq("usuario_id", usuarioId);
   if (error) return { erro: mensagemDeErro(error, "Não foi possível carregar as obras.") };
 
-  const atuaisSet = new Set(atuais.map((o) => o.obra_id));
-  const incluir = [...desejadas].filter((o) => !atuaisSet.has(o));
-  const remover = [...atuaisSet].filter((o) => !desejadas.has(o));
+  const atuaisMapa = new Map(atuais.map((o) => [o.obra_id, o.nivel] as const));
+  // Mudar o nível = tirar e ligar de novo (a tabela não tem alteração direta).
+  const remover = [...atuaisMapa].filter(([obra, nivel]) => desejadas.get(obra) !== nivel).map(([obra]) => obra);
+  const incluir = [...desejadas].filter(([obra, nivel]) => atuaisMapa.get(obra) !== nivel);
 
-  if (incluir.length) {
-    const r = await supabase.from("usuario_obras").insert(incluir.map((obra_id) => ({ usuario_id: usuarioId, obra_id })));
-    if (r.error) return { erro: mensagemDeErro(r.error, "Não foi possível ligar as obras.") };
-  }
   if (remover.length) {
     const r = await supabase.from("usuario_obras").delete().eq("usuario_id", usuarioId).in("obra_id", remover);
     if (r.error) return { erro: mensagemDeErro(r.error, "Não foi possível desligar as obras.") };
+  }
+  if (incluir.length) {
+    const r = await supabase.from("usuario_obras").insert(incluir.map(([obra_id, nivel]) => ({ usuario_id: usuarioId, obra_id, nivel })));
+    if (r.error) return { erro: mensagemDeErro(r.error, "Não foi possível ligar as obras.") };
   }
   revalidatePath(`/admin/usuarios/${usuarioId}`);
   return { ok: "Obras salvas." };

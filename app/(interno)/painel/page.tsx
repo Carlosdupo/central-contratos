@@ -3,7 +3,7 @@ import Link from "next/link";
 import { exigirInterno } from "@/modules/acesso/sessao";
 import { temAlgumPapel } from "@/modules/acesso/papeis";
 import { etapasEmAberto, type EtapaAberta } from "@/modules/contratacoes/consultas";
-import { assinaturasMinhas, etapaEhMinha } from "@/modules/painel/pendencias";
+import { assinaturasMinhas, etapaEhMinha, obrasComoAuxiliar } from "@/modules/painel/pendencias";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { agoraNoFuso, formatarData, type SituacaoPrazo } from "@/lib/datas";
 import { SeloPrazo } from "@/components/app/selo-prazo";
@@ -63,7 +63,7 @@ export default async function PaginaPainel({ searchParams }: PageProps<"/painel"
   const ehSst = usuario.papeis.includes("sst");
   const ehSuprimentos = temAlgumPapel(usuario.papeis, ["suprimentos", "gerente_suprimentos"]);
 
-  const [abertas, assinaturas, { data: contratacoes }, rh, sst, supr] = await Promise.all([
+  const [abertas, assinaturas, { data: contratacoes }, rh, sst, supr, auxiliarEm] = await Promise.all([
     etapasEmAberto(),
     assinaturasMinhas(usuario.papeis),
     supabase
@@ -73,9 +73,10 @@ export default async function PaginaPainel({ searchParams }: PageProps<"/painel"
     ehRh ? Promise.all([filaDeAnalise(), visitasSolicitadas(), vencimentosProximos(30), lerParametros()]).catch(() => null) : Promise.resolve(null),
     ehSst ? resumoSst().catch(() => null) : Promise.resolve(null),
     ehSuprimentos ? resumoSuprimentos().catch(() => null) : Promise.resolve(null),
+    obrasComoAuxiliar(),
   ]);
 
-  const minhas = abertas.filter((a) => etapaEhMinha(a, usuario.papeis));
+  const minhas = abertas.filter((a) => etapaEhMinha(a, usuario.papeis, auxiliarEm));
   const comMinhaAcao = new Set([...minhas.map((a) => a.contratacaoId), ...assinaturas.map((a) => a.contratacaoId)]);
 
   // "O que precisa de você hoje": etapas e assinaturas da pessoa, fila do RH e integrações; os 3 mais urgentes.

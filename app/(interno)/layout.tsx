@@ -3,6 +3,8 @@ import { Button } from "@ui-sdk/react/button";
 import { sair } from "@/modules/acesso/acoes";
 import { ROTULO_PAPEL } from "@/modules/acesso/papeis";
 import { contarPendencias } from "@/modules/painel/pendencias";
+import { criarClienteServidor } from "@/lib/supabase/server";
+import { rotuloDoUsuario } from "@/lib/rotulo-usuario";
 import { BarraLateral, type GrupoMenu } from "@/components/app/barra-lateral";
 import { FocoNoTitulo } from "@/components/app/foco-no-titulo";
 import { IconeAdmin, IconeAnalise, IconeBusca, IconeContratos, IconeEmpresas, IconeIntegracao, IconePainel, IconePanorama } from "@/components/app/icones";
@@ -41,13 +43,17 @@ export default async function LayoutInterno({ children }: LayoutProps<"/">) {
   ];
   if (usuario.papeis.includes("admin")) grupos.push({ titulo: "Sistema", itens: [{ href: "/admin", rotulo: "Administração", icone: <IconeAdmin /> }] });
 
+  const { data: vinculos } = usuario.papeis.includes("coordenador_obra")
+    ? await (await criarClienteServidor()).from("usuario_obras").select("nivel, obras(nome)").eq("usuario_id", usuario.id)
+    : { data: [] };
+  const nomeNoMenu = rotuloDoUsuario(usuario.nome, (vinculos ?? []).map((v) => ({ nivel: v.nivel, obra: v.obras?.nome ?? "" })));
   const perfis = usuario.papeis.map((p) => ROTULO_PAPEL[p]).join(", ") || "Sem perfil atribuído";
   const rodape = (
     <div className="flex flex-col gap-2 rounded-xl border border-sep p-2.5">
       <div className="flex min-w-0 items-center gap-2.5">
         <span className="grid size-8 shrink-0 place-items-center rounded-full bg-fill text-[12px] font-semibold" aria-hidden="true">{iniciais(usuario.nome)}</span>
         <span className="min-w-0 leading-tight">
-          <span className="block truncate text-[13px] font-semibold">{usuario.nome}</span>
+          <span className="block truncate text-[13px] font-semibold">{nomeNoMenu}</span>
           <span className="block truncate text-xs text-muted-foreground">{perfis}</span>
         </span>
       </div>

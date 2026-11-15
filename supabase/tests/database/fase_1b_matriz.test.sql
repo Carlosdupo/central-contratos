@@ -1,5 +1,3 @@
--- migration: 20261115113848_fase_1a_ajustes_rapidos.sql
--- migration: 20261115150000_fase_1b_matriz.sql
 -- Fase 1B: matriz de contratação e abertura pela atividade da matriz.
 begin;
 create extension if not exists pgtap with schema extensions;

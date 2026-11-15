@@ -79,13 +79,14 @@ export const etapasEmAberto = cache(async (): Promise<EtapaAberta[]> => {
 
 export async function detalheDaContratacao(id: string) {
   const supabase = await criarClienteServidor();
-  const [{ data: c }, { data: etapas }, { data: checklist }, { data: cotacoes }, { data: assinaturas }, { data: assinantes }, fluxo, feriados] = await Promise.all([
+  const [{ data: c }, { data: etapas }, { data: checklist }, { data: cotacoes }, { data: assinaturas }, { data: assinantes }, { data: devolucoes }, fluxo, feriados] = await Promise.all([
     supabase.from("contratacoes").select("*, obras(nome, prefixo_sienge), empresas_terceiras(id, razao_social, situacao)").eq("id", id).maybeSingle(),
     supabase.from("contratacao_etapas").select("etapa, situacao, iniciada_em, concluida_em, usuarios:concluida_por(nome)").eq("contratacao_id", id),
     supabase.from("etapa_checklist").select("etapa, item, marcado").eq("contratacao_id", id),
     supabase.from("cotacoes").select("id, fornecedor, cnpj, valor, prazo_dias, escolhida, cotacao_propostas(rodada, valor)").eq("contratacao_id", id).order("valor"),
     supabase.from("assinaturas").select("ordem, assinado_em, usuarios:assinado_por(nome)").eq("contratacao_id", id),
     supabase.from("assinantes_fluxo").select("ordem, rotulo, papel").order("ordem"),
+    supabase.from("contratacao_devolucoes").select("id, tipo, de_etapa, para_etapa, motivo, em, usuarios:por(nome)").eq("contratacao_id", id).order("em"),
     carregarFluxo(),
     carregarFeriados(),
   ]);
@@ -101,15 +102,45 @@ export async function detalheDaContratacao(id: string) {
       desde,
       concluidaEm: e?.concluida_em ? dataNoFuso(e.concluida_em) : null,
       concluidaPor: (e?.usuarios as { nome: string } | null)?.nome ?? null,
+      concluidaEmIso: e?.concluida_em ?? null,
       prazoConfig: prazo,
       prazo: e?.situacao === "em_andamento" && desde ? situacaoPrazo({ inicio: desde, hoje, prazo, feriados }) : null,
       marcados: f.itens.map((_, i) => !!(checklist ?? []).find((k) => k.etapa === f.etapa && k.item === i + 1)?.marcado),
     };
   });
+  const nomeDaEtapa = (n: number | null) => {
+    const f = fluxo.find((x) => x.etapa === n);
+    return f ? `etapa ${f.etapa} (${f.nome})` : "etapa";
+  };
+  const eventos = [
+    { id: "abertura", quando: c.created_at, texto: `Contratação ${c.codigo} aberta.` },
+    ...etapasDetalhe
+      .filter((e) => e.concluidaEmIso)
+      .map((e) => ({ id: `etapa-${e.etapa}`, quando: e.concluidaEmIso as string, texto: `Etapa ${e.etapa} (${e.nome}) ${e.situacao === "pulada" ? "pulada" : "concluída"}${e.concluidaPor ? ` por ${e.concluidaPor}` : ""}.` })),
+    ...(devolucoes ?? []).map((d) => ({
+      id: `dev-${d.id}`,
+      quando: d.em,
+      destaque: true,
+      texto:
+        d.tipo === "reabertura"
+          ? `${nomeDaEtapa(d.para_etapa)} reaberta por ${(d.usuarios as { nome: string } | null)?.nome ?? "—"}: ${d.motivo}`
+          : `${nomeDaEtapa(d.de_etapa)} devolvida para a ${nomeDaEtapa(d.para_etapa)} por ${(d.usuarios as { nome: string } | null)?.nome ?? "—"}: ${d.motivo}`,
+    })),
+  ].sort((a, b) => a.quando.localeCompare(b.quando));
   return {
     c,
+    eventos,
     etapas: etapasDetalhe,
     cotacoes: cotacoes ?? [],
+    devolucoes: (devolucoes ?? []).map((d) => ({
+      id: d.id,
+      tipo: d.tipo as "devolucao" | "reabertura",
+      de: d.de_etapa,
+      para: d.para_etapa,
+      motivo: d.motivo,
+      em: d.em,
+      por: (d.usuarios as { nome: string } | null)?.nome ?? "—",
+    })),
     assinantes: (assinantes ?? []).map((a) => {
       const s = (assinaturas ?? []).find((x) => x.ordem === a.ordem);
       return { ...a, assinadoEm: s?.assinado_em ? dataNoFuso(s.assinado_em) : null, assinadoPor: (s?.usuarios as { nome: string } | null)?.nome ?? null };

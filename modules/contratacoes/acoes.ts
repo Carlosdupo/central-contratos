@@ -215,6 +215,17 @@ export async function cancelarContratacao(contratacao: string, _: EstadoFormular
   return { ok: "Contratação cancelada." };
 }
 
+export async function devolverEtapa(contratacao: string, de: number, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
+  await exigirInterno();
+  const para = Number(dados.get("para"));
+  if (!uuid.safeParse(contratacao).success || !etapa.safeParse(de).success || !etapa.safeParse(para).success) return { erro: "Escolha para qual etapa devolver." };
+  const supabase = await criarClienteServidor();
+  const { error } = await supabase.rpc("devolver_etapa", { p_contratacao: contratacao, p_de: de, p_para: para, p_motivo: String(dados.get("motivo") ?? "") });
+  if (error) return { erro: mensagemDeErro(error, error.message ?? "Não foi possível devolver.") };
+  recarregar(contratacao);
+  return { ok: "Etapa devolvida para ajuste." };
+}
+
 export async function reabrirEtapa(contratacao: string, numeroEtapa: number, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
   await exigirPapel("admin");
   const supabase = await criarClienteServidor();

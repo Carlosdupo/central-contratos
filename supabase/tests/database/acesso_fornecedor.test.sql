@@ -1,5 +1,3 @@
--- migration: 20261115113848_fase_1a_ajustes_rapidos.sql
--- migration: 20261115150000_fase_1b_matriz.sql
 -- Acesso do fornecedor: ao autorizar (etapa 6), a empresa é cadastrada/ligada à obra da contratação.
 begin;
 create extension if not exists pgtap with schema extensions;

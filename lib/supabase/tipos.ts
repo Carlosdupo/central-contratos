@@ -249,6 +249,54 @@ export type Database = {
           },
         ]
       }
+      contratacao_devolucoes: {
+        Row: {
+          contratacao_id: string
+          de_etapa: number | null
+          em: string
+          id: string
+          motivo: string
+          para_etapa: number
+          por: string
+          tipo: string
+        }
+        Insert: {
+          contratacao_id: string
+          de_etapa?: number | null
+          em?: string
+          id?: string
+          motivo: string
+          para_etapa: number
+          por?: string
+          tipo?: string
+        }
+        Update: {
+          contratacao_id?: string
+          de_etapa?: number | null
+          em?: string
+          id?: string
+          motivo?: string
+          para_etapa?: number
+          por?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratacao_devolucoes_contratacao_id_fkey"
+            columns: ["contratacao_id"]
+            isOneToOne: false
+            referencedRelation: "contratacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratacao_devolucoes_por_fkey"
+            columns: ["por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contratacao_etapas: {
         Row: {
           concluida_em: string | null
@@ -1418,18 +1466,21 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          nivel: string
           obra_id: string
           usuario_id: string
         }
         Insert: {
           created_at?: string
           created_by?: string | null
+          nivel?: string
           obra_id: string
           usuario_id: string
         }
         Update: {
           created_at?: string
           created_by?: string | null
+          nivel?: string
           obra_id?: string
           usuario_id?: string
         }
@@ -1720,6 +1771,10 @@ export type Database = {
           p_tipo: Database["public"]["Enums"]["tipo_vinculo"]
         }
         Returns: string
+      }
+      devolver_etapa: {
+        Args: { p_contratacao: string; p_de: number; p_motivo: string; p_para: number }
+        Returns: undefined
       }
       cancelar_contratacao: {
         Args: { p_contratacao: string; p_motivo: string }

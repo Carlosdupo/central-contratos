@@ -21,7 +21,7 @@ export default async function PaginaUsuario({ params }: PageProps<"/admin/usuari
     supabase.from("usuarios").select("id, nome, email, ativo, tipo").eq("id", id).maybeSingle(),
     supabase.from("usuario_papeis").select("papel").eq("usuario_id", id),
     supabase.from("obras").select("id, codigo, nome, ativa").order("nome"),
-    supabase.from("usuario_obras").select("obra_id").eq("usuario_id", id),
+    supabase.from("usuario_obras").select("obra_id, nivel").eq("usuario_id", id),
     // Situação do convite vem do Auth (só leitura, depois de conferir o papel admin).
     criarClienteAdmin().auth.admin.getUserById(id),
   ]);
@@ -30,6 +30,7 @@ export default async function PaginaUsuario({ params }: PageProps<"/admin/usuari
 
   const perfis = new Set((papeis ?? []).map((p) => p.papel));
   const ligadas = new Set((obrasDoUsuario ?? []).map((o) => o.obra_id));
+  const auxiliarEm = new Set((obrasDoUsuario ?? []).filter((o) => o.nivel === "auxiliar").map((o) => o.obra_id));
   const proprio = usuario.id === admin.id;
 
   return (
@@ -52,8 +53,8 @@ export default async function PaginaUsuario({ params }: PageProps<"/admin/usuari
 
         <section className="painel">
           <div>
-            <h3 className="subtitulo">Obras do coordenador</h3>
-            <p className="mt-1 text-[13px] text-muted-foreground">O coordenador de obra só vê as contratações das obras marcadas aqui.</p>
+            <h3 className="subtitulo">Obras do coordenador e do auxiliar</h3>
+            <p className="mt-1 text-[13px] text-muted-foreground">Quem tem o perfil Coordenador de obra só vê as contratações das obras marcadas aqui. Marque também &ldquo;Auxiliar&rdquo; para a pessoa ser auxiliar naquela obra: abre a solicitação e age até a etapa 3; da etapa 4 em diante é só do coordenador.</p>
           </div>
           {(obras ?? []).length === 0 ? (
             <p className="text-[14px] text-muted-foreground">Nenhuma obra cadastrada. <Link href="/admin/obras" className="text-primary">Cadastrar obras</Link></p>
@@ -61,7 +62,10 @@ export default async function PaginaUsuario({ params }: PageProps<"/admin/usuari
             <Formulario acao={salvarObrasDoUsuario.bind(null, usuario.id)} textoBotao="Salvar obras">
               <div className="lista-agrupada">
                 {(obras ?? []).map((o) => (
-                  <Marcador key={o.id} nome="obras" valor={o.id} marcado={ligadas.has(o.id)} rotulo={<>{o.nome} <span className="text-faint">· {o.codigo}{o.ativa ? "" : " · desativada"}</span></>} />
+                  <div key={o.id} className="flex flex-col">
+                    <Marcador nome="obras" valor={o.id} marcado={ligadas.has(o.id)} rotulo={<>{o.nome} <span className="text-faint">· {o.codigo}{o.ativa ? "" : " · desativada"}</span></>} />
+                    <Marcador nome="auxiliar" valor={o.id} marcado={auxiliarEm.has(o.id)} rotulo={`Auxiliar em ${o.nome} (não coordenador)`} />
+                  </div>
                 ))}
               </div>
             </Formulario>
