@@ -92,7 +92,9 @@ begin
     on conflict (usuario_id, chave) do nothing
     returning id into v_novo;
     if v_novo is null then continue; end if;
-    v_quer_email := coalesce((select email from public.preferencias_aviso where usuario_id = v_u.id), true);
+    -- Por decisão do usuário (15/11), só chegada de etapa e devolução/reabertura vão por e-mail; o resto fica no sino.
+    v_quer_email := p_tipo in ('etapa', 'devolucao', 'reabertura')
+      and coalesce((select email from public.preferencias_aviso where usuario_id = v_u.id), true);
     if v_quer_email and v_u.email ~ '^\S+@\S+\.\S+$'
        and (select count(*) from public.notificacoes where destinatario = v_u.email and criado_em > now() - interval '1 hour') < 20 then
       insert into public.notificacoes (destinatario, assunto, texto)

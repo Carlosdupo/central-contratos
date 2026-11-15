@@ -1,8 +1,7 @@
--- migration: 20261115190000_fase_3_avisos_e_urgencia.sql
 -- Fase 3: avisos internos (sino e e-mail) e urgência.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(26);
+select plan(28);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-0000000004c1', 'coord3a@teste.local', '{}'),
@@ -83,6 +82,8 @@ select is((select count(*)::int from public.avisos_internos where tipo = 'etapa'
 reset role;
 update public.contratacao_etapas set situacao = 'concluida', concluida_em = now() where etapa = 6 and contratacao_id = (select id from ids where nome = 'u');
 select is((select count(*)::int from public.avisos_internos where tipo = 'autorizada' and contratacao_id = (select id from ids where nome = 'u')), 2, 'Concluir a etapa 6 avisa a obra (coordenador e auxiliar)');
+select is((select count(*)::int from public.notificacoes where destinatario = 'coord3a@teste.local' and assunto like '%autorizada%'), 0, 'Contratação autorizada fica só no sino, sem e-mail');
+select is((select count(*)::int from public.notificacoes where destinatario = 'coord3a@teste.local' and assunto like '%devolvida%'), 1, 'Devolução vai por e-mail');
 
 -- Aviso de prazo: só o servidor chama, e só uma vez por dia
 select ok(not has_function_privilege('authenticated', 'public.gerar_aviso_prazo(uuid, smallint, text, date)', 'execute'), 'Usuário logado não gera aviso de prazo');
