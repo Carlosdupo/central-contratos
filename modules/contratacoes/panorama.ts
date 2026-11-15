@@ -2,6 +2,7 @@ import "server-only";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { agoraNoFuso, formatarData, situacaoPrazo, type Prazo } from "@/lib/datas";
 import { carregarFeriados } from "@/lib/configuracao";
+import { resumoDaEquipePorObra } from "@/lib/equipe-obra";
 import { areaDoPapel, type ContratacaoPanorama, type PassoPanorama } from "@/lib/panorama";
 import { carregarFluxos } from "@/modules/contratacoes/consultas";
 
@@ -18,7 +19,7 @@ export async function panoramaDasObras(): Promise<ContratacaoPanorama[]> {
     supabase
       .from("contratacoes")
       .select(
-        "id, codigo, created_at, servico, situacao, urgente, urgente_data, urgente_motivo, fora_do_prazo, contrato_original, tipo, fornecedor_nome, valor_negociado, sienge_contrato, cancelamento_motivo, empresa_ja_liberada, prazos, fluxo_versao, obra_id, obras(nome, prefixo_sienge), contratacao_etapas(etapa, situacao, iniciada_em, concluida_em), contratacao_devolucoes(tipo, para_etapa, motivo, em, usuarios:por(nome))",
+        "id, codigo, created_at, servico, situacao, urgente, urgente_data, urgente_motivo, fora_do_prazo, contrato_original, tipo, fornecedor_nome, valor_negociado, sienge_contrato, cancelamento_motivo, empresa_ja_liberada, prazos, fluxo_versao, obra_id, obras(nome, prefixo_sienge), empresas_terceiras(vinculos(tipo, ativo, alocacoes(obra_id, situacao))), contratacao_etapas(etapa, situacao, iniciada_em, concluida_em), contratacao_devolucoes(tipo, para_etapa, motivo, em, usuarios:por(nome))",
       )
       .order("created_at", { ascending: false })
       .limit(LIMITE),
@@ -74,6 +75,7 @@ export async function panoramaDasObras(): Promise<ContratacaoPanorama[]> {
       sienge: c.sienge_contrato,
       motivoCancelamento: c.cancelamento_motivo,
       empresaJaLiberada: c.empresa_ja_liberada,
+      equipe: c.empresas_terceiras ? resumoDaEquipePorObra(c.empresas_terceiras.vinculos ?? [], c.obra_id) : null,
       devolucao: ultima ? `${(ultima.usuarios as { nome: string } | null)?.nome ?? "Alguém"} devolveu a etapa em ${formatarData(dataDe(ultima.em)).slice(0, 5)}: ${ultima.motivo}` : null,
       passos,
     };

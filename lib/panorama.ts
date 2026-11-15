@@ -37,6 +37,8 @@ export type ContratacaoPanorama = {
   sienge: string | null;
   motivoCancelamento: string | null;
   empresaJaLiberada: boolean;
+  /** Equipe da empresa nesta obra aprovada pelo RH (só existe depois que a empresa é ligada à contratação). */
+  equipe: { aprovados: number; total: number } | null;
   devolucao: string | null;
   passos: PassoPanorama[];
 };

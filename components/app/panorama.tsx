@@ -41,16 +41,19 @@ function Linha({ c, aoAbrir }: { c: ContratacaoPanorama; aoAbrir: (id: string) =
   const principal = passoPrincipal(c);
   const onde = c.situacao === "liberada" ? "Equipe liberada para a obra" : c.situacao === "cancelada" ? (c.motivoCancelamento ?? "Cancelada") : principal ? `Etapa ${posicaoDoPasso(c, principal)} de ${c.passos.length} · ${principal.nome}` : "";
   const comQuem = [...new Set(passosAtuais(c).map((p) => p.responsavel))].join(" e ");
+  // Na documentação do RH, o selo diz quantos da equipe já foram aprovados nesta obra.
+  const aprovados = c.equipe && c.equipe.total > 0 && passosAtuais(c).some((p) => p.chave === "documentacao") ? `${c.equipe.aprovados} de ${c.equipe.total} aprovados` : null;
   return (
     <Button type="button" className="pan-linha" data-encerrada={c.situacao !== "em_andamento" || undefined} onClick={() => aoAbrir(c.id)}>
       <span className="block min-w-0">
         <span className="block font-semibold">{c.servico}</span>
         <span className="block text-[12.5px] text-muted-foreground"><span className="font-mono">{c.codigo}</span> · aberta em {dia(c.abertaEm)}</span>
-        {(c.urgente || c.aditivoDe || c.foraDoPrazo) && (
+        {(c.urgente || c.aditivoDe || c.foraDoPrazo || aprovados) && (
           <span className="mt-1 flex flex-wrap gap-1.5">
-            {c.urgente && <SeloUrgente data={c.urgenteData} />}
+            {c.urgente && <SeloUrgente data={c.urgenteData} comData />}
             {c.aditivoDe && <span className="selo selo-info">Aditivo de {c.aditivoDe}</span>}
             {c.foraDoPrazo && <span className="selo selo-alerta">Pedido fora do prazo</span>}
+            {aprovados && <span className="selo selo-info">{aprovados}</span>}
           </span>
         )}
       </span>
@@ -102,6 +105,7 @@ function Detalhe({ c, aoFechar }: { c: ContratacaoPanorama; aoFechar: () => void
           <div><dt className="text-xs text-muted-foreground">Fornecedor</dt><dd>{c.fornecedor ?? "A definir"}</dd></div>
           <div><dt className="text-xs text-muted-foreground">Valor contratado</dt><dd className="tabular-nums">{c.valor ? formatarReais(c.valor) : "—"}</dd></div>
           <div><dt className="text-xs text-muted-foreground">Contrato no Sienge</dt><dd className="font-mono">{c.sienge ?? "Ainda não lançado"}</dd></div>
+          {c.equipe && c.equipe.total > 0 && <div><dt className="text-xs text-muted-foreground">Equipe aprovada pelo RH</dt><dd>{c.equipe.aprovados} de {c.equipe.total} nesta obra</dd></div>}
           <div><dt className="text-xs text-muted-foreground">{c.aditivoDe ? "Contrato original" : "Aberta em"}</dt><dd className={c.aditivoDe ? "font-mono" : undefined}>{c.aditivoDe ?? formatarData(c.abertaEm)}</dd></div>
         </dl>
         <section aria-label="Etapas">
