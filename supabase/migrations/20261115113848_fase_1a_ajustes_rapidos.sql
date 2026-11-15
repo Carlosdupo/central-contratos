@@ -152,3 +152,5 @@ begin
 end $$;
 revoke all on all functions in schema app from public;
 grant execute on all functions in schema app to authenticated;
+-- O grant acima reabriria esta função, fechada de propósito (acesso_fornecedor e revisão de segurança).
+revoke all on function app.ligar_fornecedor(uuid) from public, authenticated;
