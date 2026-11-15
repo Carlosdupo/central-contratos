@@ -1,3 +1,4 @@
+-- migration: 20261115190000_fase_3_avisos_e_urgencia.sql
 -- Fase 3: avisos internos (sino e e-mail) e urgência.
 begin;
 create extension if not exists pgtap with schema extensions;
