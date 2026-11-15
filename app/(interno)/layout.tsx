@@ -41,7 +41,15 @@ export default async function LayoutInterno({ children }: LayoutProps<"/">) {
       ],
     },
     { titulo: "Terceiros", itens: terceiros },
-    { titulo: "Apoio", itens: [{ href: "/apoio/matriz", rotulo: "Matriz de contratação", icone: <IconeContratos /> }] },
+    {
+      titulo: "Apoio",
+      itens: [
+        { href: "/apoio/calendario", rotulo: "Calendário de suprimentos", icone: <IconePanorama /> },
+        { href: "/apoio/planilha/mo", rotulo: "Planilha suprimentos MO", icone: <IconeContratos /> },
+        { href: "/apoio/planilha/mat", rotulo: "Planilha suprimentos MAT", icone: <IconeContratos /> },
+        { href: "/apoio/matriz", rotulo: "Matriz de contratação", icone: <IconeContratos /> },
+      ],
+    },
   ];
   if (usuario.papeis.includes("admin")) grupos.push({ titulo: "Sistema", itens: [{ href: "/admin", rotulo: "Administração", icone: <IconeAdmin /> }] });
 

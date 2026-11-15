@@ -32,6 +32,7 @@ const esquemaAbertura = z.object({
   valor: z.number().positive("Informe o Valor Orçamento ou marque \"Não informar\".").max(1e11).nullable(),
   aditivo: z.boolean(),
   negociacao: z.enum(["obra", "suprimentos"], { message: "Escolha quem negocia." }),
+  planejamento_item: z.uuid().optional(),
   contrato_original: z.string().trim().max(40, "Nº do contrato original grande demais.").optional(),
   urgente: z.boolean(),
   urgente_motivo: z.string().trim().max(300, "Motivo da urgência grande demais.").optional(),
@@ -60,6 +61,7 @@ export async function abrirContratacao(_: EstadoFormulario, dados: FormData): Pr
     aditivo: dados.get("aditivo") === "on",
     negociacao: dados.get("negociacao"),
     contrato_original: dados.get("contrato_original") ?? undefined,
+    planejamento_item: String(dados.get("planejamento_item") ?? "") || undefined,
     urgente: dados.get("urgente") === "on",
     urgente_motivo: String(dados.get("urgente_motivo") ?? "") || undefined,
     urgente_data: String(dados.get("urgente_data") ?? "") || undefined,
@@ -74,6 +76,7 @@ export async function abrirContratacao(_: EstadoFormulario, dados: FormData): Pr
     p_aditivo: lido.data.aditivo,
     p_negociacao: lido.data.negociacao,
     p_contrato_original: lido.data.aditivo ? lido.data.contrato_original : undefined,
+    p_planejamento_item: lido.data.planejamento_item,
   });
   if (error || !data) return { erro: mensagemDeErro(error, error?.message ?? "Não foi possível abrir a contratação.") };
   if (lido.data.urgente) {

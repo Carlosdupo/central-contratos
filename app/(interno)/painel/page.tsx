@@ -12,6 +12,8 @@ import { AbasAreas, type Aba } from "@/components/app/abas-areas";
 import { PainelRh } from "@/components/app/painel-rh";
 import { PainelSst } from "@/components/app/painel-sst";
 import { PainelSuprimentos } from "@/components/app/painel-suprimentos";
+import { IndicadoresPlanilha } from "@/components/app/indicadores-planilha";
+import { indicadoresDoMes } from "@/modules/suprimentos/consultas";
 import { resumoSuprimentos } from "@/modules/contratacoes/painel-suprimentos";
 import { resumoSst } from "@/modules/terceiros/painel-sst";
 import { filaDeAnalise, vencimentosProximos, visitasSolicitadas } from "@/modules/terceiros/analise";
@@ -123,8 +125,10 @@ export default async function PaginaPainel({ searchParams }: PageProps<"/painel"
   const lista = emAndamento.filter((c) => !soMinhas || comMinhaAcao.has(c.id));
   const totalPendencias = minhas.length + assinaturas.length + (rh?.[0].length ?? 0) + integracoesHoje;
 
+  const [anoRef, mesRef] = agoraNoFuso().data.split("-").map(Number);
+  const indicadores = supr ? await indicadoresDoMes(anoRef, mesRef).catch(() => []) : [];
   const abas: Aba[] = [];
-  if (supr) abas.push({ chave: "suprimentos", rotulo: "Suprimentos", contador: supr.fila.length + supr.assinaturas.length, conteudo: <PainelSuprimentos {...supr} ehGerente={usuario.papeis.includes("gerente_suprimentos")} /> });
+  if (supr) abas.push({ chave: "suprimentos", rotulo: "Suprimentos", contador: supr.fila.length + supr.assinaturas.length, conteudo: <div className="flex flex-col gap-5"><PainelSuprimentos {...supr} ehGerente={usuario.papeis.includes("gerente_suprimentos")} /><IndicadoresPlanilha linhas={indicadores} ano={anoRef} mes={mesRef} /></div> });
   if (rh) abas.push({ chave: "rh", rotulo: "RH", contador: rh[0].length, conteudo: <PainelRh fila={rh[0]} visitas={rh[1].length} vencendo={rh[2].vencendo} vencidos={rh[2].vencidos} prazoUteis={rh[3].prazoAnaliseRh.uteis} /> });
   if (sst) abas.push({ chave: "sst", rotulo: "Segurança do trabalho", contador: integracoesHoje, conteudo: <PainelSst {...sst} /> });
 
