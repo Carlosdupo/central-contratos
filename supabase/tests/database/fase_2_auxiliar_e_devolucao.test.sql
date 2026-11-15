@@ -2,6 +2,21 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 select plan(24);
+-- Contratações novas entram no fluxo 2. Estes testes cobrem o fluxo 1 (contratações antigas), então a contratação aberta
+-- é refeita no fluxo 1 (idempotente: só converte as que ainda estão no fluxo 2).
+create function pg_temp.para_fluxo_1(p uuid) returns void language plpgsql as $f$
+begin
+  if (select fluxo_versao from public.contratacoes where id = p) = 1 then return; end if;
+  delete from public.etapa_checklist where contratacao_id = p;
+  delete from public.contratacao_etapas where contratacao_id = p;
+  if to_regclass('public.avisos_internos') is not null then
+    execute format('delete from public.avisos_internos where contratacao_id = %L', p);
+    delete from public.notificacoes where empresa_id is null;
+  end if;
+  update public.contratacoes set fluxo_versao = 1 where id = p;
+  insert into public.contratacao_etapas (contratacao_id, etapa) select p, etapa from public.etapas_fluxo where versao = 1;
+  perform app.liberar_etapas(p);
+end $f$;
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-0000000003a1', 'adm2@teste.local', '{}'),
@@ -33,6 +48,9 @@ set local role authenticated;
 -- Auxiliar da obra A abre e leva a contratação até a etapa 3
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000003c2", "role": "authenticated", "aal": "aal1"}', true);
 select lives_ok($$ insert into ids select 'a', public.abrir_contratacao('00000000-0000-0000-0000-0000000003aa', 'Contratação do auxiliar', (select id from public.matriz_contratacao order by ordem limit 1), 100000, false, 'suprimentos') $$, 'Auxiliar abre a solicitação');
+reset role;
+do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
+set local role authenticated;
 select lives_ok(format($$ select public.marcar_item(%L, 1::smallint, i::smallint, true) from generate_series(1, 3) i $$, (select id from ids where nome = 'a')), 'Auxiliar marca os itens da etapa 1');
 select lives_ok(format($$ select public.concluir_etapa(%L, 1::smallint) $$, (select id from ids where nome = 'a')), 'Auxiliar conclui a etapa 1');
 select throws_ok(format($$ select public.cancelar_contratacao(%L, 'Cancelar pelo auxiliar') $$, (select id from ids where nome = 'a')), '42501', null, 'Auxiliar não cancela');
@@ -52,6 +70,9 @@ select lives_ok(format($$ select public.salvar_campo_etapa(%L, 4::smallint, '123
 
 -- Devolução: Suprimentos (etapa 5) devolve para a obra (etapa 4)
 select lives_ok($$ insert into ids select 'd', public.abrir_contratacao('00000000-0000-0000-0000-0000000003aa', 'Contratação devolvida', (select id from public.matriz_contratacao order by ordem limit 1), 100000, false, 'suprimentos') $$, 'Coordenador abre outra contratação');
+reset role;
+do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
+set local role authenticated;
 reset role;
 update public.contratacao_etapas set situacao = 'concluida', concluida_em = now() where etapa <= 4 and contratacao_id = (select id from ids where nome = 'd');
 update public.contratacao_etapas set situacao = 'em_andamento', iniciada_em = now() - interval '5 days' where etapa = 5 and contratacao_id = (select id from ids where nome = 'd');
@@ -75,6 +96,9 @@ reset role;
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000003c1", "role": "authenticated", "aal": "aal1"}', true);
 select lives_ok($$ insert into ids select 'r', public.abrir_contratacao('00000000-0000-0000-0000-0000000003aa', 'Contratação reaberta', (select id from public.matriz_contratacao order by ordem limit 1), 100000, false, 'suprimentos') $$, 'Coordenador abre a contratação para a reabertura');
+reset role;
+do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
+set local role authenticated;
 reset role;
 update public.contratacao_etapas set situacao = 'concluida', concluida_em = now() where etapa <= 9 and contratacao_id = (select id from ids where nome = 'r');
 update public.contratacao_etapas set situacao = 'em_andamento', iniciada_em = now() where etapa = 10 and contratacao_id = (select id from ids where nome = 'r');

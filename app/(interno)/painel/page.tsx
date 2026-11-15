@@ -204,11 +204,12 @@ export default async function PaginaPainel({ searchParams }: PageProps<"/painel"
         ) : (
           <ul>
             {lista.map((c) => {
-              const situacoes: SituacaoEtapa[] = Array.from({ length: 12 }, (_, i) => (c.contratacao_etapas.find((e) => e.etapa === i + 1)?.situacao ?? "pendente") as SituacaoEtapa);
+              const doFluxo = [...c.contratacao_etapas].sort((a, b) => a.etapa - b.etapa);
+              const situacoes = doFluxo.map((e) => e.situacao as SituacaoEtapa);
               const atuais = (porContratacao.get(c.id) ?? []).sort((a, b) => a.etapa.etapa - b.etapa.etapa);
               const principal = [...atuais].sort((a, b) => URGENCIA[a.prazo.tipo] - URGENCIA[b.prazo.tipo])[0];
               const texto = atuais.length
-                ? `Etapa ${atuais[0].etapa.etapa} de 12 · ${atuais[0].etapa.nome}${atuais.length > 1 ? ` (e mais ${atuais.length - 1} em paralelo)` : ""}`
+                ? `Etapa ${doFluxo.findIndex((e) => e.etapa === atuais[0].etapa.etapa) + 1} de ${doFluxo.length} · ${atuais[0].etapa.nome}${atuais.length > 1 ? ` (e mais ${atuais.length - 1} em paralelo)` : ""}`
                 : "Etapas concluídas";
               return (
                 <li key={c.id} className="flex flex-wrap items-center gap-3 border-t border-sep px-[18px] py-3">

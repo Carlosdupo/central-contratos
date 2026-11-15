@@ -401,6 +401,8 @@ export type Database = {
           contrato_original: string | null
           forma_legal: string | null
           matriz_id: string | null
+          aditivo_destino: string | null
+          empresa_ja_liberada: boolean
           urgente: boolean
           urgente_data: string | null
           urgente_em: string | null
@@ -445,6 +447,8 @@ export type Database = {
           contrato_original?: string | null
           forma_legal?: string | null
           matriz_id?: string | null
+          aditivo_destino?: string | null
+          empresa_ja_liberada?: boolean
           urgente?: boolean
           urgente_data?: string | null
           urgente_em?: string | null
@@ -489,6 +493,8 @@ export type Database = {
           contrato_original?: string | null
           forma_legal?: string | null
           matriz_id?: string | null
+          aditivo_destino?: string | null
+          empresa_ja_liberada?: boolean
           urgente?: boolean
           urgente_data?: string | null
           urgente_em?: string | null
@@ -1105,6 +1111,7 @@ export type Database = {
       }
       etapas_fluxo: {
         Row: {
+          chave: string
           dependencias: number[]
           etapa: number
           itens: string[]
@@ -1116,6 +1123,7 @@ export type Database = {
           versao: number
         }
         Insert: {
+          chave: string
           dependencias?: number[]
           etapa: number
           itens?: string[]
@@ -1855,6 +1863,14 @@ export type Database = {
       }
       salvar_preferencias_aviso: {
         Args: { p_email: boolean; p_som: boolean }
+        Returns: undefined
+      }
+      definir_destino_aditivo: {
+        Args: { p_contratacao: string; p_destino: string }
+        Returns: undefined
+      }
+      definir_fornecedor_aditivo: {
+        Args: { p_cnpj: string; p_contratacao: string; p_nome: string; p_valor: number }
         Returns: undefined
       }
       devolver_etapa: {

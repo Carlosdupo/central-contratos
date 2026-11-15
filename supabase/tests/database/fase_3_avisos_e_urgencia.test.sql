@@ -1,8 +1,22 @@
--- migration: 20261115190000_fase_3_avisos_e_urgencia.sql
 -- Fase 3: avisos internos (sino e e-mail) e urgência.
 begin;
 create extension if not exists pgtap with schema extensions;
 select plan(28);
+-- Contratações novas entram no fluxo 2. Estes testes cobrem o fluxo 1 (contratações antigas), então a contratação aberta
+-- é refeita no fluxo 1 (idempotente: só converte as que ainda estão no fluxo 2).
+create function pg_temp.para_fluxo_1(p uuid) returns void language plpgsql as $f$
+begin
+  if (select fluxo_versao from public.contratacoes where id = p) = 1 then return; end if;
+  delete from public.etapa_checklist where contratacao_id = p;
+  delete from public.contratacao_etapas where contratacao_id = p;
+  if to_regclass('public.avisos_internos') is not null then
+    execute format('delete from public.avisos_internos where contratacao_id = %L', p);
+    delete from public.notificacoes where empresa_id is null;
+  end if;
+  update public.contratacoes set fluxo_versao = 1 where id = p;
+  insert into public.contratacao_etapas (contratacao_id, etapa) select p, etapa from public.etapas_fluxo where versao = 1;
+  perform app.liberar_etapas(p);
+end $f$;
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-0000000004c1', 'coord3a@teste.local', '{}'),
@@ -30,6 +44,9 @@ set local role authenticated;
 -- Aviso de chegada da etapa 1: coordenador e auxiliar da obra A, ninguém mais
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000004c1", "role": "authenticated", "aal": "aal1"}', true);
 select lives_ok($$ insert into ids select 'u', public.abrir_contratacao('00000000-0000-0000-0000-0000000004aa', 'Contratação com aviso', (select id from public.matriz_contratacao order by ordem limit 1), 100000, false, 'suprimentos') $$, 'Coordenador abre a contratação');
+reset role;
+do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
+set local role authenticated;
 select is((select count(*)::int from public.avisos_internos where tipo = 'etapa' and contratacao_id = (select id from ids where nome = 'u')), 1, 'O coordenador lê o próprio aviso de chegada (e só o dele)');
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000004c2", "role": "authenticated", "aal": "aal1"}', true);
 select is((select count(*)::int from public.avisos_internos where tipo = 'etapa' and contratacao_id = (select id from ids where nome = 'u')), 1, 'O auxiliar da obra também recebe (etapa 1)');
@@ -71,6 +88,9 @@ select is((select urgente from public.contratacoes where id = (select id from id
 
 -- Devolução avisa quem recebe a etapa, com o motivo; contratação autorizada avisa a obra
 select lives_ok($$ insert into ids select 'd', public.abrir_contratacao('00000000-0000-0000-0000-0000000004aa', 'Contratação devolvida', (select id from public.matriz_contratacao order by ordem limit 1), 100000, false, 'suprimentos') $$, 'Abre outra contratação');
+reset role;
+do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
+set local role authenticated;
 reset role;
 update public.contratacao_etapas set situacao = 'concluida', concluida_em = now() where etapa <= 4 and contratacao_id = (select id from ids where nome = 'd');
 update public.contratacao_etapas set situacao = 'em_andamento', iniciada_em = now() where etapa = 5 and contratacao_id = (select id from ids where nome = 'd');

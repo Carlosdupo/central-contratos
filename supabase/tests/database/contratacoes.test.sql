@@ -2,6 +2,21 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 select plan(36);
+-- Contratações novas entram no fluxo 2. Estes testes cobrem o fluxo 1 (contratações antigas), então a contratação aberta
+-- é refeita no fluxo 1 (idempotente: só converte as que ainda estão no fluxo 2).
+create function pg_temp.para_fluxo_1(p uuid) returns void language plpgsql as $f$
+begin
+  if (select fluxo_versao from public.contratacoes where id = p) = 1 then return; end if;
+  delete from public.etapa_checklist where contratacao_id = p;
+  delete from public.contratacao_etapas where contratacao_id = p;
+  if to_regclass('public.avisos_internos') is not null then
+    execute format('delete from public.avisos_internos where contratacao_id = %L', p);
+    delete from public.notificacoes where empresa_id is null;
+  end if;
+  update public.contratacoes set fluxo_versao = 1 where id = p;
+  insert into public.contratacao_etapas (contratacao_id, etapa) select p, etapa from public.etapas_fluxo where versao = 1;
+  perform app.liberar_etapas(p);
+end $f$;
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000c01', 'coord@teste.local', '{}'),
@@ -33,7 +48,13 @@ select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000
 select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-00000000000b', 'Alvenaria', (select id from public.matriz_contratacao order by ordem limit 1), 100000, false, 'suprimentos') $$, '42501', null, 'Coordenador de outra obra não abre contratação aqui');
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000c01", "role": "authenticated", "aal": "aal1"}', true);
 insert into ids select 'grande', public.abrir_contratacao('00000000-0000-0000-0000-00000000000b', 'Alvenaria de vedação', (select id from public.matriz_contratacao order by ordem limit 1), 100000, false, 'suprimentos');
+reset role;
+do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
+set local role authenticated;
 insert into ids select 'pequena', public.abrir_contratacao('00000000-0000-0000-0000-00000000000b', 'Soleiras', (select id from public.matriz_contratacao order by ordem limit 1), null, false, 'obra');
+reset role;
+do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
+set local role authenticated;
 select ok((select codigo from public.contratacoes where id = (select id from ids where nome = 'grande')) ~ '^CT-\d{4}-\d{3,}$', 'Código no formato CT-AAAA-NNN');
 select is((select situacao::text from public.contratacao_etapas where contratacao_id = (select id from ids where nome = 'grande') and etapa = 1), 'em_andamento', 'Etapa 1 começa ao abrir');
 select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-00000000000b', 'Fundação', (select id from public.matriz_contratacao order by ordem limit 1), 50000, false, 'obra') $$,

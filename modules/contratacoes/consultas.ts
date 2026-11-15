@@ -7,6 +7,7 @@ import type { Papel } from "@/modules/acesso/papeis";
 
 export type EtapaFluxo = {
   etapa: number;
+  chave: string;
   nome: string;
   trilha: "negociacao" | "contrato" | "documentacao" | "liberacao";
   papel: Papel | null;
@@ -16,10 +17,17 @@ export type EtapaFluxo = {
   pode_pular: boolean;
 };
 
-export async function carregarFluxo(): Promise<EtapaFluxo[]> {
+/** Todas as versões do fluxo (1: contratações antigas, 2: normal, 3: aditivo), cada uma na ordem das etapas. */
+export const carregarFluxos = cache(async (): Promise<Map<number, EtapaFluxo[]>> => {
   const supabase = await criarClienteServidor();
-  const { data } = await supabase.from("etapas_fluxo").select("etapa, nome, trilha, papel, responsavel, dependencias, itens, pode_pular").eq("versao", 1).order("etapa");
-  return (data ?? []) as EtapaFluxo[];
+  const { data } = await supabase.from("etapas_fluxo").select("versao, etapa, chave, nome, trilha, papel, responsavel, dependencias, itens, pode_pular").order("etapa");
+  const porVersao = new Map<number, EtapaFluxo[]>();
+  for (const { versao, ...etapa } of data ?? []) porVersao.set(versao, [...(porVersao.get(versao) ?? []), etapa as EtapaFluxo]);
+  return porVersao;
+});
+
+export async function carregarFluxo(versao = 1): Promise<EtapaFluxo[]> {
+  return (await carregarFluxos()).get(versao) ?? [];
 }
 
 const prazoDaEtapa = (prazos: unknown, etapa: number): Prazo | null => {
@@ -47,20 +55,19 @@ const ORDEM: Record<string, number> = { atrasada: 0, vence_hoje: 1, vence_amanha
 // cache(): na mesma requisição (menu + painel) a consulta roda uma vez só.
 export const etapasEmAberto = cache(async (): Promise<EtapaAberta[]> => {
   const supabase = await criarClienteServidor();
-  const [fluxo, feriados, { data }] = await Promise.all([
-    carregarFluxo(),
+  const [fluxos, feriados, { data }] = await Promise.all([
+    carregarFluxos(),
     carregarFeriados(),
     supabase
       .from("contratacao_etapas")
-      .select("etapa, iniciada_em, contratacoes!inner(id, codigo, servico, prazos, situacao, obra_id, urgente, obras(nome))")
+      .select("etapa, iniciada_em, contratacoes!inner(id, codigo, servico, prazos, situacao, obra_id, urgente, fluxo_versao, obras(nome))")
       .eq("situacao", "em_andamento")
       .eq("contratacoes.situacao", "em_andamento"),
   ]);
   const hoje = agoraNoFuso().data;
-  const porNumero = new Map(fluxo.map((f) => [f.etapa, f]));
   return (data ?? [])
     .map((l) => {
-      const etapa = porNumero.get(l.etapa)!;
+      const etapa = (fluxos.get(l.contratacoes.fluxo_versao) ?? fluxos.get(1) ?? []).find((f) => f.etapa === l.etapa)!;
       const prazo = prazoDaEtapa(l.contratacoes.prazos, l.etapa);
       const desde = dataNoFuso(l.iniciada_em ?? new Date().toISOString());
       return {
@@ -81,7 +88,7 @@ export const etapasEmAberto = cache(async (): Promise<EtapaAberta[]> => {
 
 export async function detalheDaContratacao(id: string) {
   const supabase = await criarClienteServidor();
-  const [{ data: c }, { data: etapas }, { data: checklist }, { data: cotacoes }, { data: assinaturas }, { data: assinantes }, { data: devolucoes }, fluxo, feriados] = await Promise.all([
+  const [{ data: c }, { data: etapas }, { data: checklist }, { data: cotacoes }, { data: assinaturas }, { data: assinantes }, { data: devolucoes }, fluxos, feriados] = await Promise.all([
     supabase.from("contratacoes").select("*, obras(nome, prefixo_sienge), empresas_terceiras(id, razao_social, situacao)").eq("id", id).maybeSingle(),
     supabase.from("contratacao_etapas").select("etapa, situacao, iniciada_em, concluida_em, usuarios:concluida_por(nome)").eq("contratacao_id", id),
     supabase.from("etapa_checklist").select("etapa, item, marcado").eq("contratacao_id", id),
@@ -89,10 +96,11 @@ export async function detalheDaContratacao(id: string) {
     supabase.from("assinaturas").select("ordem, assinado_em, usuarios:assinado_por(nome)").eq("contratacao_id", id),
     supabase.from("assinantes_fluxo").select("ordem, rotulo, papel").order("ordem"),
     supabase.from("contratacao_devolucoes").select("id, tipo, de_etapa, para_etapa, motivo, em, usuarios:por(nome)").eq("contratacao_id", id).order("em"),
-    carregarFluxo(),
+    carregarFluxos(),
     carregarFeriados(),
   ]);
   if (!c) return null;
+  const fluxo = fluxos.get(c.fluxo_versao) ?? fluxos.get(1) ?? [];
   const hoje = agoraNoFuso().data;
   const etapasDetalhe = fluxo.map((f) => {
     const e = (etapas ?? []).find((x) => x.etapa === f.etapa);
@@ -192,19 +200,21 @@ export async function panoramaDasContratacoes(obraId?: string): Promise<LinhaPan
   const supabase = await criarClienteServidor();
   let consulta = supabase
     .from("contratacoes")
-    .select("id, codigo, created_at, servico, pacote, obra_id, urgente, urgente_data, situacao, prazos, sienge_solicitacao, sienge_contrato, fornecedor_nome, valor_negociado, obras(nome), contratacao_etapas(etapa, situacao, iniciada_em, concluida_em)")
+    .select("id, codigo, created_at, servico, pacote, obra_id, urgente, urgente_data, situacao, prazos, sienge_solicitacao, sienge_contrato, fornecedor_nome, valor_negociado, fluxo_versao, obras(nome), contratacao_etapas(etapa, situacao, iniciada_em, concluida_em)")
     .order("created_at", { ascending: false });
   if (obraId) consulta = consulta.eq("obra_id", obraId);
-  const [{ data }, fluxo, feriados] = await Promise.all([consulta, carregarFluxo(), carregarFeriados()]);
+  const [{ data }, fluxos, feriados] = await Promise.all([consulta, carregarFluxos(), carregarFeriados()]);
   const hoje = agoraNoFuso().data;
-  const porNumero = new Map(fluxo.map((f) => [f.etapa, f]));
 
   return (data ?? []).map((c) => {
+    const porNumero = new Map((fluxos.get(c.fluxo_versao) ?? fluxos.get(1) ?? []).map((f) => [f.etapa, f]));
     const etapas = new Map(c.contratacao_etapas.map((e) => [e.etapa, e]));
     let atrasada = false;
     const comQuem = new Set<string>();
     const celulas: CelulaPanorama[] = COLUNAS_PANORAMA.map((col) => {
-      const lista = col.etapas.map((n) => ({ n, e: etapas.get(n) }));
+      // Etapas que não existem neste fluxo (ex.: a 6 no fluxo 2) não entram na coluna.
+      const lista = col.etapas.map((n) => ({ n, e: etapas.get(n) })).filter((x) => x.e);
+      if (lista.length === 0) return { tipo: "na" };
       const andamento = lista.find((x) => x.e?.situacao === "em_andamento");
       if (andamento && c.situacao === "em_andamento") {
         const prazo = prazoDaEtapa(c.prazos, andamento.n);

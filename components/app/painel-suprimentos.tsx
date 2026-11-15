@@ -60,7 +60,7 @@ export function PainelSuprimentos({ fila, negociar, autorizar, atrasadas, assina
                 <Link key={`${a.contratacaoId}-${a.etapa.etapa}`} href={`/contratacoes/${a.contratacaoId}?etapa=${a.etapa.etapa}`} className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5 hover:bg-fill-2">
                   <span className="min-w-0">
                     <span className="block font-medium">{a.servico} {a.urgente && <SeloUrgente />}</span>
-                    <span className="block text-[12.5px] text-muted-foreground">{a.obra} · {a.etapa.etapa === 6 ? "Autorização do gerente" : "Validação e negociação"}</span>
+                    <span className="block text-[12.5px] text-muted-foreground">{a.obra} · {a.etapa.chave === "autorizacao" ? "Autorização do gerente" : "Validação e negociação"}</span>
                   </span>
                   <SeloPrazo prazo={a.prazo} uteis={a.uteis} />
                 </Link>

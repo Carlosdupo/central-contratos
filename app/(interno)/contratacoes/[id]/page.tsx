@@ -7,7 +7,7 @@ import { temAlgumPapel, type Papel } from "@/modules/acesso/papeis";
 import { detalheDaContratacao } from "@/modules/contratacoes/consultas";
 import { TIPO_CONTRATACAO, TRILHAS, formatarReais } from "@/modules/contratacoes/rotulos";
 import {
-  assinarContrato, autorizarContratoGerente, cancelarContratacao, concluirEtapa, definirFornecedor, devolverEtapa, marcarUrgencia, novaProposta, pularNegociacao, reabrirEtapa, registrarCotacao, salvarCampoEtapa, salvarEmailFornecedor,
+  assinarContrato, autorizarContratoGerente, cancelarContratacao, concluirEtapa, definirFornecedor, definirDestinoAditivo, definirFornecedorAditivo, devolverEtapa, marcarUrgencia, novaProposta, pularNegociacao, reabrirEtapa, registrarCotacao, salvarCampoEtapa, salvarEmailFornecedor,
 } from "@/modules/contratacoes/acoes";
 import { equipeDaEmpresa } from "@/modules/terceiros/consultas";
 import { linksDasFotos } from "@/modules/terceiros/fotos";
@@ -18,8 +18,9 @@ import { CampoFornecedor } from "@/components/app/campo-fornecedor";
 import { ChecklistEtapa } from "@/components/app/checklist-etapa";
 import { CamposCondicoesGerente } from "@/components/app/campos-condicoes-gerente";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { CampoEmLinha, CampoSelecao, CampoTexto, Formulario } from "@/components/app/formulario";
-import { CampoReais } from "@/components/app/campos-mascara";
+import { CampoEmLinha, CampoSelecao, CampoTexto, Formulario, GrupoOpcoes } from "@/components/app/formulario";
+import { CampoCnpj, CampoReais } from "@/components/app/campos-mascara";
+import { resumoDaEquipe } from "@/lib/equipe-obra";
 import { MaisAcoes } from "@/components/app/mais-acoes";
 import { DevolverEtapa } from "@/components/app/devolver-etapa";
 import { LinhaDoTempo } from "@/components/app/linha-do-tempo";
@@ -52,8 +53,10 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
     !!papel && (papel === "suprimentos" ? temAlgumPapel(usuario.papeis, ["suprimentos", "gerente_suprimentos"]) : usuario.papeis.includes(papel)) &&
     !(papel === "coordenador_obra" && ehAuxiliar && numeroEtapa > 3);
   const emAndamento = etapas.filter((e) => e.situacao === "em_andamento");
-  const numero = Number(etapaParam) || (emAndamento.find((e) => podeComo(e.papel, e.etapa)) ?? emAndamento[0] ?? etapas[11]).etapa;
+  const numero = Number(etapaParam) || (emAndamento.find((e) => podeComo(e.papel, e.etapa)) ?? emAndamento[0] ?? etapas[etapas.length - 1]).etapa;
   const sel = etapas.find((e) => e.etapa === numero) ?? etapas[0];
+  // As etapas têm chave (autorizacao, contrato...); o número é só a posição. No fluxo 2 a etapa 6 não existe, então a régua mostra 1, 2, 3...
+  const posicao = (n: number) => etapas.findIndex((e) => e.etapa === n) + 1;
   const ativa = c.situacao === "em_andamento" && sel.situacao === "em_andamento";
   const pode = ativa && podeComo(sel.papel, sel.etapa);
   const anteriores = new Set<number>();
@@ -63,25 +66,34 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
   const ultimaDevolucao = sel.situacao === "em_andamento" ? [...devolucoes].reverse().find((x) => x.tipo === "devolucao" && x.para === sel.etapa) : undefined;
   const negociaObra = c.negociacao === "obra" && !c.negociacao_pulada;
   // Negociação pela obra: em 5, Suprimentos só ajusta o valor do fornecedor que a obra escolheu.
-  const fornecedorTravado = sel.etapa === 5 && negociaObra && !!c.fornecedor_cnpj;
+  const negociacaoSuprimentos = sel.chave === "negociacao" || sel.chave === "autorizacao";
+  const fornecedorTravado = negociacaoSuprimentos && c.fluxo_versao !== 3 && negociaObra && !!c.fornecedor_cnpj;
   const proxAssinante = assinantes.find((a) => !a.assinadoEm);
   const empresa = c.empresas_terceiras as { id: string; razao_social: string; situacao: string } | null;
   const equipe = empresa ? await equipeDaEmpresa(empresa.id) : [];
   const fotos = await linksDasFotos(equipe.map((m) => m.fotoPath));
   const ehAdmin = usuario.papeis.includes("admin");
+  const ehGerente = usuario.papeis.includes("gerente_suprimentos");
   // Cancelar: administrador e coordenador (a RLS limita o coordenador às obras dele; o banco confere de novo).
   const podeMarcarUrgencia = usuario.papeis.includes("coordenador_obra");
   const podeCancelar = c.situacao === "em_andamento" && (ehAdmin || (usuario.papeis.includes("coordenador_obra") && !ehAuxiliar));
   const prefixoSienge = c.obras?.prefixo_sienge ?? null;
 
-  const podeEscolher = (sel.etapa === 3 && c.negociacao === "obra") || sel.etapa === 5;
+  const podeEscolher = (sel.chave === "negociacao_obra" && c.negociacao === "obra") || negociacaoSuprimentos;
   // Rodadas de negociação: obra na etapa 3 (negociação pela obra) ou Suprimentos na etapa 5.
-  const podeNegociar = (sel.etapa === 3 && c.negociacao === "obra") || sel.etapa === 5;
+  const podeNegociar = (sel.chave === "negociacao_obra" && c.negociacao === "obra") || negociacaoSuprimentos;
   const opcoes = fornecedorTravado ? cotacoes.filter((q) => q.escolhida) : cotacoes;
   const empresasCadastradas =
-    sel.etapa === 2 && pode
+    sel.chave === "cotacao" && pode
       ? ((await (await criarClienteServidor()).from("empresas_terceiras").select("razao_social, cnpj").order("razao_social")).data ?? []).map((e) => ({ razao: e.razao_social, cnpj: e.cnpj }))
       : [];
+  const naoSeAplica =
+    sel.situacao !== "pulada" ? null
+    : ["documentacao", "integracao", "liberacao"].includes(sel.chave) && c.empresa_ja_liberada ? "a empresa já está liberada nesta obra."
+    : sel.chave === "assinaturas" && c.aditivo_destino === "guarda_chuva" ? "o aditivo cabe em contrato guarda-chuva."
+    : sel.chave === "negociacao_obra" ? "a negociação ficou com Suprimentos."
+    : "esta etapa foi pulada.";
+  const resumoEquipe = empresa && c.fluxo_versao >= 2 && ["documentacao", "liberacao"].includes(sel.chave) ? resumoDaEquipe(equipe, c.obras?.nome ?? "") : null;
   const menor = cotacoes.length ? Math.min(...cotacoes.map((x) => Number(x.valor))) : 0;
 
   return (
@@ -135,7 +147,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                   >
                     <span className={`grid size-[26px] place-items-center rounded-full text-xs font-semibold ${
                       e.situacao === "concluida" || e.situacao === "pulada" ? "bg-[var(--ok-fill)] text-[var(--superficie)]" : e.situacao === "em_andamento" ? "border-2 border-primary bg-card text-primary" : "border-[1.5px] border-input text-faint"
-                    }`}>{e.situacao === "concluida" ? "✓" : e.situacao === "pulada" ? "–" : e.etapa}</span>
+                    }`}>{e.situacao === "concluida" ? "✓" : e.situacao === "pulada" ? "–" : posicao(e.etapa)}</span>
                     <span className="min-w-0">
                       <span className={`block font-medium ${e.etapa === sel.etapa ? "text-primary" : e.situacao === "pendente" ? "text-muted-foreground" : ""}`}>{e.nome}</span>
                       <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
@@ -154,7 +166,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
         <div className="flex flex-col gap-5 lg:sticky lg:top-6">
           <section className="painel">
             <div>
-              <div className="text-xs font-semibold text-faint">Etapa {sel.etapa} · {sel.responsavel}</div>
+              <div className="text-xs font-semibold text-faint">Etapa {posicao(sel.etapa)} · {sel.responsavel}</div>
               <h2 className="subtitulo mt-1">{sel.nome}</h2>
               <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted-foreground">
                 <span>{sel.prazoConfig ? `Prazo: ${sel.prazoConfig.dias} ${sel.prazoConfig.uteis ? "dias úteis" : "dias"}` : "Prazo ainda não definido"}</span>
@@ -183,8 +195,8 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                 itens={sel.itens}
                 marcados={sel.marcados}
                 editavel={pode}
-                concluir={pode ? concluirEtapa.bind(null, id, sel.etapa) : null}
-                textoBotao={sel.etapa === 6 ? "Autorizar contratação" : "Concluir etapa"}
+                concluir={pode && sel.chave !== "autorizacao" ? concluirEtapa.bind(null, id, sel.etapa) : null}
+                textoBotao="Concluir etapa"
               />
             )}
 
@@ -198,7 +210,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
               )
             )}
 
-            {[2, 3, 5].includes(sel.etapa) && sel.situacao !== "pendente" && (
+            {c.fluxo_versao !== 3 && ["cotacao", "negociacao_obra", "negociacao", "autorizacao"].includes(sel.chave) && sel.situacao !== "pendente" && (
               <div className="flex flex-col gap-2">
                 <h3 className="text-[14px] font-semibold">Cotações ({cotacoes.length}/3)</h3>
                 <div className="lista-agrupada">
@@ -226,7 +238,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                     </div>
                   ))}
                 </div>
-                {sel.etapa === 2 && pode && cotacoes.length < 3 && (
+                {sel.chave === "cotacao" && pode && cotacoes.length < 3 && (
                   <Formulario acao={registrarCotacao.bind(null, id)} textoBotao="Registrar cotação" className="grid grid-cols-2 gap-2 max-sm:grid-cols-1">
                     <CampoFornecedor empresas={empresasCadastradas} />
                     <CampoReais nome="valor" rotulo="Valor (R$)" />
@@ -247,14 +259,55 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                     </div>
                   </Formulario>
                 )}
-                {sel.etapa === 3 && c.negociacao === "obra" && (
+                {sel.chave === "negociacao_obra" && c.negociacao === "obra" && (
                   <p className="rounded-xl bg-fill px-3.5 py-2.5 text-[13px] text-muted-foreground">Negociação pela obra: escolha a empresa e informe o valor final. Se preferir, deixe a negociação para Suprimentos.</p>
                 )}
-                {sel.etapa === 5 && c.negociacao_pulada && <p className="rounded-xl bg-primary-soft px-3.5 py-2.5 text-[13px]">A obra não negociou. A equalização e a negociação ficam com Suprimentos.</p>}
+                {negociacaoSuprimentos && c.negociacao_pulada && <p className="rounded-xl bg-primary-soft px-3.5 py-2.5 text-[13px]">A obra não negociou. A equalização e a negociação ficam com Suprimentos.</p>}
               </div>
             )}
 
-            {sel.etapa === 9 && sel.situacao !== "pendente" && (
+            {naoSeAplica && <p className="rounded-xl bg-fill px-3.5 py-2.5 text-[13px] text-muted-foreground">Não se aplica: {naoSeAplica}</p>}
+
+            {sel.chave === "fornecedor_valor" && sel.situacao !== "pendente" && (
+              <div className="flex flex-col gap-2">
+                <h3 className="text-[14px] font-semibold">Fornecedor do contrato e valor negociado</h3>
+                {sel.situacao === "em_andamento" && pode ? (
+                  <Formulario acao={definirFornecedorAditivo.bind(null, id)} textoBotao="Salvar fornecedor e valor" className="flex flex-col gap-3 rounded-xl border-[.5px] border-sep p-3.5">
+                    <div className="grid grid-cols-2 gap-2 max-sm:grid-cols-1">
+                      <CampoTexto nome="fornecedor" rotulo="Fornecedor" padrao={c.fornecedor_nome} />
+                      <CampoCnpj nome="cnpj" rotulo="CNPJ do fornecedor" />
+                    </div>
+                    <CampoReais nome="valor" rotulo="Valor negociado (R$)" padrao={c.valor_negociado} />
+                  </Formulario>
+                ) : (
+                  <p className="text-[13px]">{c.fornecedor_nome ?? "—"} · {formatarReais(c.valor_negociado ? Number(c.valor_negociado) : null)}</p>
+                )}
+                <p className="text-[12.5px] text-muted-foreground">Aditivo não tem as 3 cotações: informe o fornecedor do contrato e o valor negociado e conclua a etapa.</p>
+              </div>
+            )}
+
+            {sel.chave === "contrato_aditivo" && sel.situacao !== "pendente" && (
+              <div className="flex flex-col gap-2">
+                <h3 className="text-[14px] font-semibold">O aditivo cabe em contrato guarda-chuva?</h3>
+                {sel.situacao === "em_andamento" && pode ? (
+                  <Formulario acao={definirDestinoAditivo.bind(null, id)} textoBotao="Salvar escolha" className="flex flex-col gap-3">
+                    <GrupoOpcoes
+                      nome="destino"
+                      rotulo="Destino do aditivo"
+                      padrao={c.aditivo_destino}
+                      opcoes={[
+                        { value: "guarda_chuva", label: "Cabe em contrato guarda-chuva", dica: "A assinatura não se aplica; a alçada continua." },
+                        { value: "contrato_novo", label: "Precisa de contrato novo", dica: "Segue para a assinatura." },
+                      ]}
+                    />
+                  </Formulario>
+                ) : (
+                  <p className="text-[13px]">{c.aditivo_destino === "guarda_chuva" ? "Cabe em contrato guarda-chuva." : c.aditivo_destino === "contrato_novo" ? "Precisa de contrato novo." : "Ainda não escolhido."}</p>
+                )}
+              </div>
+            )}
+
+            {sel.chave === "assinaturas" && sel.situacao !== "pendente" && sel.situacao !== "pulada" && (
               <div className="flex flex-col gap-2">
                 <h3 className="text-[14px] font-semibold">Ordem de assinatura</h3>
                 <div className="lista-agrupada">
@@ -275,15 +328,16 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
               </div>
             )}
 
-            {sel.etapa === 6 && sel.situacao !== "pendente" && (
+            {sel.chave === "autorizacao" && sel.situacao !== "pendente" && (
               <div className="flex flex-col gap-2">
                 <h3 className="text-[14px] font-semibold">Condições da contratação</h3>
-                {pode ? (
+                {pode && ehGerente ? (
                   <Formulario acao={autorizarContratoGerente.bind(null, id)} textoBotao="Autorizar contratação" confirmar={`Autorizar ${c.fornecedor_nome ?? "o fornecedor"} por ${formatarReais(c.valor_negociado ? Number(c.valor_negociado) : null)}? As condições preenchidas acima serão gravadas e a etapa, concluída.`} sensivel="Grava as condições e autoriza a contratação.">
                     <CamposCondicoesGerente inicial={c} />
                   </Formulario>
                 ) : (
                   <div className="lista-agrupada text-[13.5px]">
+                    {sel.situacao === "em_andamento" && <p className="px-3.5 py-2.5 text-[12.5px] text-muted-foreground">Só o gerente de suprimentos define as condições e autoriza.</p>}
                     {[
                       ["Permuta", c.permuta == null ? "—" : c.permuta ? `Sim · ${formatarReais(Number(c.permuta_valor))} · ${c.permuta_formato}` : "Não"],
                       ["Faturamento direto", c.fat_direto == null ? "—" : c.fat_direto ? `Sim · ${formatarReais(Number(c.fat_direto_valor))} · ${String(c.fat_direto_percentual).replace(".", ",")}%` : "Não"],
@@ -296,7 +350,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                 )}
               </div>
             )}
-            {(sel.etapa === 5 || (sel.etapa === 6 && !c.fornecedor_email && !empresa)) && sel.situacao !== "pendente" && c.fornecedor_cnpj && (
+            {(sel.chave === "negociacao" || (sel.chave === "autorizacao" && (c.fluxo_versao >= 2 || (!c.fornecedor_email && !empresa)))) && sel.situacao !== "pendente" && c.fornecedor_cnpj && (
               <div className="flex flex-col gap-2">
                 <h3 className="text-[14px] font-semibold">Acesso do fornecedor ao portal</h3>
                 {empresa ? (
@@ -315,9 +369,16 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                 )}
               </div>
             )}
-            {sel.etapa === 10 && empresa && <p className="rounded-xl bg-primary-soft px-3.5 py-2.5 text-[13px]">A situação da equipe vem do portal da empresa (abaixo). O RH confere os documentos em Análise do RH.</p>}
+            {sel.chave === "documentacao" && c.fluxo_versao < 2 && empresa && <p className="rounded-xl bg-primary-soft px-3.5 py-2.5 text-[13px]">A situação da equipe vem do portal da empresa (abaixo). O RH confere os documentos em Análise do RH.</p>}
+            {resumoEquipe && (
+              <div className="flex flex-col gap-1 rounded-xl bg-primary-soft px-3.5 py-2.5 text-[13px]">
+                <span className="font-semibold">{resumoEquipe.aprovados} de {resumoEquipe.total} aprovados nesta obra</span>
+                {resumoEquipe.faltam.length > 0 && <span>Faltam: {resumoEquipe.faltam.join(", ")}.</span>}
+                <span className="text-muted-foreground">O RH confere os documentos em Análise do RH, decide e fecha esta etapa.</span>
+              </div>
+            )}
 
-            {ativa && sel.etapa !== 9 && sel.etapa !== 6 && (
+            {ativa && sel.chave !== "assinaturas" && sel.chave !== "autorizacao" && (
               <div className="flex flex-wrap items-center justify-between gap-3 border-t-[.5px] border-sep pt-4">
                 <span className="text-[12.5px] text-muted-foreground">{pode ? "" : `Etapa de ${sel.responsavel}.`}</span>
                 <span className="flex flex-wrap gap-2">
@@ -328,7 +389,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
             )}
             {pode && sel.papel && devolvivel.length > 0 && (
               <div className="flex justify-end border-t-[.5px] border-sep pt-4">
-                <DevolverEtapa acao={devolverEtapa.bind(null, id, sel.etapa)} etapas={devolvivel.map((e) => ({ etapa: e.etapa, nome: e.nome }))} etapaAtual={`A etapa ${sel.etapa}`} />
+                <DevolverEtapa acao={devolverEtapa.bind(null, id, sel.etapa)} etapas={devolvivel.map((e) => ({ etapa: e.etapa, nome: e.nome, posicao: posicao(e.etapa) }))} etapaAtual={`A etapa ${posicao(sel.etapa)}`} />
               </div>
             )}
             {ehAdmin && (sel.situacao === "concluida" || sel.situacao === "pulada") && c.situacao === "em_andamento" && (

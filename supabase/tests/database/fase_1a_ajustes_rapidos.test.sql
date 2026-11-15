@@ -2,6 +2,21 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 select plan(25);
+-- Contratações novas entram no fluxo 2. Estes testes cobrem o fluxo 1 (contratações antigas), então a contratação aberta
+-- é refeita no fluxo 1 (idempotente: só converte as que ainda estão no fluxo 2).
+create function pg_temp.para_fluxo_1(p uuid) returns void language plpgsql as $f$
+begin
+  if (select fluxo_versao from public.contratacoes where id = p) = 1 then return; end if;
+  delete from public.etapa_checklist where contratacao_id = p;
+  delete from public.contratacao_etapas where contratacao_id = p;
+  if to_regclass('public.avisos_internos') is not null then
+    execute format('delete from public.avisos_internos where contratacao_id = %L', p);
+    delete from public.notificacoes where empresa_id is null;
+  end if;
+  update public.contratacoes set fluxo_versao = 1 where id = p;
+  insert into public.contratacao_etapas (contratacao_id, etapa) select p, etapa from public.etapas_fluxo where versao = 1;
+  perform app.liberar_etapas(p);
+end $f$;
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-0000000001a1', 'adm1a@teste.local', '{}'),
@@ -30,12 +45,30 @@ set local role authenticated;
 -- Coordenador da obra A abre as contratações da obra A
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000001c1", "role": "authenticated", "aal": "aal1"}', true);
 insert into ids select 'c1', public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Cancelar pelo coordenador', (select id from public.matriz_contratacao order by ordem limit 1), null, false, 'obra');
+reset role;
+do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
+set local role authenticated;
 insert into ids select 'c2', public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Cancelar pelo admin', (select id from public.matriz_contratacao order by ordem limit 1), null, false, 'obra');
+reset role;
+do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
+set local role authenticated;
 insert into ids select 'e7a', public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Etapa 7 com prefixo', (select id from public.matriz_contratacao order by ordem limit 1), null, false, 'obra');
+reset role;
+do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
+set local role authenticated;
 insert into ids select 'g1', public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Gerente autoriza', (select id from public.matriz_contratacao order by ordem limit 1), null, false, 'obra');
+reset role;
+do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
+set local role authenticated;
 insert into ids select 'g2', public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Gerente com dados faltando', (select id from public.matriz_contratacao order by ordem limit 1), null, false, 'obra');
+reset role;
+do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
+set local role authenticated;
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000001c2", "role": "authenticated", "aal": "aal1"}', true);
 insert into ids select 'e7b', public.abrir_contratacao('00000000-0000-0000-0000-0000000001bb', 'Etapa 7 sem prefixo', (select id from public.matriz_contratacao order by ordem limit 1), null, false, 'obra');
+reset role;
+do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
+set local role authenticated;
 
 -- Cancelar
 select throws_ok(format($$ select public.cancelar_contratacao(%L, 'Motivo de teste') $$, (select id from ids where nome = 'c1')),

@@ -25,8 +25,8 @@ export async function resumoSuprimentos() {
     supabase.from("assinaturas").select("contratacao_id, ordem"),
   ]);
 
-  const negociar = abertas.filter((a) => a.etapa.etapa === 5);
-  const autorizar = abertas.filter((a) => a.etapa.etapa === 6);
+  const negociar = abertas.filter((a) => a.etapa.chave === "negociacao");
+  const autorizar = abertas.filter((a) => a.etapa.chave === "autorizacao");
   // Assinatura de Suprimentos é a 2ª da ordem: está na vez quando a 1ª (coordenador) já assinou e a 2ª não.
   const feitas = new Map<string, Set<number>>();
   for (const s of assinadas ?? []) feitas.set(s.contratacao_id, (feitas.get(s.contratacao_id) ?? new Set()).add(s.ordem));

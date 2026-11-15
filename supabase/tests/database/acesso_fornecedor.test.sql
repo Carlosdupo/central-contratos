@@ -2,6 +2,21 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 select plan(13);
+-- Contratações novas entram no fluxo 2. Estes testes cobrem o fluxo 1 (contratações antigas), então a contratação aberta
+-- é refeita no fluxo 1 (idempotente: só converte as que ainda estão no fluxo 2).
+create function pg_temp.para_fluxo_1(p uuid) returns void language plpgsql as $f$
+begin
+  if (select fluxo_versao from public.contratacoes where id = p) = 1 then return; end if;
+  delete from public.etapa_checklist where contratacao_id = p;
+  delete from public.contratacao_etapas where contratacao_id = p;
+  if to_regclass('public.avisos_internos') is not null then
+    execute format('delete from public.avisos_internos where contratacao_id = %L', p);
+    delete from public.notificacoes where empresa_id is null;
+  end if;
+  update public.contratacoes set fluxo_versao = 1 where id = p;
+  insert into public.contratacao_etapas (contratacao_id, etapa) select p, etapa from public.etapas_fluxo where versao = 1;
+  perform app.liberar_etapas(p);
+end $f$;
 
 delete from public.empresas_terceiras where cnpj in ('99888777000155');
 insert into auth.users (id, email, raw_user_meta_data) values
@@ -24,7 +39,13 @@ grant all on ids to authenticated;
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000e01", "role": "authenticated", "aal": "aal1"}', true);
 insert into ids select 'um', public.abrir_contratacao('00000000-0000-0000-0000-0000000000a1', 'Pintura', (select id from public.matriz_contratacao order by ordem limit 1), 50000, false, 'suprimentos');
+reset role;
+do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
+set local role authenticated;
 insert into ids select 'dois', public.abrir_contratacao('00000000-0000-0000-0000-0000000000a2', 'Pintura torre 2', (select id from public.matriz_contratacao order by ordem limit 1), null, false, 'suprimentos');
+reset role;
+do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
+set local role authenticated;
 
 -- Pula direto para a etapa 6 (como postgres), com fornecedor novo escolhido.
 reset role;

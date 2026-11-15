@@ -245,6 +245,35 @@ export async function devolverEtapa(contratacao: string, de: number, _: EstadoFo
   return { ok: "Etapa devolvida para ajuste." };
 }
 
+export async function definirFornecedorAditivo(contratacao: string, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
+  await exigirInterno();
+  if (!uuid.safeParse(contratacao).success) return { erro: "Dados inválidos." };
+  const lido = z
+    .object({
+      nome: z.string().trim().min(2, "Informe o fornecedor.").max(160),
+      cnpj: z.string().transform(somenteDigitos).refine(cnpjValido, "CNPJ inválido."),
+      valor: z.number({ message: "Informe o valor negociado." }).positive("Informe o valor negociado."),
+    })
+    .safeParse({ nome: dados.get("fornecedor"), cnpj: dados.get("cnpj") ?? "", valor: lerValor(dados.get("valor")) });
+  if (!lido.success) return { erro: lido.error.issues[0].message };
+  const supabase = await criarClienteServidor();
+  const { error } = await supabase.rpc("definir_fornecedor_aditivo", { p_contratacao: contratacao, p_nome: lido.data.nome, p_cnpj: lido.data.cnpj, p_valor: Number(lido.data.valor.toFixed(2)) });
+  if (error) return { erro: mensagemDeErro(error, error.message ?? "Não foi possível salvar.") };
+  recarregar(contratacao);
+  return { ok: "Fornecedor e valor salvos." };
+}
+
+export async function definirDestinoAditivo(contratacao: string, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
+  await exigirInterno();
+  const destino = z.enum(["guarda_chuva", "contrato_novo"], { message: "Escolha guarda-chuva ou contrato novo." }).safeParse(dados.get("destino"));
+  if (!uuid.safeParse(contratacao).success || !destino.success) return { erro: destino.success ? "Dados inválidos." : destino.error.issues[0].message };
+  const supabase = await criarClienteServidor();
+  const { error } = await supabase.rpc("definir_destino_aditivo", { p_contratacao: contratacao, p_destino: destino.data });
+  if (error) return { erro: mensagemDeErro(error, error.message ?? "Não foi possível salvar.") };
+  recarregar(contratacao);
+  return { ok: destino.data === "guarda_chuva" ? "Cabe em contrato guarda-chuva: a assinatura não se aplica." : "Contrato novo: segue para assinatura." };
+}
+
 export async function marcarUrgencia(contratacao: string, urgente: boolean, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
   await exigirInterno();
   if (!uuid.safeParse(contratacao).success) return { erro: "Dados inválidos." };
