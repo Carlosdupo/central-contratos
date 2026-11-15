@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CampoReais } from "@/components/app/campos-mascara";
 import { CampoTexto, GrupoOpcoes } from "@/components/app/formulario";
 
 export type Condicoes = {
@@ -45,7 +46,7 @@ export function CamposCondicoesGerente({ inicial }: { inicial: Condicoes }) {
     <div className="lista-agrupada">
       <Linha titulo="Permuta" detalhe={permuta && (
         <div className="flex flex-wrap gap-2">
-          <Campo nome="permuta_valor" rotulo="Valor da permuta (R$)" padrao={texto(inicial.permuta_valor)} />
+          <CampoReais nome="permuta_valor" rotulo="Valor da permuta (R$)" padrao={inicial.permuta_valor} className="min-w-[140px] flex-1" />
           <Campo nome="permuta_formato" rotulo="Formato da permuta" padrao={inicial.permuta_formato ?? ""} />
         </div>
       )}>
@@ -53,14 +54,14 @@ export function CamposCondicoesGerente({ inicial }: { inicial: Condicoes }) {
       </Linha>
       <Linha titulo="Faturamento direto" detalhe={fat && (
         <div className="flex flex-wrap gap-2">
-          <Campo nome="fat_direto_valor" rotulo="Valor do faturamento direto (R$)" padrao={texto(inicial.fat_direto_valor)} />
+          <CampoReais nome="fat_direto_valor" rotulo="Valor do faturamento direto (R$)" padrao={inicial.fat_direto_valor} className="min-w-[140px] flex-1" />
           <Campo nome="fat_direto_percentual" rotulo="Percentual do faturamento direto (%)" padrao={texto(inicial.fat_direto_percentual)} />
         </div>
       )}>
         <SimNao nome="fat_direto" rotulo="Faturamento direto" valor={fat} aoMudar={setFat} />
       </Linha>
       <Linha titulo="Sinal" detalhe={sinal && (
-        <div className="flex flex-wrap gap-2"><Campo nome="sinal_valor" rotulo="Valor do sinal (R$)" padrao={texto(inicial.sinal_valor)} /></div>
+        <div className="flex flex-wrap gap-2"><CampoReais nome="sinal_valor" rotulo="Valor do sinal (R$)" padrao={inicial.sinal_valor} className="min-w-[140px] flex-1" /></div>
       )}>
         <SimNao nome="sinal" rotulo="Sinal" valor={sinal} aoMudar={setSinal} />
       </Linha>

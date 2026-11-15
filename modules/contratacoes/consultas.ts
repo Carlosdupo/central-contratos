@@ -80,7 +80,7 @@ export const etapasEmAberto = cache(async (): Promise<EtapaAberta[]> => {
 export async function detalheDaContratacao(id: string) {
   const supabase = await criarClienteServidor();
   const [{ data: c }, { data: etapas }, { data: checklist }, { data: cotacoes }, { data: assinaturas }, { data: assinantes }, fluxo, feriados] = await Promise.all([
-    supabase.from("contratacoes").select("*, obras(nome), empresas_terceiras(id, razao_social, situacao)").eq("id", id).maybeSingle(),
+    supabase.from("contratacoes").select("*, obras(nome, prefixo_sienge), empresas_terceiras(id, razao_social, situacao)").eq("id", id).maybeSingle(),
     supabase.from("contratacao_etapas").select("etapa, situacao, iniciada_em, concluida_em, usuarios:concluida_por(nome)").eq("contratacao_id", id),
     supabase.from("etapa_checklist").select("etapa, item, marcado").eq("contratacao_id", id),
     supabase.from("cotacoes").select("id, fornecedor, cnpj, valor, prazo_dias, escolhida, cotacao_propostas(rodada, valor)").eq("contratacao_id", id).order("valor"),

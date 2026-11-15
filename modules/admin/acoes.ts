@@ -143,7 +143,7 @@ const esquemaObra = z.object({
   nome: z.string().trim().min(2, "Informe o nome da obra.").max(120),
   cidade: z.string().trim().min(2, "Informe a cidade.").max(80),
   uf: z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/, "UF com 2 letras, ex.: SC."),
-  prefixo_sienge: z.string().trim().max(20).nullable(),
+  prefixo_sienge: z.string().trim().regex(/^[A-Za-z0-9/_-]{1,20}$/, "Prefixo do Sienge com letras, números, / ou -, até 20 caracteres. Ex.: CT/BL.").nullable(),
 });
 const lerObra = (dados: FormData) => {
   const prefixo = String(dados.get("prefixo_sienge") ?? "").trim();

@@ -241,5 +241,11 @@
   [data-slot="select-group-label"] { padding: 8px 10px 4px; font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--cinza); }
   [data-slot="alert-dialog-backdrop"] { position: fixed; inset: 0; background: rgb(0 0 0 / .45); z-index: 60; }
   [data-slot="alert-dialog-content"] { position: fixed; left: 50%; top: 50%; translate: -50% -50%; z-index: 61; width: min(calc(100vw - 32px), 440px); display: flex; flex-direction: column; gap: 10px; padding: 20px; border-radius: var(--raio-cartao); background: var(--superficie); color: var(--texto); border: 1px solid var(--separador); box-shadow: 0 16px 48px rgb(0 0 0 / .2); }
+  [data-slot="menu-content"] { background: var(--superficie); border: 1px solid var(--separador); border-radius: var(--raio-campo); box-shadow: 0 8px 24px rgb(0 0 0 / .12); min-width: 200px; padding: 4px; z-index: 50; }
+  [data-slot="menu-item"] { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; min-height: 40px; }
+  [data-slot="menu-item"][data-highlighted] { background: var(--azul-suave); }
+  [data-slot="menu-item"].item-menu-perigo { color: var(--vermelho, #b3261e); font-weight: 600; }
+  [data-slot="dialog-backdrop"] { position: fixed; inset: 0; background: rgb(0 0 0 / .45); z-index: 60; }
+  [data-slot="dialog-content"] { position: fixed; left: 50%; top: 50%; translate: -50% -50%; z-index: 61; width: min(calc(100vw - 32px), 460px); display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: var(--raio-cartao); background: var(--superficie); color: var(--texto); border: 1px solid var(--separador); box-shadow: 0 16px 48px rgb(0 0 0 / .2); }
   @media (pointer: coarse) { [data-slot="tabs-tab"], .opcao-pilula { min-height: 44px; } [data-slot="checkbox"] { width: 24px; height: 24px; } }
 }

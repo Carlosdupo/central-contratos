@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { exigirPapel } from "@/modules/acesso/sessao";
 import { abrirContratacao } from "@/modules/contratacoes/acoes";
-import { TIPO_CONTRATACAO } from "@/modules/contratacoes/rotulos";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import {Formulario,GrupoOpcoes,CampoTexto} from "@/components/app/formulario";
+import { Formulario } from "@/components/app/formulario";
 import { CamposNovaContratacao, type ObraComEap } from "@/components/app/campos-nova-contratacao";
 import { agruparEap } from "@/lib/eap";
 import { lerParametros } from "@/lib/configuracao";
@@ -14,7 +13,7 @@ export const metadata: Metadata = { title: "Nova contratação" };
 export default async function PaginaNovaContratacao() {
   const usuario = await exigirPapel("coordenador_obra");
   const supabase = await criarClienteServidor();
-  const { data: obras } = await supabase.from("usuario_obras").select("obra_id, obras(nome, ativa)").eq("usuario_id", usuario.id);
+  const { data: obras } = await supabase.from("usuario_obras").select("obra_id, obras(nome, ativa, prefixo_sienge)").eq("usuario_id", usuario.id);
   const ativas = (obras ?? []).filter((o) => o.obras?.ativa);
   const [{ data: eap }, parametros] = await Promise.all([
     supabase.from("obra_eap").select("id, obra_id, referencia, descricao, nivel").in("obra_id", ativas.map((o) => o.obra_id)).order("ordem"),
@@ -23,6 +22,7 @@ export default async function PaginaNovaContratacao() {
   const obrasComEap: ObraComEap[] = ativas.map((o) => ({
     id: o.obra_id,
     nome: o.obras?.nome ?? "",
+    prefixoSienge: o.obras?.prefixo_sienge ?? null,
     eap: agruparEap((eap ?? []).filter((e) => e.obra_id === o.obra_id)),
   }));
 
@@ -39,8 +39,6 @@ export default async function PaginaNovaContratacao() {
         ) : (
           <Formulario acao={abrirContratacao} textoBotao="Abrir contratação">
             <CamposNovaContratacao obras={obrasComEap} limite={parametros.limiteEscolhaObra} />
-            <GrupoOpcoes nome="tipo" rotulo="Tipo de contrato" opcoes={Object.entries(TIPO_CONTRATACAO).map(([value, rotulo], i) => ({ value, label: `${i + 1}. ${rotulo}` }))} />
-            <CampoTexto nome="contrato_original" rotulo="Nº do contrato original no Sienge (aditivos)" dica="Obrigatório para aditivos. Ex.: CT/BL0083 (prefixo + 4 números)" />
           </Formulario>
         )}
       </section>

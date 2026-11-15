@@ -2,6 +2,7 @@
 // Cada arquivo roda dentro de begin/rollback (nada fica gravado). O `supabase db query`
 // devolve só o último resultado, então as asserções são gravadas numa tabela temporária
 // e listadas no final.
+// Teste com migration nova: coloque `-- migration: nome.sql` no arquivo; ela é aplicada só dentro da transação do teste.
 // Uso: node scripts/testes-banco-remoto.mjs [arquivo.test.sql ...]
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -14,10 +15,14 @@ const temp = mkdtempSync(join(tmpdir(), "pgtap-"));
 let falhou = false;
 
 for (const arquivo of arquivos) {
-  const sql = readFileSync(arquivo, "utf8")
+  const original = readFileSync(arquivo, "utf8");
+  // Migration ainda não aplicada: o teste pede com "-- migrations: arquivo.sql" e ela roda dentro da mesma transação (desfeita no fim).
+  const pedidas = [...original.matchAll(/^-- migrations?: (\S+)/gm)].map((m) => readFileSync(join("supabase/migrations", m[1]), "utf8"));
+  let sql = original
     .replace(/^select plan\(/m, "create temp table _r (n serial, t text);\ngrant all on _r to authenticated, anon, service_role;\ngrant all on sequence _r_n_seq to authenticated, anon, service_role;\nselect plan(")
     .replace(/^select (?!set_config)/gm, "insert into _r (t) select ")
     .replace(/^insert into _r \(t\) select \* from finish\(\);/m, "insert into _r (t) select * from finish();\nreset role;\nselect string_agg(t, E'\\n' order by n) as resultado from _r;");
+  if (pedidas.length) sql = sql.replace(/^begin;/m, () => "begin;" + String.fromCharCode(10) + pedidas.join(String.fromCharCode(10)) + String.fromCharCode(10));
   const destino = join(temp, "teste.sql");
   writeFileSync(destino, sql);
   const npx = process.platform === "win32" ? "npx.cmd" : "npx";

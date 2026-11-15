@@ -6,6 +6,7 @@ import { z } from "zod";
 import { exigirInterno, exigirPapel } from "@/modules/acesso/sessao";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { cnpjValido, somenteDigitos } from "@/lib/documentos-br";
+import { lerValor, numeroOuNulo } from "@/lib/valor-reais";
 import { mensagemDeErro, type EstadoFormulario } from "@/lib/formulario";
 import { liberarPortalDaContratacao } from "@/modules/terceiros/acesso-portal";
 
@@ -13,35 +14,32 @@ import { liberarPortalDaContratacao } from "@/modules/terceiros/acesso-portal";
 // inclusive o coordenador só nas obras dele.
 
 const uuid = z.uuid();
+const simNao = (v: FormDataEntryValue | null) => (v === "sim" ? true : v === "nao" ? false : null);
 const etapa = z.number().int().min(1).max(12);
 const recarregar = (id: string) => {
   revalidatePath(`/contratacoes/${id}`);
   revalidatePath("/contratacoes");
   revalidatePath("/painel");
 };
-const lerValor = (v: FormDataEntryValue | null) => {
-  const t = String(v ?? "").trim().replace(/\./g, "").replace(",", ".");
-  return t === "" ? NaN : Number(t);
-};
 
 const esquemaAbertura = z.object({
   obra: z.uuid("Escolha a obra."),
   eap: z.uuid().nullable(),
   servico: z.string().trim().min(3, "Descreva o serviço ou escopo.").max(200),
-  valor: z.number().positive("Informe o valor orçamento ou marque \"Não informar\".").max(1e11).nullable(),
+  valor: z.number().positive("Informe o Valor Orçamento ou marque \"Não informar\".").max(1e11).nullable(),
   tipo: z.enum(["unico", "contrato", "aditivo"], { message: "Escolha o tipo de contrato." }),
   negociacao: z.enum(["obra", "suprimentos"], { message: "Escolha quem negocia." }),
-  contrato_original: z.string().trim().optional(),
+  contrato_original: z.string().trim().max(40, "Nº do contrato original grande demais.").optional(),
 }).refine(
-  (data) => data.tipo !== "aditivo" || (data.contrato_original && data.contrato_original.length > 0),
-  { message: "Informe o contrato original para aditivos.", path: ["contrato_original"] }
+  (data) => data.tipo !== "aditivo" || !!data.contrato_original,
+  { message: "Informe o nº do contrato original no Sienge.", path: ["contrato_original"] },
 );
 
 export async function abrirContratacao(_: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
   await exigirPapel("coordenador_obra");
   const semValor = dados.get("sem_valor") === "on";
   const valor = semValor ? null : lerValor(dados.get("valor"));
-  if (!semValor && Number.isNaN(valor)) return { erro: "Informe o valor orçamento ou marque \"Não informar\"." };
+  if (!semValor && Number.isNaN(valor)) return { erro: "Informe o Valor Orçamento ou marque \"Não informar\"." };
   const eap = dados.get("eap");
   const lido = esquemaAbertura.safeParse({
     obra: dados.get("obra"),
@@ -61,7 +59,7 @@ export async function abrirContratacao(_: EstadoFormulario, dados: FormData): Pr
     p_valor: lido.data.valor as number,
     p_tipo: lido.data.tipo,
     p_negociacao: lido.data.negociacao,
-    p_contrato_original: lido.data.contrato_original || null,
+    p_contrato_original: lido.data.tipo === "aditivo" ? lido.data.contrato_original : undefined,
   });
   if (error || !data) return { erro: mensagemDeErro(error, error?.message ?? "Não foi possível abrir a contratação.") };
   recarregar(data);
@@ -142,39 +140,13 @@ export async function definirFornecedor(contratacao: string, _: EstadoFormulario
   return { ok: "Fornecedor e valor final salvos." };
 }
 
-const simNao = (v: FormDataEntryValue | null) => (v === "sim" ? true : v === "nao" ? false : null);
-const numeroOuNulo = (v: FormDataEntryValue | null) => {
-  const n = lerValor(v);
-  return Number.isFinite(n) ? Number(n.toFixed(2)) : null;
-};
-
-export async function salvarCondicoesGerente(contratacao: string, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
-  await exigirInterno();
-  if (!uuid.safeParse(contratacao).success) return { erro: "Dados inválidos." };
-  const supabase = await criarClienteServidor();
-  const { error } = await supabase.rpc("salvar_condicoes_gerente", {
-    p_contratacao: contratacao,
-    p_permuta: simNao(dados.get("permuta")) as boolean,
-    p_permuta_valor: numeroOuNulo(dados.get("permuta_valor")) as number,
-    p_permuta_formato: String(dados.get("permuta_formato") ?? "").trim().slice(0, 160),
-    p_fat_direto: simNao(dados.get("fat_direto")) as boolean,
-    p_fat_direto_valor: numeroOuNulo(dados.get("fat_direto_valor")) as number,
-    p_fat_direto_percentual: numeroOuNulo(dados.get("fat_direto_percentual")) as number,
-    p_sinal: simNao(dados.get("sinal")) as boolean,
-    p_sinal_valor: numeroOuNulo(dados.get("sinal_valor")) as number,
-    p_caucao: String(dados.get("caucao") ?? "") || (null as unknown as string),
-  });
-  if (error) return { erro: mensagemDeErro(error, error.message ?? "Não foi possível salvar.") };
-  recarregar(contratacao);
-  return { ok: "Condições salvas." };
-}
-
+// Botão único da etapa 6: o banco grava as condições e conclui a etapa na mesma transação (autorizar_contratacao),
+// conferindo permissão e regras. Aqui só sai o convite do portal.
 export async function autorizarContratoGerente(contratacao: string, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
   await exigirInterno();
   if (!uuid.safeParse(contratacao).success) return { erro: "Dados inválidos." };
   const supabase = await criarClienteServidor();
-  // Salvar condições
-  const { error: errorSalvar } = await supabase.rpc("salvar_condicoes_gerente", {
+  const { error } = await supabase.rpc("autorizar_contratacao", {
     p_contratacao: contratacao,
     p_permuta: simNao(dados.get("permuta")) as boolean,
     p_permuta_valor: numeroOuNulo(dados.get("permuta_valor")) as number,
@@ -186,13 +158,7 @@ export async function autorizarContratoGerente(contratacao: string, _: EstadoFor
     p_sinal_valor: numeroOuNulo(dados.get("sinal_valor")) as number,
     p_caucao: String(dados.get("caucao") ?? "") || (null as unknown as string),
   });
-  if (errorSalvar) return { erro: mensagemDeErro(errorSalvar, "Não foi possível salvar as condições.") };
-
-  // Concluir etapa
-  const { error: errorConcluir } = await supabase.rpc("concluir_etapa", { p_contratacao: contratacao, p_etapa: 6 });
-  if (errorConcluir) return { erro: mensagemDeErro(errorConcluir, "Não foi possível autorizar.") };
-
-  // Liberar portal da contratacao
+  if (error) return { erro: mensagemDeErro(error, error.message ?? "Não foi possível autorizar.") };
   const ok = await liberarPortalDaContratacao(contratacao);
   recarregar(contratacao);
   return { ok };
@@ -241,7 +207,8 @@ export async function assinarContrato(contratacao: string, ordem: number): Promi
 }
 
 export async function cancelarContratacao(contratacao: string, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
-  await exigirPapel("admin");
+  await exigirPapel("admin", "coordenador_obra"); // o banco confere se o coordenador é da obra
+  if (!uuid.safeParse(contratacao).success) return { erro: "Dados inválidos." };
   const supabase = await criarClienteServidor();
   const { error } = await supabase.rpc("cancelar_contratacao", { p_contratacao: contratacao, p_motivo: String(dados.get("motivo") ?? "") });
   if (error) return { erro: mensagemDeErro(error, error.message ?? "Não foi possível cancelar.") };

@@ -1,43 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { Field, FieldDescription, FieldLabel } from "@ui-sdk/react/field";
-import { Input } from "@ui-sdk/react/input";
+import { CampoReais } from "@/components/app/campos-mascara";
+import { lerValor } from "@/lib/valor-reais";
+import { TIPO_CONTRATACAO } from "@/modules/contratacoes/rotulos";
+import { dicaCodigoSienge } from "@/lib/sienge";
 import { CampoSelecao, CampoTexto, GrupoOpcoes, Marcador } from "@/components/app/formulario";
 
 type ItemEap = { id: string; referencia: string; descricao: string };
-export type ObraComEap = { id: string; nome: string; eap: { grupo: ItemEap; filhos: ItemEap[] }[] };
+export type ObraComEap = { id: string; nome: string; prefixoSienge: string | null; eap: { grupo: ItemEap; filhos: ItemEap[] }[] };
 
-const somenteDigitos = (t: string) => t.replace(/\D/g, "");
-const paraNumero = (t: string) => {
-  const n = Number(t.trim().replace(/\./g, "").replace(",", "."));
-  return Number.isFinite(n) ? n : NaN;
-};
+
 const reais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
-const formatarReais = (v: string) => {
-  const d = somenteDigitos(v);
-  if (!d) return "";
-  const n = Number(d);
-  const inteira = Math.floor(n / 100).toString();
-  const centavos = (n % 100).toString().padStart(2, "0");
-  const partes = inteira.split("");
-  let resultado = "";
-  for (let i = partes.length - 1; i >= 0; i--) {
-    if ((partes.length - i - 1) % 3 === 0 && resultado) resultado = "." + resultado;
-    resultado = partes[i] + resultado;
-  }
-  return resultado + "," + centavos;
-};
-
-// Campos da abertura: obra, serviço da EAP, valor orçado (opcional) e quem negocia.
+// Campos da abertura: obra, serviço da EAP, Valor Orçamento (opcional) e quem negocia.
 // As regras são conferidas de novo no banco (abrir_contratacao).
 export function CamposNovaContratacao({ obras, limite }: { obras: ObraComEap[]; limite: number }) {
   const [obraId, setObraId] = useState<string | null>(obras.length === 1 ? obras[0].id : null);
   const [semValor, setSemValor] = useState(false);
   const [valor, setValor] = useState("");
+  const [tipo, setTipo] = useState<string | null>(null);
   const [negociacao, setNegociacao] = useState<string | null>(null);
   const obra = obras.find((o) => o.id === obraId);
-  const valorNum = semValor ? NaN : paraNumero(valor);
+  const valorNum = semValor ? NaN : lerValor(valor);
   const obraNaoPodeNegociar = Number.isFinite(valorNum) && valorNum >= limite;
   const negociacaoEfetiva = obraNaoPodeNegociar && negociacao === "obra" ? null : negociacao;
 
@@ -64,11 +48,14 @@ export function CamposNovaContratacao({ obras, limite }: { obras: ObraComEap[]; 
       <CampoTexto nome="servico" rotulo="Descrição do serviço / escopo" dica="Ex.: Alvenaria de vedação, torre B" />
 
       <div className="flex flex-col gap-1.5">
-        <Field className="flex flex-col gap-1.5" disabled={semValor}>
-          <FieldLabel className="text-[13px] font-semibold">Valor Orçamento (R$)</FieldLabel>
-          <Input name="valor" className="campo" inputMode="numeric" value={semValor ? "" : valor} onChange={(e) => setValor(formatarReais(e.target.value))} placeholder={semValor ? "Não informado" : ""} />
-          {obraNaoPodeNegociar && <FieldDescription className="text-xs text-muted-foreground">A partir de {reais(limite)} do orçamento, a negociação é de Suprimentos.</FieldDescription>}
-        </Field>
+        <CampoReais
+          nome="valor"
+          rotulo="Valor Orçamento (R$)"
+          desabilitado={semValor}
+          placeholder={semValor ? "Não informado" : ""}
+          aoMudar={setValor}
+          dica={obraNaoPodeNegociar ? `A partir de ${reais(limite)} do orçamento, a negociação é de Suprimentos.` : undefined}
+        />
         <Marcador nome="sem_valor" rotulo="Não informar / não se aplica" marcadoAgora={semValor} aoMudar={setSemValor} className="flex cursor-pointer items-center gap-2 text-[13px]" />
       </div>
 
@@ -87,6 +74,11 @@ export function CamposNovaContratacao({ obras, limite }: { obras: ObraComEap[]; 
           { value: "suprimentos", label: "Negociação pelo Suprimentos", dica: "A obra faz as 3 cotações; Suprimentos negocia e escolhe o fornecedor." },
         ]}
       />
+
+      <GrupoOpcoes nome="tipo" rotulo="Tipo de contrato" valor={tipo} aoMudar={setTipo} opcoes={Object.entries(TIPO_CONTRATACAO).map(([value, rotulo], i) => ({ value, label: `${i + 1}. ${rotulo}` }))} />
+      {tipo === "aditivo" && (
+        <CampoTexto nome="contrato_original" rotulo="Nº do contrato original no Sienge" dica={`Obrigatório no aditivo. ${dicaCodigoSienge(obra?.prefixoSienge)}`} />
+      )}
     </>
   );
 }

@@ -1608,6 +1608,7 @@ export type Database = {
     Functions: {
       abrir_contratacao: {
         Args: {
+          p_contrato_original?: string
           p_eap_item: string
           p_negociacao: string
           p_obra: string
@@ -1616,6 +1617,21 @@ export type Database = {
           p_valor: number
         }
         Returns: string
+      }
+      autorizar_contratacao: {
+        Args: {
+          p_caucao: string
+          p_contratacao: string
+          p_fat_direto: boolean
+          p_fat_direto_percentual: number
+          p_fat_direto_valor: number
+          p_permuta: boolean
+          p_permuta_formato: string
+          p_permuta_valor: number
+          p_sinal: boolean
+          p_sinal_valor: number
+        }
+        Returns: undefined
       }
       assinar_contrato: {
         Args: { p_contratacao: string; p_ordem: number }

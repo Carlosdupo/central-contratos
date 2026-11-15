@@ -18,7 +18,10 @@ import { CampoFornecedor } from "@/components/app/campo-fornecedor";
 import { ChecklistEtapa } from "@/components/app/checklist-etapa";
 import { CamposCondicoesGerente } from "@/components/app/campos-condicoes-gerente";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import {CampoEmLinha,CampoSelecao,CampoTexto,Formulario} from "@/components/app/formulario";
+import { CampoEmLinha, CampoSelecao, CampoTexto, Formulario } from "@/components/app/formulario";
+import { CampoReais } from "@/components/app/campos-mascara";
+import { MaisAcoes } from "@/components/app/mais-acoes";
+import { dicaCodigoSienge } from "@/lib/sienge";
 import { ListaEquipe } from "@/components/app/lista-equipe";
 
 export const metadata: Metadata = { title: "Contratação" };
@@ -53,7 +56,9 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
   const equipe = empresa ? await equipeDaEmpresa(empresa.id) : [];
   const fotos = await linksDasFotos(equipe.map((m) => m.fotoPath));
   const ehAdmin = usuario.papeis.includes("admin");
-  const ehCoordenadorDaObra = usuario.papeis.includes("coordenador_obra");
+  // Cancelar: administrador e coordenador (a RLS limita o coordenador às obras dele; o banco confere de novo).
+  const podeCancelar = c.situacao === "em_andamento" && (ehAdmin || usuario.papeis.includes("coordenador_obra"));
+  const prefixoSienge = c.obras?.prefixo_sienge ?? null;
 
   const podeEscolher = (sel.etapa === 3 && c.negociacao === "obra") || sel.etapa === 5;
   // Rodadas de negociação: obra na etapa 3 (negociação pela obra) ou Suprimentos na etapa 5.
@@ -76,6 +81,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
           </div>
           {c.situacao === "liberada" && <span className="selo selo-ok">Liberada para a obra</span>}
           {c.situacao === "cancelada" && <span className="selo selo-neutro">Cancelada: {c.cancelamento_motivo}</span>}
+          {podeCancelar && <MaisAcoes cancelar={cancelarContratacao.bind(null, id)} />}
         </div>
       </div>
 
@@ -163,7 +169,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
             {CAMPO[sel.etapa] && sel.situacao !== "pendente" && (
               pode ? (
                 <Formulario acao={salvarCampoEtapa.bind(null, id, sel.etapa)} textoBotao={sel.etapa === 4 ? "Salvar nº da solicitação" : "Salvar código do contrato"} className="flex flex-wrap items-end gap-2">
-                  <CampoTexto nome="valor" rotulo={CAMPO[sel.etapa].rotulo} padrao={c[CAMPO[sel.etapa].chave] as string | null} className="min-w-[220px] flex-1" />
+                  <CampoTexto nome="valor" rotulo={CAMPO[sel.etapa].rotulo} padrao={c[CAMPO[sel.etapa].chave] as string | null} dica={sel.etapa === 7 ? dicaCodigoSienge(prefixoSienge) : undefined} className="min-w-[220px] flex-1" />
                 </Formulario>
               ) : (
                 <p className="text-[13px]"><span className="text-muted-foreground">{CAMPO[sel.etapa].rotulo}:</span> {String(c[CAMPO[sel.etapa].chave] ?? "—")}</p>
@@ -189,7 +195,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                           <details className="mt-1.5">
                             <summary className="cursor-pointer text-[12.5px] font-medium text-primary">Nova proposta</summary>
                             <Formulario acao={novaProposta.bind(null, id, q.id)} textoBotao="Registrar proposta" className="mt-1.5 flex flex-wrap items-center gap-2">
-                              <CampoEmLinha nome="valor" placeholder="Novo valor (R$)" rotulo={`Nova proposta de ${q.fornecedor}`} className="max-w-[180px]" />
+                              <CampoReais nome="valor" placeholder="Novo valor (R$)" rotulo={`Nova proposta de ${q.fornecedor}`} rotuloOculto className="max-w-[180px]" />
                             </Formulario>
                           </details>
                         )}
@@ -201,7 +207,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                 {sel.etapa === 2 && pode && cotacoes.length < 3 && (
                   <Formulario acao={registrarCotacao.bind(null, id)} textoBotao="Registrar cotação" className="grid grid-cols-2 gap-2 max-sm:grid-cols-1">
                     <CampoFornecedor empresas={empresasCadastradas} />
-                    <CampoTexto nome="valor" rotulo="Valor (R$)" />
+                    <CampoReais nome="valor" rotulo="Valor (R$)" />
                     <CampoTexto nome="prazo" rotulo="Prazo (dias)" />
                   </Formulario>
                 )}
@@ -215,7 +221,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                         placeholder="Escolha a empresa"
                         opcoes={opcoes.map((q) => ({ value: q.id, label: `${q.fornecedor} · ${formatarReais(Number(q.valor))}` }))}
                       />
-                      <CampoTexto nome="valor" rotulo="Valor final (R$)" padrao={c.valor_negociado ? String(c.valor_negociado).replace(".", ",") : null} />
+                      <CampoReais nome="valor" rotulo="Valor final (R$)" padrao={c.valor_negociado} />
                     </div>
                   </Formulario>
                 )}
@@ -251,7 +257,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
               <div className="flex flex-col gap-2">
                 <h3 className="text-[14px] font-semibold">Condições da contratação</h3>
                 {pode ? (
-                  <Formulario acao={autorizarContratoGerente.bind(null, id)} textoBotao="Autorizar contratação" confirmar={`Autorizar ${c.fornecedor_nome ?? "fornecedor"}? Valor ${formatarReais(c.valor_negociado ? Number(c.valor_negociado) : null)}.`}>
+                  <Formulario acao={autorizarContratoGerente.bind(null, id)} textoBotao="Autorizar contratação" confirmar={`Autorizar ${c.fornecedor_nome ?? "o fornecedor"} por ${formatarReais(c.valor_negociado ? Number(c.valor_negociado) : null)}? As condições preenchidas acima serão gravadas e a etapa, concluída.`} sensivel="Grava as condições e autoriza a contratação.">
                     <CamposCondicoesGerente inicial={c} />
                   </Formulario>
                 ) : (
@@ -312,20 +318,6 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                 <p className="mt-1 text-[13px] text-muted-foreground">Resumo da empresa (A2). <Link href={`/terceiros/empresas/${empresa.id}`} className="text-primary">Ver documentos da empresa</Link></p>
               </div>
               <ListaEquipe equipe={equipe} fotos={fotos} linkBase="/terceiros/pessoas" />
-            </section>
-          )}
-
-          {(ehAdmin || ehCoordenadorDaObra) && c.situacao === "em_andamento" && (
-            <section className="painel">
-              <h2 className="subtitulo">Mais ações</h2>
-              <details className="group">
-                <summary className="cursor-pointer px-3.5 py-2.5 text-[14px] font-semibold text-primary hover:text-primary-dark">⋯ Cancelar contratação</summary>
-                <div className="mt-3">
-                  <Formulario acao={cancelarContratacao.bind(null, id)} textoBotao="Cancelar contratação" variante="perigo" confirmar="Cancelar esta contratação? Não dá para desfazer." className="flex flex-wrap items-center gap-2" sensivel="Cancela a contratação.">
-                    <CampoEmLinha nome="motivo" placeholder="Motivo" rotulo="Motivo do cancelamento" className="max-w-[320px]" />
-                  </Formulario>
-                </div>
-              </details>
             </section>
           )}
         </div>

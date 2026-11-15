@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@ui-sdk/react/field";
 import { Input } from "@ui-sdk/react/input";
 import { cnpjValido, somenteDigitos } from "@/lib/documentos-br";
+import { mascaraReais, valorParaCampo } from "@/lib/valor-reais";
 
 // Campos com máscara e validação no navegador. A validação de verdade continua na Server Action (Zod).
 
@@ -32,19 +33,29 @@ function CampoMascarado(props: {
   inputMode?: "numeric" | "tel";
   autoComplete?: string;
   padrao?: string | null;
+  placeholder?: string;
+  className?: string;
+  /** Rótulo só para leitor de tela (campo ao lado de um botão). */
+  rotuloOculto?: boolean;
+  desabilitado?: boolean;
+  aoMudar?: (valor: string) => void;
 }) {
   const [valor, setValor] = useState(props.padrao || "");
   const [erro, setErro] = useState<string | null>(null);
   return (
-    <Field invalid={!!erro} className="flex min-w-0 flex-col gap-1.5">
-      <FieldLabel className="text-[13px] font-semibold">{props.rotulo}</FieldLabel>
+    <Field invalid={!!erro} disabled={props.desabilitado} className={`flex min-w-0 flex-col gap-1.5 ${props.className ?? ""}`}>
+      <FieldLabel className={props.rotuloOculto ? "sr-only" : "text-[13px] font-semibold"}>{props.rotulo}</FieldLabel>
       <Input
         name={props.nome}
-        value={valor}
+        value={props.desabilitado ? "" : valor}
+        placeholder={props.placeholder}
+        disabled={props.desabilitado}
         inputMode={props.inputMode}
         autoComplete={props.autoComplete}
         onChange={(e) => {
-          setValor(props.mascara(e.target.value));
+          const novo = props.mascara(e.target.value);
+          setValor(novo);
+          props.aoMudar?.(novo);
           if (erro) setErro(null);
         }}
         onBlur={() => setErro(valor ? props.validar(valor) : null)}
@@ -79,32 +90,33 @@ export const CampoTelefone = ({ nome = "telefone", rotulo = "Telefone (opcional)
   />
 );
 
-const mascaraReais = (v: string) => {
-  const d = somenteDigitos(v);
-  if (!d) return "";
-  const n = Number(d);
-  const inteira = Math.floor(n / 100).toString();
-  const centavos = (n % 100).toString().padStart(2, "0");
-  const partes = inteira.split("");
-  let resultado = "";
-  for (let i = partes.length - 1; i >= 0; i--) {
-    if ((partes.length - i - 1) % 3 === 0 && resultado) resultado = "." + resultado;
-    resultado = partes[i] + resultado;
-  }
-  return resultado + "," + centavos;
-};
-
-export const CampoReais = ({ nome, rotulo, dica, padrao }: { nome: string; rotulo: string; dica?: string; padrao?: string | null }) => (
+/** Campo de valor em R$ com pontos e vírgula automáticos: a pessoa digita só números e o campo mostra 1.234,56. */
+export const CampoReais = ({
+  nome, rotulo, dica, padrao, placeholder, className, rotuloOculto, desabilitado, aoMudar,
+}: {
+  nome: string;
+  rotulo: string;
+  dica?: string;
+  /** Valor inicial: número do banco ou texto já formatado. */
+  padrao?: number | string | null;
+  placeholder?: string;
+  className?: string;
+  rotuloOculto?: boolean;
+  desabilitado?: boolean;
+  aoMudar?: (valor: string) => void;
+}) => (
   <CampoMascarado
     nome={nome}
     rotulo={rotulo}
     dica={dica}
-    padrao={padrao}
+    padrao={typeof padrao === "string" && padrao.includes(",") ? padrao : valorParaCampo(padrao)}
+    placeholder={placeholder}
+    className={className}
+    rotuloOculto={rotuloOculto}
+    desabilitado={desabilitado}
+    aoMudar={aoMudar}
     inputMode="numeric"
     mascara={mascaraReais}
-    validar={(v) => {
-      const n = somenteDigitos(v);
-      return n && Number(n) > 0 ? null : "Informe um valor maior que zero.";
-    }}
+    validar={(v) => (Number(somenteDigitos(v)) > 0 ? null : "Informe um valor maior que zero.")}
   />
 );
