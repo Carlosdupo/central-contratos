@@ -14,7 +14,7 @@ Troca da tabela larga com barra de arrastar por uma tela compacta, conforme a ma
 - A regra do panorama (áreas, trilha, filtros, resumo, ordem) está em `lib/panorama.ts`, sem depender da tela, e tem testes próprios.
 
 ## Como foi testado
-- `npm run lint`, `npm run typecheck` e `npm test` (127 testes): passam.
+- `npm run lint`, `npm run typecheck` e `npm test` (134 testes): passam.
 - Unitários (`tests/unit/panorama.test.ts`): área pelo papel, estado de cada segmento da trilha, blocos, texto da trilha (inclusive etapas em paralelo), texto do prazo, filtros, resumo, contagem por área e ordem na lista.
 - Tela (`tests/ui/fase-6.test.tsx`): resumo e áreas, texto da trilha, filtros por obra, situação e busca, lista vazia, detalhe com etapas e aviso de urgência, e o teste de agente (todo controle tem nome).
 
