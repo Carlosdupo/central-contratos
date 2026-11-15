@@ -31,8 +31,9 @@ function CampoMascarado(props: {
   validar: (v: string) => string | null;
   inputMode?: "numeric" | "tel";
   autoComplete?: string;
+  padrao?: string | null;
 }) {
-  const [valor, setValor] = useState("");
+  const [valor, setValor] = useState(props.padrao || "");
   const [erro, setErro] = useState<string | null>(null);
   return (
     <Field invalid={!!erro} className="flex min-w-0 flex-col gap-1.5">
@@ -75,5 +76,35 @@ export const CampoTelefone = ({ nome = "telefone", rotulo = "Telefone (opcional)
     autoComplete="tel"
     mascara={mascaraTelefone}
     validar={(v) => (somenteDigitos(v).length < 10 ? "Digite o telefone com DDD: 10 ou 11 números." : null)}
+  />
+);
+
+const mascaraReais = (v: string) => {
+  const d = somenteDigitos(v);
+  if (!d) return "";
+  const n = Number(d);
+  const inteira = Math.floor(n / 100).toString();
+  const centavos = (n % 100).toString().padStart(2, "0");
+  const partes = inteira.split("");
+  let resultado = "";
+  for (let i = partes.length - 1; i >= 0; i--) {
+    if ((partes.length - i - 1) % 3 === 0 && resultado) resultado = "." + resultado;
+    resultado = partes[i] + resultado;
+  }
+  return resultado + "," + centavos;
+};
+
+export const CampoReais = ({ nome, rotulo, dica, padrao }: { nome: string; rotulo: string; dica?: string; padrao?: string | null }) => (
+  <CampoMascarado
+    nome={nome}
+    rotulo={rotulo}
+    dica={dica}
+    padrao={padrao}
+    inputMode="numeric"
+    mascara={mascaraReais}
+    validar={(v) => {
+      const n = somenteDigitos(v);
+      return n && Number(n) > 0 ? null : "Informe um valor maior que zero.";
+    }}
   />
 );

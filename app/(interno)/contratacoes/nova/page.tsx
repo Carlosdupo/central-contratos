@@ -4,7 +4,7 @@ import { exigirPapel } from "@/modules/acesso/sessao";
 import { abrirContratacao } from "@/modules/contratacoes/acoes";
 import { TIPO_CONTRATACAO } from "@/modules/contratacoes/rotulos";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import {Formulario,GrupoOpcoes} from "@/components/app/formulario";
+import {Formulario,GrupoOpcoes,CampoTexto} from "@/components/app/formulario";
 import { CamposNovaContratacao, type ObraComEap } from "@/components/app/campos-nova-contratacao";
 import { agruparEap } from "@/lib/eap";
 import { lerParametros } from "@/lib/configuracao";
@@ -31,7 +31,7 @@ export default async function PaginaNovaContratacao() {
       <div>
         <Link href="/contratacoes" className="text-[14px] text-primary">← Contratações</Link>
         <h1 className="titulo mt-2">Nova contratação</h1>
-        <p className="mt-1.5 max-w-[66ch] text-[15px] text-muted-foreground">A obra abre a contratação. O serviço vem da EAP da obra. O valor orçado pode ficar em branco por enquanto.</p>
+        <p className="mt-1.5 max-w-[66ch] text-[15px] text-muted-foreground">A obra abre a contratação. O serviço vem da EAP da obra. O valor orçamento pode ficar em branco por enquanto.</p>
       </div>
       <section className="painel max-w-[680px]">
         {ativas.length === 0 ? (
@@ -40,6 +40,7 @@ export default async function PaginaNovaContratacao() {
           <Formulario acao={abrirContratacao} textoBotao="Abrir contratação">
             <CamposNovaContratacao obras={obrasComEap} limite={parametros.limiteEscolhaObra} />
             <GrupoOpcoes nome="tipo" rotulo="Tipo de contrato" opcoes={Object.entries(TIPO_CONTRATACAO).map(([value, rotulo], i) => ({ value, label: `${i + 1}. ${rotulo}` }))} />
+            <CampoTexto nome="contrato_original" rotulo="Nº do contrato original no Sienge (aditivos)" dica="Obrigatório para aditivos. Ex.: CT/BL0083 (prefixo + 4 números)" />
           </Formulario>
         )}
       </section>

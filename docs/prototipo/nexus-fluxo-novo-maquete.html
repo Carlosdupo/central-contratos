@@ -1,0 +1,540 @@
+<title>Nexus Fluxo Novo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: casca de aplicativo com três telas do fluxo novo (abertura pela matriz, tela da
+   contratação e calendário de suprimentos), trocadas pelo seletor do topo. */
+:root {
+  --fundo: #F3F5F9; --superficie: #FFFFFF; --preench: #EEF1F6; --preench-2: #E1E6EE;
+  --sep: #DDE2EA; --sep-forte: #778296;
+  --texto: #101827; --cinza: #5B6678;
+  --azul: #1D5FE0; --azul-tinta: #FFFFFF; --azul-suave: #E4EDFD;
+  --feito: #2A3852;
+  --ok: #0E7A4B; --ok-soft: #DDF3E8;
+  --warn: #8A5A00; --warn-soft: #FBEBC8;
+  --hot: #B4410A; --hot-soft: #FCE3D3;
+  --bad: #B42318; --bad-soft: #FCE0DD;
+  --sombra: 0 1px 2px rgba(16,24,39,.05), 0 8px 24px -12px rgba(16,24,39,.12);
+  --sombra-alta: 0 24px 64px -16px rgba(16,24,39,.28);
+  --fonte: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+  --fonte-titulo: "Space Grotesk", "Inter", "Segoe UI", Arial, sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+  --raio: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fundo: #0B0E13; --superficie: #141922; --preench: #1B212B; --preench-2: #283140;
+    --sep: #252C38; --sep-forte: #66738A;
+    --texto: #E8ECF3; --cinza: #9AA5B6;
+    --azul: #6B98FF; --azul-tinta: #0A1226; --azul-suave: #17274A;
+    --feito: #AEBBD0;
+    --ok: #4CD39A; --ok-soft: #10301F;
+    --warn: #F2BD52; --warn-soft: #382A0A;
+    --hot: #FF9A62; --hot-soft: #3A1F10;
+    --bad: #FF8A80; --bad-soft: #3B1815;
+    --sombra: 0 1px 2px rgba(0,0,0,.4);
+    --sombra-alta: 0 24px 64px -16px rgba(0,0,0,.7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --fundo: #0B0E13; --superficie: #141922; --preench: #1B212B; --preench-2: #283140;
+  --sep: #252C38; --sep-forte: #66738A;
+  --texto: #E8ECF3; --cinza: #9AA5B6;
+  --azul: #6B98FF; --azul-tinta: #0A1226; --azul-suave: #17274A;
+  --feito: #AEBBD0;
+  --ok: #4CD39A; --ok-soft: #10301F;
+  --warn: #F2BD52; --warn-soft: #382A0A;
+  --hot: #FF9A62; --hot-soft: #3A1F10;
+  --bad: #FF8A80; --bad-soft: #3B1815;
+  --sombra: 0 1px 2px rgba(0,0,0,.4);
+  --sombra-alta: 0 24px 64px -16px rgba(0,0,0,.7);
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { background: var(--fundo); color: var(--texto); font: 14px/1.45 var(--fonte); -webkit-font-smoothing: antialiased; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--azul); outline-offset: 2px; border-radius: 8px; }
+.so-leitor { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.num { font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--mono); font-size: 12px; }
+
+.casca { display: grid; grid-template-columns: 236px minmax(0, 1fr); min-height: 100vh; }
+.menu { position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; gap: 22px; padding: 20px 14px; background: var(--superficie); border-right: 1px solid var(--sep); }
+.marca { display: flex; align-items: center; gap: 10px; padding: 0 8px; font: 700 17px var(--fonte-titulo); letter-spacing: .08em; }
+.menu nav { display: flex; flex-direction: column; gap: 2px; }
+.menu h2 { margin: 0; padding: 0 10px 8px; font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--cinza); }
+.menu a { display: flex; align-items: center; gap: 10px; min-height: 38px; padding: 0 10px; border-radius: 9px; color: var(--cinza); font-weight: 500; text-decoration: none; }
+.menu a:hover { background: var(--preench); color: var(--texto); }
+.menu a[aria-current="page"] { background: var(--azul-suave); color: var(--azul); }
+.menu a i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .55; }
+.menu a b { margin-left: auto; padding: 0 7px; border-radius: 99px; background: var(--hot-soft); color: var(--hot); font-size: 12px; }
+.novo { font-size: 10px; font-weight: 600; margin-left: 6px; letter-spacing: 0; text-transform: none; padding: 1px 6px; border-radius: 99px; border: 1px solid var(--sep-forte); color: var(--cinza); }
+
+.conteudo { min-width: 0; display: flex; flex-direction: column; gap: 22px; padding-block: 22px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+@media (min-width: 900px) { .conteudo { padding-left: 32px; padding-right: 32px; } }
+.limite { width: 100%; max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+
+.topo { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px; }
+.topo h1 { margin: 0; font: 600 28px/1.15 var(--fonte-titulo); letter-spacing: -.02em; text-wrap: balance; }
+.topo p { margin: 6px 0 0; color: var(--cinza); max-width: 62ch; }
+.acoes { display: flex; align-items: center; gap: 8px; }
+.botao { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--sep-forte); background: var(--superficie); font-weight: 500; }
+.botao:hover { background: var(--preench); }
+.botao.principal { border-color: var(--azul); background: var(--azul); color: var(--azul-tinta); font-weight: 600; }
+.sino { position: relative; width: 40px; padding: 0; justify-content: center; }
+.sino b { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px; background: var(--bad); color: var(--superficie); font-size: 11px; line-height: 18px; }
+.exemplo { align-self: flex-start; padding: 3px 10px; border-radius: 99px; border: 1px dashed var(--sep-forte); color: var(--cinza); font-size: 12px; }
+
+.resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 0; background: var(--superficie); border: 1px solid var(--sep); border-radius: var(--raio); box-shadow: var(--sombra); overflow: hidden; }
+.resumo div { display: flex; flex-direction: column; gap: 2px; padding: 16px 18px; border-left: 1px solid var(--sep); margin-left: -1px; }
+.resumo strong { font: 600 30px/1.1 var(--fonte-titulo); letter-spacing: -.02em; }
+.resumo span { color: var(--cinza); font-size: 13px; }
+.resumo small { font-size: 12px; font-weight: 500; }
+.t-bad { color: var(--bad); } .t-hot { color: var(--hot); } .t-ok { color: var(--ok); } .t-cinza { color: var(--cinza); }
+
+.cartao { background: var(--superficie); border: 1px solid var(--sep); border-radius: var(--raio); box-shadow: var(--sombra); }
+.barra-celular { display: none; }
+@media (max-width: 859px) {
+  .casca { grid-template-columns: minmax(0, 1fr); }
+  .menu { display: none; }
+  .barra-celular { display: flex; align-items: center; justify-content: space-between; }
+  .resumo strong { font-size: 24px; }
+  .busca { max-width: none; margin-left: 0; flex-basis: 100%; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .linha, .menu a, .grupo button { transition: background-color .12s; }
+}
+.filtros { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.grupo { display: flex; flex-wrap: wrap; gap: 2px; padding: 3px; border-radius: 11px; background: var(--preench); border: 1px solid var(--sep); }
+.grupo button { min-height: 34px; padding: 0 12px; border: 0; border-radius: 8px; background: none; color: var(--cinza); font-weight: 500; font-size: 13px; }
+.grupo button:hover { color: var(--texto); }
+.grupo button[aria-pressed="true"] { background: var(--superficie); color: var(--texto); box-shadow: var(--sombra); }
+.selo { display: inline-flex; align-items: center; gap: 5px; padding: 1px 8px; border-radius: 99px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+.selo.urgente { background: var(--hot-soft); color: var(--hot); }
+.selo.bad { background: var(--bad-soft); color: var(--bad); }
+.selo.warn { background: var(--warn-soft); color: var(--warn); }
+.selo.ok { background: var(--ok-soft); color: var(--ok); }
+.selo.neutro { background: var(--preench-2); color: var(--cinza); }
+.selo.azul { background: var(--azul-suave); color: var(--azul); }
+.sub { color: var(--cinza); font-size: 12.5px; }
+.cartao h2 { margin: 0; font: 600 16px var(--fonte-titulo); }
+.cartao h3 { margin: 0; font: 600 14px var(--fonte-titulo); }
+.pad { padding: 18px; display: flex; flex-direction: column; gap: 16px; }
+.colunas { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+.colunas.inv { grid-template-columns: minmax(0, .8fr) minmax(0, 1.6fr); }
+.coluna { min-width: 0; display: flex; flex-direction: column; gap: 22px; }
+@media (max-width: 1080px) { .colunas, .colunas.inv { grid-template-columns: minmax(0, 1fr); } }
+
+.campo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.campo > label, .campo > .rotulo { font-size: 13px; font-weight: 600; }
+.campo input[type="text"], .campo input[type="number"], .campo select, .campo textarea { width: 100%; min-height: 42px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--sep-forte); background: var(--superficie); }
+.campo textarea { min-height: 84px; resize: vertical; }
+.campo small { color: var(--cinza); font-size: 12px; }
+.par { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+.opcao { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--sep); border-radius: 12px; }
+.opcao input { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--azul); }
+.opcao b { display: block; font-weight: 600; }
+.opcao:has(input:checked) { border-color: var(--azul); background: var(--azul-suave); }
+.opcao:has(input:disabled) { opacity: .55; }
+.extra { display: flex; flex-direction: column; gap: 14px; padding: 14px; border-radius: 12px; background: var(--preench); }
+.prefixo { display: flex; }
+.prefixo span { display: grid; place-items: center; padding: 0 12px; border: 1px solid var(--sep-forte); border-right: 0; border-radius: 10px 0 0 10px; background: var(--preench); font-family: var(--mono); font-size: 13px; }
+.prefixo input { border-radius: 0 10px 10px 0 !important; font-family: var(--mono); }
+.dados { display: grid; grid-template-columns: 1fr; gap: 12px; margin: 0; }
+.dados dt { color: var(--cinza); font-size: 12px; }
+.dados dd { margin: 2px 0 0; font-weight: 500; overflow-wrap: anywhere; }
+.caixa { padding: 12px 14px; border-radius: 12px; background: var(--azul-suave); color: var(--texto); font-size: 13px; }
+.caixa b { display: block; color: var(--azul); }
+.caixa.hot { background: var(--hot-soft); } .caixa.hot b { color: var(--hot); }
+.caixa.warn { background: var(--warn-soft); } .caixa.warn b { color: var(--warn); }
+.caixa.ok { background: var(--ok-soft); } .caixa.ok b { color: var(--ok); }
+
+.cabeca { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.cabeca h1 { margin: 4px 0 8px; font: 600 26px/1.15 var(--fonte-titulo); letter-spacing: -.02em; text-wrap: balance; }
+.selos { display: flex; flex-wrap: wrap; gap: 6px; }
+.mais { position: relative; }
+.mais summary { list-style: none; cursor: pointer; }
+.mais summary::-webkit-details-marker { display: none; }
+.mais .lista { position: absolute; right: 0; top: calc(100% + 6px); z-index: 5; min-width: 220px; padding: 6px; border-radius: 12px; border: 1px solid var(--sep); background: var(--superficie); box-shadow: var(--sombra-alta); display: flex; flex-direction: column; }
+.mais .lista button { min-height: 38px; padding: 0 10px; border: 0; border-radius: 8px; background: none; text-align: left; }
+.mais .lista button:hover { background: var(--preench); }
+.mais .lista .perigo { color: var(--bad); }
+.passos { list-style: none; margin: 0; padding: 8px; display: flex; flex-direction: column; }
+.passos li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px 10px; border-radius: 10px; font-size: 13.5px; }
+.passos .n { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--preench-2); color: var(--cinza); font-size: 12px; font-weight: 600; }
+.passos li[data-s="feito"] .n { background: var(--feito); color: var(--superficie); }
+.passos li[data-s="agora"] { background: var(--azul-suave); }
+.passos li[data-s="agora"] .n { background: var(--azul); color: var(--azul-tinta); }
+.passos li[data-s="agora"] b { color: var(--azul); }
+.passos b { font-weight: 500; display: block; }
+.passos small { color: var(--cinza); font-size: 12px; }
+.cot { list-style: none; margin: 0; padding: 0; border: 1px solid var(--sep); border-radius: 12px; overflow: hidden; }
+.cot li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; padding: 10px 14px; border-top: 1px solid var(--sep); }
+.cot li:first-child { border-top: 0; }
+.cond { border: 1px solid var(--sep); border-radius: 12px; overflow: hidden; }
+.cond > div { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-top: 1px solid var(--sep); }
+.cond > div:first-child { border-top: 0; }
+.cond .linha-c { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; font-weight: 500; }
+.pilulas { display: flex; gap: 4px; }
+.pilulas label { display: inline-flex; align-items: center; min-height: 32px; padding: 0 12px; border-radius: 99px; border: 1px solid var(--sep-forte); font-size: 13px; cursor: pointer; }
+.pilulas input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.pilulas label:has(input:checked) { background: var(--azul); border-color: var(--azul); color: var(--azul-tinta); font-weight: 600; }
+.pilulas label:has(input:focus-visible) { outline: 2px solid var(--azul); outline-offset: 2px; }
+.rodape { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tempo { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.tempo li { display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; gap: 12px; align-items: baseline; font-size: 13px; }
+.tempo i { width: 8px; height: 8px; border-radius: 50%; background: var(--feito); align-self: center; }
+.tempo li[data-t="dev"] i { background: var(--warn); } .tempo li[data-t="urg"] i { background: var(--hot); }
+.tempo time { color: var(--cinza); font-size: 12px; white-space: nowrap; }
+
+dialog.janela { width: min(520px, calc(100% - 32px)); padding: 0; border: 1px solid var(--sep); border-radius: 16px; background: var(--superficie); color: var(--texto); box-shadow: var(--sombra-alta); }
+dialog.janela::backdrop { background: rgba(8, 12, 20, .5); }
+dialog.janela h2 { margin: 0; font: 600 19px var(--fonte-titulo); }
+
+.meses { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.mes-c { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.mes-c h3 { text-transform: capitalize; }
+.ciclo { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 10px; align-items: center; }
+.ciclo input { width: 100%; min-height: 38px; padding: 6px 8px; text-align: center; border-radius: 9px; border: 1px solid var(--sep-forte); background: var(--superficie); }
+.ciclo span { font-size: 12.5px; color: var(--cinza); }
+.ciclo span b { color: var(--texto); font-weight: 600; }
+.status { min-height: 20px; font-size: 13px; font-weight: 500; color: var(--ok); }
+</style>
+
+<div class="casca">
+  <aside class="menu" aria-label="Menu principal">
+    <div class="marca">
+      <svg viewBox="0 0 40 40" width="28" height="28" fill="none" stroke-linecap="round" aria-hidden="true"><rect width="40" height="40" rx="9" fill="#1F61E3"/><g transform="translate(5 5) scale(.75)" stroke-width="4.4"><path d="M11 11H17A9 9 0 0 1 17 29H11A9 9 0 0 1 11 11Z" stroke="#fff"/><path d="M23 11H29A9 9 0 0 1 29 29H23A9 9 0 0 1 23 11Z" stroke="#A9C5F8"/></g></svg>
+      NEXUS
+    </div>
+    <nav aria-label="Obras"><h2>Obras</h2>
+      <a href="#"><i></i>Painel<b class="num">4</b></a>
+      <a href="#" aria-current="page"><i></i>Contratações</a>
+      <a href="#"><i></i>Panorama das obras</a>
+    </nav>
+    <nav aria-label="Terceiros"><h2>Terceiros</h2>
+      <a href="#"><i></i>Empresas</a>
+      <a href="#"><i></i>Consultar pessoas</a>
+    </nav>
+    <nav aria-label="Apoio"><h2>Apoio <span class="novo">novo</span></h2>
+      <a href="#"><i></i>Calendário de suprimentos</a>
+      <a href="#"><i></i>Planilha suprimentos MO</a>
+      <a href="#"><i></i>Planilha suprimentos MAT</a>
+      <a href="#"><i></i>Matriz de contratação</a>
+    </nav>
+  </aside>
+
+  <main class="conteudo">
+    <div class="limite">
+      <div class="barra-celular"><div class="marca" style="padding:0">NEXUS</div><span class="sub">Fluxo novo</span></div>
+      <div class="filtros">
+        <div class="grupo" id="telas" role="group" aria-label="Escolher a tela da maquete">
+          <button type="button" data-tela="abertura">Nova contratação</button>
+          <button type="button" data-tela="contratacao">Tela da contratação</button>
+          <button type="button" data-tela="calendario">Calendário de suprimentos</button>
+        </div>
+        <span class="exemplo" style="margin-left:auto">Maquete com dados de exemplo · segunda-feira, 16/11/2026</span>
+      </div>
+
+      <!-- ABERTURA -->
+      <section id="tela-abertura" class="limite">
+        <div class="topo"><div><h1>Nova contratação</h1><p>A obra escolhe a atividade da matriz. A forma legal e as datas aparecem sozinhas ao lado.</p></div></div>
+        <div class="colunas">
+          <form class="cartao pad" id="f-abertura" novalidate>
+            <div class="par">
+              <div class="campo"><label for="a-obra">Obra da contratação</label><select id="a-obra"><option>Block</option><option>Vértice</option><option>Aurora</option></select></div>
+              <div class="campo"><label for="a-ativ">Atividade da matriz</label><select id="a-ativ"></select></div>
+            </div>
+            <div class="campo"><label for="a-plan">Item da planilha de suprimentos</label><select id="a-plan"></select><small>Se o serviço não está na planilha, deixe em "Não está na planilha".</small></div>
+            <div class="campo"><label for="a-escopo">Descrição do escopo</label><textarea id="a-escopo" placeholder="Ex.: Alvenaria de vedação da torre B, pavimentos 3 a 12"></textarea></div>
+            <div class="par">
+              <div class="campo"><label for="a-valor">Valor Orçamento (R$)</label><input type="text" id="a-valor" inputmode="numeric" placeholder="0,00" value="486.000,00"><small id="a-valor-dica"></small></div>
+              <div class="campo"><span class="rotulo">Anexos</span><button type="button" class="botao" id="a-anexo">Anexar projeto, memorial ou quantitativo</button></div>
+            </div>
+            <fieldset style="border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:8px">
+              <legend style="padding:0;font-size:13px;font-weight:600;margin-bottom:6px">Quem negocia</legend>
+              <label class="opcao"><input type="radio" name="neg" id="a-neg-obra" value="obra"><span><b>Negociação pela obra</b><span class="sub" id="a-neg-dica">A obra negocia, escolhe o fornecedor e informa o valor final.</span></span></label>
+              <label class="opcao"><input type="radio" name="neg" id="a-neg-sup" value="sup" checked><span><b>Negociação pelo Suprimentos</b><span class="sub">A obra faz as cotações; Suprimentos negocia e o gerente autoriza.</span></span></label>
+            </fieldset>
+            <label class="opcao"><input type="checkbox" id="a-aditivo"><span><b>É aditivo de contrato</b><span class="sub">O fornecedor já tem contrato nesta obra.</span></span></label>
+            <div class="extra" id="a-aditivo-extra" hidden>
+              <div class="campo"><label for="a-ct">Nº do contrato original no Sienge</label><div class="prefixo"><span id="a-prefixo">CT/BL</span><input type="text" id="a-ct" inputmode="numeric" maxlength="4" placeholder="0083"></div><small>Prefixo da obra e 4 números.</small></div>
+            </div>
+            <label class="opcao"><input type="checkbox" id="a-urg"><span><b>Marcar como urgente</b><span class="sub">Todos veem o selo. O prazo do Suprimentos não muda.</span></span></label>
+            <div class="extra" id="a-urg-extra" hidden>
+              <div class="par">
+                <div class="campo"><label for="a-urg-data">Data de necessidade</label><input type="text" id="a-urg-data" placeholder="dd/mm/aaaa"></div>
+              </div>
+              <div class="campo"><label for="a-urg-motivo">Motivo da urgência</label><textarea id="a-urg-motivo" placeholder="Explique por que a obra precisa antes do prazo"></textarea></div>
+            </div>
+            <div class="rodape"><button type="submit" class="botao principal">Abrir contratação</button><span class="status" id="a-status" role="status"></span></div>
+          </form>
+
+          <div class="coluna">
+            <section class="cartao pad" aria-labelledby="t-matriz">
+              <h2 id="t-matriz">O que a matriz define</h2>
+              <dl class="dados" id="a-matriz"></dl>
+            </section>
+            <section class="cartao pad" aria-labelledby="t-datas">
+              <h2 id="t-datas">Quando será negociado</h2>
+              <div id="a-datas"></div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONTRATAÇÃO -->
+      <section id="tela-contratacao" class="limite" hidden>
+        <div class="cabeca">
+          <div>
+            <span class="mono t-cinza">CT-2026-052 · Block · aberta em 20/10 por Ana - Auxiliar Block</span>
+            <h1>Alvenaria de vedação, torre B</h1>
+            <div class="selos"><span class="selo urgente">Urgente · precisa em 24/11</span><span class="selo azul">Contrato + Edital</span><span class="selo bad">Atrasada 3 dias</span><span class="selo neutro">Item da planilha de suprimentos</span></div>
+          </div>
+          <details class="mais"><summary class="botao">Mais ações</summary>
+            <div class="lista">
+              <button type="button">Ver histórico completo</button>
+              <button type="button">Copiar link da contratação</button>
+              <button type="button" class="perigo" id="c-cancelar" data-agent-confirm="Cancela esta contratação. Não dá para desfazer.">Cancelar contratação</button>
+            </div>
+          </details>
+        </div>
+        <div class="caixa hot"><b>Urgência marcada pela obra em 12/11</b>Frente de serviço liberada antes do previsto no cronograma. A obra precisa da equipe em 24/11. O prazo do Suprimentos continua o mesmo.</div>
+
+        <div class="colunas inv">
+          <div class="coluna">
+            <section class="cartao" aria-label="Etapas"><ol class="passos" id="c-passos"></ol></section>
+            <section class="cartao pad" aria-labelledby="t-tempo"><h2 id="t-tempo">Linha do tempo</h2><ul class="tempo" id="c-tempo"></ul></section>
+          </div>
+          <div class="coluna">
+            <section class="cartao pad" aria-labelledby="t-etapa">
+              <div><span class="sub">Etapa 5 de 11 · Suprimentos · prazo de 15 dias · início em 29/10</span><h2 id="t-etapa" style="font-size:19px;margin-top:4px">Negociação e autorização</h2></div>
+              <div>
+                <h3 style="margin-bottom:8px">Cotações</h3>
+                <ul class="cot">
+                  <li><span><b style="font-weight:600">Construtora Pilar</b> <span class="selo ok">menor valor</span><span class="sub" style="display:block">1ª R$ 512.000 → 2ª R$ 498.500 → 3ª R$ 486.000</span></span><span class="num" style="font-weight:600">R$ 486.000,00</span></li>
+                  <li><span><b style="font-weight:600">Alvenarias Costa &amp; Filhos</b><span class="sub" style="display:block">1ª R$ 531.200 → 2ª R$ 509.000</span></span><span class="num">R$ 509.000,00</span></li>
+                  <li><span><b style="font-weight:600">Mão Certa Empreiteira</b><span class="sub" style="display:block">1ª R$ 544.900</span></span><span class="num">R$ 544.900,00</span></li>
+                </ul>
+              </div>
+              <div class="par">
+                <div class="campo"><label for="c-forn">Fornecedor escolhido</label><select id="c-forn"><option>Construtora Pilar</option><option>Alvenarias Costa &amp; Filhos</option><option>Mão Certa Empreiteira</option></select></div>
+                <div class="campo"><label for="c-valor">Valor final (R$)</label><input type="text" id="c-valor" inputmode="numeric" value="486.000,00"><small>Valor Orçamento: R$ 520.000,00</small></div>
+              </div>
+              <div>
+                <h3 style="margin-bottom:8px">Condições do gerente de suprimentos</h3>
+                <div class="cond" id="c-cond"></div>
+              </div>
+              <div class="rodape">
+                <button type="button" class="botao principal" id="c-autorizar" data-agent-confirm="Autoriza a contratação com o fornecedor, o valor e as condições informadas.">Autorizar contratação</button>
+                <button type="button" class="botao" id="c-devolver" data-agent-confirm="Devolve a contratação para uma etapa anterior e avisa o responsável.">Devolver para ajuste</button>
+                <span class="status" id="c-status" role="status"></span>
+              </div>
+              <span class="sub">Só o gerente de suprimentos autoriza. As condições são gravadas junto com a autorização.</span>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <!-- CALENDÁRIO -->
+      <section id="tela-calendario" class="limite" hidden>
+        <div class="topo"><div><h1>Calendário de suprimentos</h1><p>Vale para todas as obras e só para o que não está na planilha de suprimentos. O gerente de suprimentos define o ano inteiro.</p></div></div>
+        <section class="cartao pad" aria-labelledby="t-padrao">
+          <h2 id="t-padrao">Padrão de 2027</h2>
+          <div class="par" style="align-items:end">
+            <div class="campo"><label for="k-c1">1º ciclo: pedir até o dia</label><input type="number" id="k-c1" min="1" max="28" value="10"></div>
+            <div class="campo"><label for="k-c2">2º ciclo: pedir até o dia</label><input type="number" id="k-c2" min="1" max="28" value="24"></div>
+            <div class="campo"><label for="k-prazo">Prazo de negociação (dias)</label><input type="number" id="k-prazo" min="1" max="60" value="15"></div>
+            <button type="button" class="botao principal" id="k-aplicar">Aplicar a todos os meses</button>
+          </div>
+          <span class="sub">A negociação começa no dia seguinte ao último dia para pedir. Ajuste um mês específico direto no cartão dele.</span>
+        </section>
+        <div class="meses" id="k-meses"></div>
+        <div class="rodape"><button type="button" class="botao principal" id="k-salvar">Salvar calendário de 2027</button><span class="status" id="k-status" role="status"></span></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<dialog class="janela" id="d-autorizar" aria-labelledby="d-aut-t"><div class="pad">
+  <h2 id="d-aut-t">Autorizar esta contratação?</h2>
+  <dl class="dados" id="d-aut-resumo" style="grid-template-columns:1fr 1fr"></dl>
+  <div class="rodape"><button type="button" class="botao principal" id="d-aut-sim">Autorizar contratação</button><button type="button" class="botao" data-fechar>Voltar e revisar</button></div>
+</div></dialog>
+
+<dialog class="janela" id="d-devolver" aria-labelledby="d-dev-t"><form class="pad" id="f-devolver" novalidate>
+  <h2 id="d-dev-t">Devolver para ajuste</h2>
+  <div class="campo"><label for="d-dev-etapa">Devolver para qual etapa</label><select id="d-dev-etapa"><option value="4">4. Solicitação no Sienge · Coordenador da obra</option><option value="3">3. Equalização e 1ª negociação · Obra</option><option value="2">2. Cotações · Obra</option><option value="1">1. Solicitação e escopo · Obra</option></select></div>
+  <div class="campo"><label for="d-dev-motivo">O que precisa ser ajustado</label><textarea id="d-dev-motivo" placeholder="Ex.: falta a planilha de equalização"></textarea><small id="d-dev-erro" class="t-bad" role="alert"></small></div>
+  <span class="sub">O responsável recebe o aviso no sino e por e-mail. O prazo da etapa devolvida recomeça.</span>
+  <div class="rodape"><button type="submit" class="botao principal">Devolver etapa</button><button type="button" class="botao" data-fechar>Desistir</button></div>
+</form></dialog>
+
+<dialog class="janela" id="d-cancelar" aria-labelledby="d-can-t"><form class="pad" id="f-cancelar" novalidate>
+  <h2 id="d-can-t">Cancelar esta contratação?</h2>
+  <span class="sub">Não dá para desfazer. Só o administrador e o coordenador da obra podem cancelar.</span>
+  <div class="campo"><label for="d-can-motivo">Motivo do cancelamento</label><textarea id="d-can-motivo"></textarea><small id="d-can-erro" class="t-bad" role="alert"></small></div>
+  <div class="rodape"><button type="submit" class="botao" style="border-color:var(--bad);color:var(--bad)">Cancelar contratação</button><button type="button" class="botao" data-fechar>Manter contratação</button></div>
+</form></dialog>
+
+<script>
+const el = (id) => document.getElementById(id);
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const numero = (t) => Number(String(t).replace(/\./g, "").replace(",", ".")) || 0;
+const dinheiro = (n) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// Máscara de valor: a pessoa digita só números e os pontos e a vírgula entram sozinhos.
+function mascarar(campo) {
+  const d = campo.value.replace(/\D/g, "").replace(/^0+/, "");
+  campo.value = d ? dinheiro(Number(d) / 100) : "";
+}
+document.addEventListener("input", (e) => { if (e.target.matches("[data-valor], #a-valor, #c-valor")) { mascarar(e.target); if (e.target.id === "a-valor") regraValor(); } });
+
+/* Telas */
+const TELAS = ["abertura", "contratacao", "calendario"];
+function mostrar(tela) {
+  if (!TELAS.includes(tela)) tela = "abertura";
+  TELAS.forEach((t) => { el("tela-" + t).hidden = t !== tela; });
+  document.querySelectorAll("#telas button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.tela === tela));
+}
+el("telas").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { location.hash = b.dataset.tela; mostrar(b.dataset.tela); } });
+addEventListener("hashchange", () => mostrar(location.hash.slice(1)));
+
+/* Abertura */
+const MATRIZ = [
+  { nome: "9.1 Alvenaria racionalizada/convencional", legal: "Contrato + Edital", un: "m²", tipo: "Mão de obra", lotes: "Por pavimento (garagens, pavimentos comuns, tipos, áreas técnicas, escada, hall dos elevadores e antecâmara)", med: "0, 50% ou 100% do pavimento", obs: "Incluso vergas, contravergas e pontos de graute. Desconto dos vãos maiores que 2 m²." },
+  { nome: "10.1 Reboco interno", legal: "Contrato + Edital", un: "m²", tipo: "Mão de obra", lotes: "Por pavimento", med: "0, 50% ou 100% do pavimento", obs: "Incluso encunhamento, taqueamento e esquadrejamento. Separar equipes por pavimento." },
+  { nome: "11 Contrapiso", legal: "Contrato + Edital", un: "m²", tipo: "Mão de obra", lotes: "Por pavimento (garagens, áreas técnicas, tipos, pavimentos comuns)", med: "0 ou 100% do pavimento", obs: "Incluso desníveis dos banheiros." },
+  { nome: "12.1 Forro drywall", legal: "Contrato + Edital", un: "m²", tipo: "Material + mão de obra", lotes: "Por pavimento", med: "0, 50% ou 100% do pavimento", obs: "" },
+  { nome: "2.1 SLQA: instalação", legal: "Contrato", un: "m²", tipo: "Mão de obra", lotes: "Por pavimento", med: "0, 50% ou 100% do pavimento", obs: "" },
+  { nome: "3.1 Equipe de apoio à logística (diárias)", legal: "Contrato genérico", un: "unidade", tipo: "Mão de obra", lotes: "Sem lotes", med: "Unidade", obs: "Serviços esporádicos. Negociar a quantidade de diárias antes de iniciar os serviços." },
+  { nome: "4.6 Reformas das áreas de vivência (diárias)", legal: "Pedido", un: "unidade", tipo: "Mão de obra", lotes: "Sem lotes", med: "Unidade", obs: "Reformas pontuais e itens específicos." },
+];
+const PLANILHA = [
+  { nome: "Mão de obra hidráulica de climatização", solicitar: "12/11/2026", fechar: "12/12/2026", inicio: "11/01/2027", atraso: 4 },
+  { nome: "Mão de obra de contramarco e muretas dos shafts", solicitar: "26/11/2026", fechar: "26/12/2026", inicio: "25/01/2027" },
+  { nome: "Contrato de gesso (shafts, parede, forro e duto)", solicitar: "01/12/2026", fechar: "30/01/2027", inicio: "31/03/2027" },
+  { nome: "Contrato de mão de obra de chumbamento de PCF", solicitar: "21/12/2026", fechar: "20/01/2027", inicio: "19/02/2027" },
+];
+const PREFIXOS = { Block: "CT/BL", "Vértice": "CT/VT", Aurora: "CT/AU" };
+el("a-ativ").innerHTML = MATRIZ.map((m, i) => `<option value="${i}">${esc(m.nome)}</option>`).join("");
+el("a-plan").innerHTML = `<option value="">Não está na planilha</option>` + PLANILHA.map((p, i) => `<option value="${i}">${esc(p.nome)}</option>`).join("");
+
+function regraValor() {
+  const acima = numero(el("a-valor").value) >= 4000;
+  el("a-neg-obra").disabled = acima;
+  if (acima) el("a-neg-sup").checked = true;
+  el("a-neg-dica").textContent = acima ? "A partir de R$ 4.000,00 do orçamento, a negociação é de Suprimentos." : "A obra negocia, escolhe o fornecedor e informa o valor final.";
+  el("a-valor-dica").textContent = acima ? "A partir de R$ 4.000,00, quem negocia é Suprimentos." : "Abaixo de R$ 4.000,00 a obra pode negociar.";
+}
+function desenharAbertura() {
+  const m = MATRIZ[el("a-ativ").value];
+  el("a-matriz").innerHTML = [["Forma legal", `<span class="selo azul">${m.legal}</span>${m.legal === "Contrato genérico" ? ' <span class="sub">(contrato guarda-chuva)</span>' : ""}`], ["Tipo", m.tipo], ["Unidade da negociação", m.un], ["Lotes do contrato", m.lotes], ["Unidade de medição", m.med], ...(m.obs ? [["Observações da matriz", m.obs]] : [])]
+    .map(([t, d]) => `<div><dt>${t}</dt><dd>${d}</dd></div>`).join("");
+  const p = PLANILHA[el("a-plan").value];
+  el("a-datas").innerHTML = p
+    ? `<div class="caixa ${p.atraso ? "hot" : "ok"}"><b>${p.atraso ? `A obra devia ter pedido até ${p.solicitar} (${p.atraso} dias de atraso)` : `Dentro do prazo: a obra deve pedir até ${p.solicitar}`}</b>Item da planilha: segue as datas dela.</div>
+       <dl class="dados" style="margin-top:14px"><div><dt>Suprimentos deve fechar até</dt><dd>${p.fechar}</dd></div><div><dt>Início do pacote no cronograma</dt><dd>${p.inicio}</dd></div></dl>`
+    : `<div class="caixa"><b>Negociação a partir de 25/11/2026</b>Fora da planilha: entra no ciclo do calendário. Pedido feito até 24/11 é negociado de 25/11 a 10/12 (15 dias).</div>
+       <p class="sub" style="margin:12px 0 0">Depois de 24/11, o pedido cai no ciclo seguinte e ganha a marca "fora do prazo do calendário".</p>`;
+  el("a-prefixo").textContent = PREFIXOS[el("a-obra").value];
+}
+["a-ativ", "a-plan", "a-obra"].forEach((id) => el(id).addEventListener("change", desenharAbertura));
+el("a-aditivo").addEventListener("change", (e) => { el("a-aditivo-extra").hidden = !e.target.checked; });
+el("a-urg").addEventListener("change", (e) => { el("a-urg-extra").hidden = !e.target.checked; });
+el("a-ct").addEventListener("input", (e) => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4); });
+el("f-abertura").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const falta = [];
+  if (!el("a-escopo").value.trim()) falta.push("a descrição do escopo");
+  if (el("a-aditivo").checked && el("a-ct").value.length !== 4) falta.push("os 4 números do contrato original");
+  if (el("a-urg").checked && (!el("a-urg-data").value.trim() || !el("a-urg-motivo").value.trim())) falta.push("a data e o motivo da urgência");
+  const s = el("a-status");
+  s.style.color = falta.length ? "var(--bad)" : "var(--ok)";
+  s.textContent = falta.length ? `Falta informar ${falta.join(" e ")}.` : "Contratação aberta. A etapa 1 foi concluída sozinha (maquete).";
+});
+
+/* Contratação */
+const ETAPAS = [["Solicitação e escopo", "Obra"], ["Cotações", "Obra"], ["Equalização e 1ª negociação", "Obra"], ["Solicitação no Sienge", "Coordenador da obra"], ["Negociação e autorização", "Suprimentos"], ["Contrato no Sienge e minuta", "Contratos"], ["Aprovação de alçada", "Coordenador da obra"], ["Assinaturas", "Assinantes"], ["Documentação dos funcionários", "RH"], ["Integração de segurança", "Segurança do trabalho"], ["Liberação para a obra", "RH"]];
+function passos(atual) {
+  el("c-passos").innerHTML = ETAPAS.map(([n, q], i) => {
+    const s = i + 1 < atual ? "feito" : i + 1 === atual ? "agora" : "";
+    return `<li data-s="${s}" ${s === "agora" ? 'aria-current="step"' : ""}><span class="n">${s === "feito" ? "✓" : i + 1}</span><span><b>${n}</b><small>${q}${s === "agora" ? " · etapa atual" : ""}</small></span></li>`;
+  }).join("");
+}
+const HIST = [
+  ["urg", "Obra marcou urgência: precisa em 24/11", "12/11"],
+  ["", "Coordenador informou a solicitação SS 1612 no Sienge", "29/10"],
+  ["dev", "Suprimentos devolveu para a etapa 4: faltava a planilha de equalização", "27/10"],
+  ["", "Obra concluiu a equalização com 3 cotações", "24/10"],
+  ["", "Ana - Auxiliar Block abriu a contratação", "20/10"],
+];
+const tempo = () => { el("c-tempo").innerHTML = HIST.map(([t, txt, d]) => `<li data-t="${t}"><i></i><span>${esc(txt)}</span><time>${d}</time></li>`).join(""); };
+const COND = [["permuta", "Permuta", [["permuta_valor", "Valor da permuta (R$)", 1], ["permuta_formato", "Formato da permuta", 0]]], ["fat", "Faturamento direto", [["fat_valor", "Valor do faturamento direto (R$)", 1], ["fat_pct", "Percentual (%)", 0]]], ["sinal", "Sinal", [["sinal_valor", "Valor do sinal (R$)", 1]]]];
+el("c-cond").innerHTML = COND.map(([k, r, campos]) => `<div><div class="linha-c"><span id="r-${k}">${r}</span>
+  <span class="pilulas" role="radiogroup" aria-labelledby="r-${k}"><label><input type="radio" name="${k}" value="sim">Sim</label><label><input type="radio" name="${k}" value="nao" checked>Não</label></span></div>
+  <div class="par" id="x-${k}" hidden>${campos.map(([id, rot, v]) => `<div class="campo"><label for="${id}">${rot}</label><input type="text" id="${id}" ${v ? 'data-valor inputmode="numeric" placeholder="0,00"' : ""}></div>`).join("")}</div></div>`).join("") +
+  `<div><div class="linha-c"><span id="r-caucao">Caução</span><span class="pilulas" role="radiogroup" aria-labelledby="r-caucao"><label><input type="radio" name="caucao" value="3%">3%</label><label><input type="radio" name="caucao" value="5%" checked>5%</label><label><input type="radio" name="caucao" value="Não se aplica">N.A.</label></span></div></div>`;
+el("c-cond").addEventListener("change", (e) => { const x = el("x-" + e.target.name); if (x) x.hidden = e.target.value !== "sim"; });
+const marcado = (n) => document.querySelector(`input[name="${n}"]:checked`).value;
+el("c-autorizar").addEventListener("click", () => {
+  const linha = (k, r, campos) => marcado(k) === "sim" ? "Sim · " + campos.map(([id]) => el(id).value || "não informado").join(" · ") : "Não";
+  el("d-aut-resumo").innerHTML = [["Fornecedor", el("c-forn").value], ["Valor final", "R$ " + el("c-valor").value], ...COND.map(([k, r, c]) => [r, linha(k, r, c)]), ["Caução", marcado("caucao")]]
+    .map(([t, d]) => `<div><dt>${t}</dt><dd>${esc(d)}</dd></div>`).join("");
+  el("d-autorizar").showModal();
+});
+el("d-aut-sim").addEventListener("click", () => {
+  el("d-autorizar").close(); passos(6);
+  HIST.unshift(["", `Gerente de suprimentos autorizou: ${el("c-forn").value}, R$ ${el("c-valor").value}`, "hoje"]); tempo();
+  el("c-status").textContent = "Contratação autorizada. Contratos recebeu o aviso (maquete).";
+  el("c-autorizar").disabled = el("c-devolver").disabled = true;
+});
+el("c-devolver").addEventListener("click", () => el("d-devolver").showModal());
+el("f-devolver").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const motivo = el("d-dev-motivo").value.trim();
+  if (motivo.length < 5) { el("d-dev-erro").textContent = "Escreva o que precisa ser ajustado."; return; }
+  const n = Number(el("d-dev-etapa").value);
+  el("d-devolver").close(); passos(n);
+  HIST.unshift(["dev", `Suprimentos devolveu para a etapa ${n}: ${motivo}`, "hoje"]); tempo();
+  el("c-status").textContent = `Devolvida para a etapa ${n}. ${ETAPAS[n - 1][1]} recebeu o aviso (maquete).`;
+  el("c-autorizar").disabled = el("c-devolver").disabled = true;
+});
+el("c-cancelar").addEventListener("click", () => { document.querySelector(".mais").open = false; el("d-cancelar").showModal(); });
+el("f-cancelar").addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (el("d-can-motivo").value.trim().length < 5) { el("d-can-erro").textContent = "Escreva o motivo do cancelamento."; return; }
+  el("d-cancelar").close(); el("c-status").textContent = "Na tela real, a contratação seria cancelada aqui (maquete).";
+});
+document.addEventListener("click", (e) => { if (e.target.matches("[data-fechar]")) e.target.closest("dialog").close(); });
+
+/* Calendário */
+const DIAS = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+const dm = (d) => d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+function textoCiclo(mes, dia) {
+  const prazo = Number(el("k-prazo").value) || 15;
+  const corte = new Date(2027, mes, dia), ini = new Date(2027, mes, dia + 1), fim = new Date(2027, mes, dia + 1 + prazo);
+  const fds = corte.getDay() === 0 || corte.getDay() === 6;
+  return `Pedir até <b>${dm(corte)}</b> (${DIAS[corte.getDay()]})${fds ? ' <span class="selo warn">fim de semana</span>' : ""}<br>Negociação de <b>${dm(ini)}</b> a <b>${dm(fim)}</b>`;
+}
+function desenharCalendario(aplicar) {
+  const c1 = el("k-c1").value, c2 = el("k-c2").value;
+  if (aplicar || !el("k-meses").children.length) {
+    el("k-meses").innerHTML = Array.from({ length: 12 }, (_, m) => `<section class="cartao mes-c" aria-label="${new Date(2027, m, 1).toLocaleDateString("pt-BR", { month: "long" })}">
+      <h3>${new Date(2027, m, 1).toLocaleDateString("pt-BR", { month: "long" })}</h3>
+      ${[c1, c2].map((v, i) => `<div class="ciclo"><input type="number" min="1" max="28" value="${v}" id="k-${m}-${i}" data-mes="${m}" aria-label="${i + 1}º ciclo: último dia para pedir"><span id="k-t-${m}-${i}"></span></div>`).join("")}
+    </section>`).join("");
+  }
+  document.querySelectorAll("#k-meses input").forEach((inp) => {
+    const dia = Math.min(28, Math.max(1, Number(inp.value) || 1));
+    el(inp.id.replace("k-", "k-t-")).innerHTML = textoCiclo(Number(inp.dataset.mes), dia);
+  });
+}
+el("k-aplicar").addEventListener("click", () => { desenharCalendario(true); el("k-status").textContent = "Padrão aplicado aos 12 meses."; });
+el("k-meses").addEventListener("input", () => desenharCalendario(false));
+el("k-prazo").addEventListener("input", () => desenharCalendario(false));
+el("k-salvar").addEventListener("click", () => { el("k-status").textContent = "Calendário de 2027 salvo (maquete)."; });
+
+regraValor(); desenharAbertura(); passos(5); tempo(); desenharCalendario(true); mostrar(location.hash.slice(1));
+</script>

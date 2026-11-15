@@ -143,9 +143,18 @@ const esquemaObra = z.object({
   nome: z.string().trim().min(2, "Informe o nome da obra.").max(120),
   cidade: z.string().trim().min(2, "Informe a cidade.").max(80),
   uf: z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/, "UF com 2 letras, ex.: SC."),
+  prefixo_sienge: z.string().trim().max(20).nullable(),
 });
-const lerObra = (dados: FormData) =>
-  esquemaObra.safeParse({ codigo: dados.get("codigo"), nome: dados.get("nome"), cidade: dados.get("cidade"), uf: dados.get("uf") });
+const lerObra = (dados: FormData) => {
+  const prefixo = String(dados.get("prefixo_sienge") ?? "").trim();
+  return esquemaObra.safeParse({
+    codigo: dados.get("codigo"),
+    nome: dados.get("nome"),
+    cidade: dados.get("cidade"),
+    uf: dados.get("uf"),
+    prefixo_sienge: prefixo || null,
+  });
+};
 
 export async function criarObra(_: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
   await exigirPapel("admin");

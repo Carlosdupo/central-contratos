@@ -296,6 +296,7 @@ export type Database = {
           cancelamento_motivo: string | null
           caucao: string | null
           codigo: string
+          contrato_original: string | null
           created_at: string
           criado_por: string
           eap_item_id: string | null
@@ -332,6 +333,7 @@ export type Database = {
           cancelamento_motivo?: string | null
           caucao?: string | null
           codigo: string
+          contrato_original?: string | null
           created_at?: string
           criado_por?: string
           eap_item_id?: string | null
@@ -368,6 +370,7 @@ export type Database = {
           cancelamento_motivo?: string | null
           caucao?: string | null
           codigo?: string
+          contrato_original?: string | null
           created_at?: string
           criado_por?: string
           eap_item_id?: string | null
@@ -1202,6 +1205,7 @@ export type Database = {
           eap_importada_em: string | null
           id: string
           nome: string
+          prefixo_sienge: string | null
           uf: string
           updated_at: string
         }
@@ -1214,6 +1218,7 @@ export type Database = {
           eap_importada_em?: string | null
           id?: string
           nome: string
+          prefixo_sienge?: string | null
           uf: string
           updated_at?: string
         }
@@ -1226,6 +1231,7 @@ export type Database = {
           eap_importada_em?: string | null
           id?: string
           nome?: string
+          prefixo_sienge?: string | null
           uf?: string
           updated_at?: string
         }

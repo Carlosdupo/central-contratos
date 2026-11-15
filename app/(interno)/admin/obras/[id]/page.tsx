@@ -18,7 +18,7 @@ export default async function PaginaObra({ params }: PageProps<"/admin/obras/[id
 
   const supabase = await criarClienteServidor();
   const [{ data: obra }, { data: eap }] = await Promise.all([
-    supabase.from("obras").select("id, codigo, nome, cidade, uf, ativa, eap_importada_em").eq("id", id).maybeSingle(),
+    supabase.from("obras").select("id, codigo, nome, cidade, uf, ativa, prefixo_sienge, eap_importada_em").eq("id", id).maybeSingle(),
     supabase.from("obra_eap").select("id, referencia, descricao, nivel").eq("obra_id", id).order("ordem"),
   ]);
   if (!obra) notFound();
@@ -40,6 +40,7 @@ export default async function PaginaObra({ params }: PageProps<"/admin/obras/[id
             <CampoTexto nome="cidade" rotulo="Cidade" padrao={obra.cidade} />
             <CampoTexto nome="uf" rotulo="UF" padrao={obra.uf} />
           </div>
+          <CampoTexto nome="prefixo_sienge" rotulo="Prefixo do contrato no Sienge (ex.: CT/BL)" padrao={obra.prefixo_sienge} dica="Usado com 4 números para formar o código, ex: CT/BL0083" />
           <div className="lista-agrupada">
             <Marcador nome="ativa" marcado={obra.ativa} rotulo="Obra ativa (desmarque quando a obra terminar; o histórico continua guardado)" />
           </div>

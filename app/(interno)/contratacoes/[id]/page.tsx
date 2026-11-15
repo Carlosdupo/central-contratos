@@ -7,7 +7,7 @@ import { temAlgumPapel, type Papel } from "@/modules/acesso/papeis";
 import { detalheDaContratacao } from "@/modules/contratacoes/consultas";
 import { TIPO_CONTRATACAO, TRILHAS, formatarReais } from "@/modules/contratacoes/rotulos";
 import {
-  assinarContrato, cancelarContratacao, concluirEtapa, definirFornecedor, novaProposta, pularNegociacao, reabrirEtapa, registrarCotacao, salvarCampoEtapa, salvarCondicoesGerente, salvarEmailFornecedor,
+  assinarContrato, autorizarContratoGerente, cancelarContratacao, concluirEtapa, definirFornecedor, novaProposta, pularNegociacao, reabrirEtapa, registrarCotacao, salvarCampoEtapa, salvarEmailFornecedor,
 } from "@/modules/contratacoes/acoes";
 import { equipeDaEmpresa } from "@/modules/terceiros/consultas";
 import { linksDasFotos } from "@/modules/terceiros/fotos";
@@ -53,6 +53,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
   const equipe = empresa ? await equipeDaEmpresa(empresa.id) : [];
   const fotos = await linksDasFotos(equipe.map((m) => m.fotoPath));
   const ehAdmin = usuario.papeis.includes("admin");
+  const ehCoordenadorDaObra = usuario.papeis.includes("coordenador_obra");
 
   const podeEscolher = (sel.etapa === 3 && c.negociacao === "obra") || sel.etapa === 5;
   // Rodadas de negociação: obra na etapa 3 (negociação pela obra) ou Suprimentos na etapa 5.
@@ -85,8 +86,9 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
           ["Fornecedor", c.fornecedor_nome ? `${c.fornecedor_nome} · ${formatarCnpj(c.fornecedor_cnpj ?? "")}` : "a definir"],
           ["Serviço da EAP", c.pacote ?? "—"],
           ["Negociação", negociaObra ? "Pela obra" : "Pelo Suprimentos"],
-          ["Orçado", c.valor_orcado == null ? "não informado" : formatarReais(Number(c.valor_orcado))],
+          ["Orçamento", c.valor_orcado == null ? "não informado" : formatarReais(Number(c.valor_orcado))],
           ["Contratado", formatarReais(c.valor_negociado ? Number(c.valor_negociado) : null)],
+          ...(c.contrato_original ? [["Contrato original", c.contrato_original]] : []),
           ["Sienge", [c.sienge_solicitacao && `SS ${c.sienge_solicitacao}`, c.sienge_contrato].filter(Boolean).join(" · ") || "—"],
         ].map(([r, v]) => (
           <div key={r as string}><div className="text-xs font-medium text-faint">{r}</div>{v}</div>
@@ -249,7 +251,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
               <div className="flex flex-col gap-2">
                 <h3 className="text-[14px] font-semibold">Condições da contratação</h3>
                 {pode ? (
-                  <Formulario acao={salvarCondicoesGerente.bind(null, id)} textoBotao="Salvar condições">
+                  <Formulario acao={autorizarContratoGerente.bind(null, id)} textoBotao="Autorizar contratação" confirmar={`Autorizar ${c.fornecedor_nome ?? "fornecedor"}? Valor ${formatarReais(c.valor_negociado ? Number(c.valor_negociado) : null)}.`}>
                     <CamposCondicoesGerente inicial={c} />
                   </Formulario>
                 ) : (
@@ -287,12 +289,12 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
             )}
             {sel.etapa === 10 && empresa && <p className="rounded-xl bg-primary-soft px-3.5 py-2.5 text-[13px]">A situação da equipe vem do portal da empresa (abaixo). O RH confere os documentos em Análise do RH.</p>}
 
-            {ativa && sel.etapa !== 9 && (
+            {ativa && sel.etapa !== 9 && sel.etapa !== 6 && (
               <div className="flex flex-wrap items-center justify-between gap-3 border-t-[.5px] border-sep pt-4">
                 <span className="text-[12.5px] text-muted-foreground">{pode ? "" : `Etapa de ${sel.responsavel}.`}</span>
                 <span className="flex flex-wrap gap-2">
                   {sel.pode_pular && pode && c.negociacao === "obra" && <Formulario acao={pularNegociacao.bind(null, id)} textoBotao="Pular: deixar para Suprimentos" variante="neutro" className="flex" />}
-                  {pode && sel.itens.length === 0 && <Formulario acao={concluirEtapa.bind(null, id, sel.etapa)} textoBotao={sel.etapa === 6 ? "Autorizar contratação" : "Concluir etapa"} confirmar={sel.etapa === 6 ? "Autorizar esta contratação?" : `Concluir a etapa "${sel.nome}"?`} className="flex" />}
+                  {pode && sel.itens.length === 0 && <Formulario acao={concluirEtapa.bind(null, id, sel.etapa)} textoBotao="Concluir etapa" confirmar={`Concluir a etapa "${sel.nome}"?`} className="flex" />}
                 </span>
               </div>
             )}
@@ -313,12 +315,17 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
             </section>
           )}
 
-          {ehAdmin && c.situacao === "em_andamento" && (
+          {(ehAdmin || ehCoordenadorDaObra) && c.situacao === "em_andamento" && (
             <section className="painel">
-              <h2 className="subtitulo">Cancelar contratação</h2>
-              <Formulario acao={cancelarContratacao.bind(null, id)} textoBotao="Cancelar contratação" variante="perigo" confirmar="Cancelar esta contratação? Não dá para desfazer." className="flex flex-wrap items-center gap-2">
-                <CampoEmLinha nome="motivo" placeholder="Motivo" rotulo="Motivo do cancelamento" className="max-w-[320px]" />
-              </Formulario>
+              <h2 className="subtitulo">Mais ações</h2>
+              <details className="group">
+                <summary className="cursor-pointer px-3.5 py-2.5 text-[14px] font-semibold text-primary hover:text-primary-dark">⋯ Cancelar contratação</summary>
+                <div className="mt-3">
+                  <Formulario acao={cancelarContratacao.bind(null, id)} textoBotao="Cancelar contratação" variante="perigo" confirmar="Cancelar esta contratação? Não dá para desfazer." className="flex flex-wrap items-center gap-2" sensivel="Cancela a contratação.">
+                    <CampoEmLinha nome="motivo" placeholder="Motivo" rotulo="Motivo do cancelamento" className="max-w-[320px]" />
+                  </Formulario>
+                </div>
+              </details>
             </section>
           )}
         </div>

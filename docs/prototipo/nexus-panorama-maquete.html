@@ -1,0 +1,469 @@
+<title>Nexus Panorama das Obras</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: casca de aplicativo (menu + conteúdo). No conteúdo, resumo no topo, uma faixa única
+   "onde estão as contratações" como peça principal, e a lista por obra com trilha de etapas. */
+:root {
+  --fundo: #F3F5F9; --superficie: #FFFFFF; --preench: #EEF1F6; --preench-2: #E1E6EE;
+  --sep: #DDE2EA; --sep-forte: #778296;
+  --texto: #101827; --cinza: #5B6678;
+  --azul: #1D5FE0; --azul-tinta: #FFFFFF; --azul-suave: #E4EDFD;
+  --feito: #2A3852;
+  --ok: #0E7A4B; --ok-soft: #DDF3E8;
+  --warn: #8A5A00; --warn-soft: #FBEBC8;
+  --hot: #B4410A; --hot-soft: #FCE3D3;
+  --bad: #B42318; --bad-soft: #FCE0DD;
+  --sombra: 0 1px 2px rgba(16,24,39,.05), 0 8px 24px -12px rgba(16,24,39,.12);
+  --sombra-alta: 0 24px 64px -16px rgba(16,24,39,.28);
+  --fonte: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+  --fonte-titulo: "Space Grotesk", "Inter", "Segoe UI", Arial, sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+  --raio: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fundo: #0B0E13; --superficie: #141922; --preench: #1B212B; --preench-2: #283140;
+    --sep: #252C38; --sep-forte: #66738A;
+    --texto: #E8ECF3; --cinza: #9AA5B6;
+    --azul: #6B98FF; --azul-tinta: #0A1226; --azul-suave: #17274A;
+    --feito: #AEBBD0;
+    --ok: #4CD39A; --ok-soft: #10301F;
+    --warn: #F2BD52; --warn-soft: #382A0A;
+    --hot: #FF9A62; --hot-soft: #3A1F10;
+    --bad: #FF8A80; --bad-soft: #3B1815;
+    --sombra: 0 1px 2px rgba(0,0,0,.4);
+    --sombra-alta: 0 24px 64px -16px rgba(0,0,0,.7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --fundo: #0B0E13; --superficie: #141922; --preench: #1B212B; --preench-2: #283140;
+  --sep: #252C38; --sep-forte: #66738A;
+  --texto: #E8ECF3; --cinza: #9AA5B6;
+  --azul: #6B98FF; --azul-tinta: #0A1226; --azul-suave: #17274A;
+  --feito: #AEBBD0;
+  --ok: #4CD39A; --ok-soft: #10301F;
+  --warn: #F2BD52; --warn-soft: #382A0A;
+  --hot: #FF9A62; --hot-soft: #3A1F10;
+  --bad: #FF8A80; --bad-soft: #3B1815;
+  --sombra: 0 1px 2px rgba(0,0,0,.4);
+  --sombra-alta: 0 24px 64px -16px rgba(0,0,0,.7);
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { background: var(--fundo); color: var(--texto); font: 14px/1.45 var(--fonte); -webkit-font-smoothing: antialiased; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--azul); outline-offset: 2px; border-radius: 8px; }
+.so-leitor { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.num { font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--mono); font-size: 12px; }
+
+.casca { display: grid; grid-template-columns: 236px minmax(0, 1fr); min-height: 100vh; }
+.menu { position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; gap: 22px; padding: 20px 14px; background: var(--superficie); border-right: 1px solid var(--sep); }
+.marca { display: flex; align-items: center; gap: 10px; padding: 0 8px; font: 700 17px var(--fonte-titulo); letter-spacing: .08em; }
+.menu nav { display: flex; flex-direction: column; gap: 2px; }
+.menu h2 { margin: 0; padding: 0 10px 8px; font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--cinza); }
+.menu a { display: flex; align-items: center; gap: 10px; min-height: 38px; padding: 0 10px; border-radius: 9px; color: var(--cinza); font-weight: 500; text-decoration: none; }
+.menu a:hover { background: var(--preench); color: var(--texto); }
+.menu a[aria-current="page"] { background: var(--azul-suave); color: var(--azul); }
+.menu a i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .55; }
+.menu a b { margin-left: auto; padding: 0 7px; border-radius: 99px; background: var(--hot-soft); color: var(--hot); font-size: 12px; }
+.novo { font-size: 10px; font-weight: 600; margin-left: 6px; letter-spacing: 0; text-transform: none; padding: 1px 6px; border-radius: 99px; border: 1px solid var(--sep-forte); color: var(--cinza); }
+
+.conteudo { min-width: 0; display: flex; flex-direction: column; gap: 22px; padding-block: 22px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+@media (min-width: 900px) { .conteudo { padding-left: 32px; padding-right: 32px; } }
+.limite { width: 100%; max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+
+.topo { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px; }
+.topo h1 { margin: 0; font: 600 28px/1.15 var(--fonte-titulo); letter-spacing: -.02em; text-wrap: balance; }
+.topo p { margin: 6px 0 0; color: var(--cinza); max-width: 62ch; }
+.acoes { display: flex; align-items: center; gap: 8px; }
+.botao { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--sep-forte); background: var(--superficie); font-weight: 500; }
+.botao:hover { background: var(--preench); }
+.botao.principal { border-color: var(--azul); background: var(--azul); color: var(--azul-tinta); font-weight: 600; }
+.sino { position: relative; width: 40px; padding: 0; justify-content: center; }
+.sino b { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px; background: var(--bad); color: var(--superficie); font-size: 11px; line-height: 18px; }
+.exemplo { align-self: flex-start; padding: 3px 10px; border-radius: 99px; border: 1px dashed var(--sep-forte); color: var(--cinza); font-size: 12px; }
+
+.resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 0; background: var(--superficie); border: 1px solid var(--sep); border-radius: var(--raio); box-shadow: var(--sombra); overflow: hidden; }
+.resumo div { display: flex; flex-direction: column; gap: 2px; padding: 16px 18px; border-left: 1px solid var(--sep); margin-left: -1px; }
+.resumo strong { font: 600 30px/1.1 var(--fonte-titulo); letter-spacing: -.02em; }
+.resumo span { color: var(--cinza); font-size: 13px; }
+.resumo small { font-size: 12px; font-weight: 500; }
+.t-bad { color: var(--bad); } .t-hot { color: var(--hot); } .t-ok { color: var(--ok); } .t-cinza { color: var(--cinza); }
+
+.cartao { background: var(--superficie); border: 1px solid var(--sep); border-radius: var(--raio); box-shadow: var(--sombra); }
+.faixa { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.faixa header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 14px; }
+.faixa h2, .obra h2 { margin: 0; font: 600 16px var(--fonte-titulo); }
+.faixa header span { color: var(--cinza); font-size: 13px; }
+.areas { display: flex; gap: 4px; }
+.area { flex: var(--peso) 1 0; min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 0; border: 0; background: none; text-align: left; }
+.area .barra { height: 34px; border-radius: 8px; background: var(--azul); opacity: var(--forca); display: grid; place-items: center; color: var(--azul-tinta); font: 600 14px var(--fonte-titulo); }
+.area[data-vazia] .barra { background: var(--preench-2); color: var(--cinza); opacity: 1; }
+.area .nome { font-size: 12.5px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.area .atraso { font-size: 12px; color: var(--bad); font-weight: 500; }
+.area[aria-pressed="true"] .barra { outline: 2px solid var(--texto); outline-offset: 2px; opacity: 1; }
+.area[aria-pressed="true"] .nome { color: var(--azul); font-weight: 600; }
+@media (max-width: 640px) { .areas { flex-wrap: wrap; } .area { flex: 1 1 30%; } }
+
+.filtros { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.grupo { display: flex; flex-wrap: wrap; gap: 2px; padding: 3px; border-radius: 11px; background: var(--preench); border: 1px solid var(--sep); }
+.grupo button { min-height: 34px; padding: 0 12px; border: 0; border-radius: 8px; background: none; color: var(--cinza); font-weight: 500; font-size: 13px; }
+.grupo button:hover { color: var(--texto); }
+.grupo button[aria-pressed="true"] { background: var(--superficie); color: var(--texto); box-shadow: var(--sombra); }
+.grupo button span { margin-left: 4px; opacity: .7; }
+.busca { flex: 1 1 200px; min-width: 0; max-width: 300px; margin-left: auto; min-height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--sep-forte); background: var(--superficie); }
+.legenda { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--cinza); font-size: 12.5px; }
+.legenda span { display: inline-flex; align-items: center; gap: 6px; }
+.p { width: 16px; height: 6px; border-radius: 3px; background: var(--preench-2); }
+.p.feito { background: var(--feito); } .p.agora { background: var(--azul); } .p.tarde { background: var(--bad); }
+.p.na { background: repeating-linear-gradient(90deg, var(--sep-forte) 0 2px, transparent 2px 5px); }
+
+.obra header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 14px 18px; border-bottom: 1px solid var(--sep); }
+.obra header span { color: var(--cinza); font-size: 13px; }
+.obra header .mono { margin-left: auto; color: var(--cinza); }
+.linha { width: 100%; display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, .95fr) 16px; align-items: center; gap: 18px; padding: 13px 18px; border: 0; border-top: 1px solid var(--sep); background: none; text-align: left; }
+.linha:first-of-type { border-top: 0; }
+.linha:hover { background: var(--preench); }
+.linha[data-fim] { opacity: .62; }
+.linha > span { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.servico { font-weight: 600; font-size: 14.5px; }
+.sub { color: var(--cinza); font-size: 12.5px; }
+.selos { flex-direction: row !important; flex-wrap: wrap; gap: 6px !important; }
+.selo { display: inline-flex; align-items: center; gap: 5px; padding: 1px 8px; border-radius: 99px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+.selo.urgente { background: var(--hot-soft); color: var(--hot); }
+.selo.bad { background: var(--bad-soft); color: var(--bad); }
+.selo.warn { background: var(--warn-soft); color: var(--warn); }
+.selo.ok { background: var(--ok-soft); color: var(--ok); }
+.selo.neutro { background: var(--preench-2); color: var(--cinza); }
+.selo.azul { background: var(--azul-suave); color: var(--azul); }
+.trilha { display: flex; gap: 6px; }
+.trilha i { display: flex; gap: 2px; flex: var(--n) 1 0; }
+.trilha .p { flex: 1; width: auto; height: 7px; }
+.seta { color: var(--cinza); font-size: 18px; }
+@media (max-width: 980px) {
+  .linha { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 16px; row-gap: 10px; }
+  .linha > span:nth-child(1) { grid-column: 1 / 3; }
+  .linha > span:nth-child(4) { display: none; }
+  .linha .seta { grid-row: 1; grid-column: 3; }
+}
+@media (max-width: 560px) {
+  .linha { grid-template-columns: minmax(0, 1fr) 16px; }
+  .linha > span:nth-child(1), .linha > span:nth-child(2), .linha > span:nth-child(3) { grid-column: 1; }
+  .linha .seta { grid-column: 2; }
+}
+.vazio { padding: 28px 18px; color: var(--cinza); text-align: center; }
+
+dialog { margin: 0 0 0 auto; width: min(480px, 100%); height: 100%; max-height: none; max-width: none; padding: 0; border: 0; border-left: 1px solid var(--sep); background: var(--superficie); color: var(--texto); box-shadow: var(--sombra-alta); }
+dialog::backdrop { background: rgba(8, 12, 20, .5); }
+.gaveta { display: flex; flex-direction: column; gap: 18px; padding: 22px; padding-top: calc(22px + env(safe-area-inset-top, 0px)); }
+.gaveta header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.gaveta h2 { margin: 4px 0 0; font: 600 21px/1.2 var(--fonte-titulo); letter-spacing: -.01em; text-wrap: balance; }
+.fechar { flex: none; width: 36px; height: 36px; border-radius: 9px; border: 1px solid var(--sep-forte); background: none; font-size: 18px; line-height: 1; }
+.dados { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; margin: 0; }
+.dados div { min-width: 0; }
+.dados dt { color: var(--cinza); font-size: 12px; }
+.dados dd { margin: 2px 0 0; font-weight: 500; overflow-wrap: anywhere; }
+.aviso { padding: 12px 14px; border-radius: 12px; background: var(--hot-soft); color: var(--hot); font-size: 13px; }
+.aviso b { display: block; }
+.aviso.dev { background: var(--warn-soft); color: var(--warn); }
+.gaveta h3 { margin: 0; font: 600 14px var(--fonte-titulo); }
+.passos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.passos li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 7px 0; font-size: 13.5px; }
+.passos .bola { width: 10px; height: 10px; margin: 0 6px; border-radius: 50%; background: var(--preench-2); align-self: center; }
+.passos li[data-s="feito"] .bola { background: var(--feito); }
+.passos li[data-s="agora"] .bola { background: var(--azul); box-shadow: 0 0 0 4px var(--azul-suave); }
+.passos li[data-s="tarde"] .bola { background: var(--bad); box-shadow: 0 0 0 4px var(--bad-soft); }
+.passos li[data-s="na"] { color: var(--cinza); }
+.passos li[data-s="agora"] b, .passos li[data-s="tarde"] b { font-weight: 600; }
+.passos b { font-weight: 500; }
+.passos small { display: block; color: var(--cinza); font-size: 12px; }
+.passos time, .passos em { color: var(--cinza); font-size: 12px; font-style: normal; white-space: nowrap; }
+.rodape { display: flex; flex-wrap: wrap; gap: 8px; }
+.nota { color: var(--cinza); font-size: 12px; }
+
+.barra-celular { display: none; }
+@media (max-width: 859px) {
+  .casca { grid-template-columns: minmax(0, 1fr); }
+  .menu { display: none; }
+  .barra-celular { display: flex; align-items: center; justify-content: space-between; }
+  .resumo strong { font-size: 24px; }
+  .busca { max-width: none; margin-left: 0; flex-basis: 100%; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .linha, .menu a, .grupo button { transition: background-color .12s; }
+}
+</style>
+
+<div class="casca">
+  <aside class="menu" aria-label="Menu principal">
+    <div class="marca">
+      <svg viewBox="0 0 40 40" width="28" height="28" fill="none" stroke-linecap="round" aria-hidden="true"><rect width="40" height="40" rx="9" fill="#1F61E3"/><g transform="translate(5 5) scale(.75)" stroke-width="4.4"><path d="M11 11H17A9 9 0 0 1 17 29H11A9 9 0 0 1 11 11Z" stroke="#fff"/><path d="M23 11H29A9 9 0 0 1 29 29H23A9 9 0 0 1 23 11Z" stroke="#A9C5F8"/></g></svg>
+      NEXUS
+    </div>
+    <nav aria-label="Obras"><h2>Obras</h2>
+      <a href="#"><i></i>Painel<b class="num">4</b></a>
+      <a href="#"><i></i>Contratações</a>
+      <a href="#" aria-current="page"><i></i>Panorama das obras</a>
+    </nav>
+    <nav aria-label="Terceiros"><h2>Terceiros</h2>
+      <a href="#"><i></i>Empresas</a>
+      <a href="#"><i></i>Consultar pessoas</a>
+    </nav>
+    <nav aria-label="Apoio"><h2>Apoio <span class="novo">novo</span></h2>
+      <a href="#"><i></i>Calendário de suprimentos</a>
+      <a href="#"><i></i>Planilha suprimentos MO</a>
+      <a href="#"><i></i>Planilha suprimentos MAT</a>
+      <a href="#"><i></i>Matriz de contratação</a>
+    </nav>
+  </aside>
+
+  <main class="conteudo">
+    <div class="limite">
+      <div class="barra-celular">
+        <div class="marca" style="padding:0">NEXUS</div>
+        <span class="sub">Panorama das obras</span>
+      </div>
+
+      <div class="topo">
+        <div>
+          <h1>Panorama das obras</h1>
+          <p>Onde está cada contratação, com quem e se o prazo está em dia. Toque em uma linha para ver o detalhe.</p>
+        </div>
+        <div class="acoes">
+          <button class="botao sino" type="button" id="sino" aria-label="Notificações: 3 novas"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7 2.5 7h-17S6 15 6 9Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><b class="num">3</b></button>
+          <button class="botao principal" type="button" id="nova">Nova contratação</button>
+        </div>
+      </div>
+      <span class="exemplo">Maquete com dados de exemplo · hoje é 15/11/2026</span>
+
+      <section class="resumo" id="resumo" aria-label="Resumo"></section>
+
+      <section class="cartao faixa" aria-labelledby="t-faixa">
+        <header>
+          <h2 id="t-faixa">Com quem estão as contratações em andamento</h2>
+          <span>Toque em uma área para filtrar a lista</span>
+        </header>
+        <div class="areas" id="areas"></div>
+      </section>
+
+      <div class="filtros">
+        <div class="grupo" id="f-obra" role="group" aria-label="Filtrar por obra"></div>
+        <div class="grupo" id="f-sit" role="group" aria-label="Filtrar por situação"></div>
+        <input class="busca" id="busca" type="search" placeholder="Buscar serviço, fornecedor ou código" aria-label="Buscar contratação">
+      </div>
+      <div class="legenda" aria-label="Legenda da trilha de etapas">
+        <span><i class="p feito"></i>Etapa concluída</span>
+        <span><i class="p agora"></i>Etapa atual</span>
+        <span><i class="p tarde"></i>Etapa atual com atraso</span>
+        <span><i class="p"></i>Ainda não chegou</span>
+        <span><i class="p na"></i>Não se aplica</span>
+      </div>
+
+      <div id="lista" class="limite" style="gap:16px" aria-live="polite"></div>
+    </div>
+  </main>
+</div>
+
+<dialog id="gaveta" aria-labelledby="g-titulo"><div class="gaveta" id="g-corpo"></div></dialog>
+
+<script>
+const ETAPAS = [
+  { n: 1, nome: "Solicitação e escopo", area: "Obra" },
+  { n: 2, nome: "Cotações", area: "Obra" },
+  { n: 3, nome: "Equalização e 1ª negociação", area: "Obra" },
+  { n: 4, nome: "Solicitação no Sienge", area: "Obra" },
+  { n: 5, nome: "Negociação e autorização", area: "Suprimentos" },
+  { n: 6, nome: "Contrato no Sienge e minuta", area: "Contratos" },
+  { n: 7, nome: "Aprovação de alçada", area: "Contratos" },
+  { n: 8, nome: "Assinaturas", area: "Assinaturas" },
+  { n: 9, nome: "Documentação dos funcionários", area: "RH" },
+  { n: 10, nome: "Integração de segurança", area: "Segurança" },
+  { n: 11, nome: "Liberação para a obra", area: "RH" },
+];
+const QUEM = { 1: "Obra", 2: "Obra", 3: "Obra", 4: "Coordenador da obra", 5: "Suprimentos", 6: "Contratos", 7: "Coordenador da obra", 8: "Assinantes", 9: "RH", 10: "Segurança do trabalho", 11: "RH" };
+const AREAS = ["Obra", "Suprimentos", "Contratos", "Assinaturas", "RH", "Segurança"];
+const BLOCOS = [[1, 2, 3, 4], [5], [6, 7], [8], [9], [10], [11]];
+
+// prazo: número de dias que faltam (negativo = atraso); null = sem prazo
+const DADOS = [
+  { id: "CT-2026-052", obra: "Block", prefixo: "CT/BL", servico: "Alvenaria de vedação, torre B", etapa: 5, prazo: -3, forn: "Construtora Pilar", valor: 486000, aberta: "2026-10-20", urgente: { motivo: "Frente de serviço liberada antes do previsto no cronograma.", data: "24/11" } },
+  { id: "CT-2026-049", obra: "Block", prefixo: "CT/BL", servico: "Instalações elétricas, torre A", etapa: 8, prazo: 0, forn: "Eletro Sul Instalações", valor: 312400, sienge: "CT/BL0083", aberta: "2026-10-06", nota: "3 de 5 assinaturas" },
+  { id: "CT-2026-058", obra: "Block", prefixo: "CT/BL", servico: "Impermeabilização de lajes", etapa: 2, prazo: 4, aberta: "2026-11-09", nota: "2 de 3 cotações" },
+  { id: "CT-2026-055", obra: "Block", prefixo: "CT/BL", servico: "Fôrmas e escoramento", aditivo: "CT/BL0061", etapa: 6, prazo: 5, forn: "Madefort Estruturas", valor: 74900, aberta: "2026-11-03", na: [3, 9, 10, 11], nota: "Empresa já liberada na obra" },
+  { id: "CT-2026-044", obra: "Block", prefixo: "CT/BL", servico: "Esquadrias de alumínio", etapa: 9, prazo: 1, forn: "Alumiglass", valor: 228750, sienge: "CT/BL0080", aberta: "2026-09-22", nota: "7 de 10 funcionários aprovados" },
+  { id: "CT-2026-031", obra: "Block", prefixo: "CT/BL", servico: "Pintura interna, torre A", fim: "liberada", forn: "Cores do Sul Pinturas", valor: 163200, sienge: "CT/BL0074", aberta: "2026-08-11", liberadaEm: "04/11" },
+  { id: "CT-2026-056", obra: "Vértice", prefixo: "CT/VT", servico: "Gesso e forro, pavimentos 3 a 8", etapa: 4, prazo: -1, forn: "Gessocenter", valor: 98600, aberta: "2026-11-02" },
+  { id: "CT-2026-059", obra: "Vértice", prefixo: "CT/VT", servico: "Revestimento cerâmico, áreas comuns", etapa: 5, prazo: 9, aberta: "2026-11-12", fora: "Pedido depois do corte de 10/11. Negociação a partir de 25/11." },
+  { id: "CT-2026-041", obra: "Vértice", prefixo: "CT/VT", servico: "Estrutura metálica da cobertura", etapa: 10, prazo: 0, forn: "Metalúrgica Serrana", valor: 541000, sienge: "CT/VT0037", aberta: "2026-09-15", nota: "Integração marcada para hoje, 13h30" },
+  { id: "CT-2026-050", obra: "Vértice", prefixo: "CT/VT", servico: "Montagem dos elevadores", etapa: 7, prazo: 2, forn: "Vertical Elevadores", valor: 892000, sienge: "CT/VT0041", aberta: "2026-10-13" },
+  { id: "CT-2026-038", obra: "Vértice", prefixo: "CT/VT", servico: "Limpeza pós-obra", fim: "cancelada", aberta: "2026-09-01", motivo: "Escopo absorvido por outro contrato." },
+  { id: "CT-2026-060", obra: "Aurora", prefixo: "CT/AU", servico: "Terraplenagem e contenções", etapa: 3, prazo: 2, aberta: "2026-11-10", urgente: { motivo: "Licença de movimentação de terra vence no fim do mês.", data: "27/11" }, nota: "3 de 3 cotações" },
+  { id: "CT-2026-057", obra: "Aurora", prefixo: "CT/AU", servico: "Fundações em estaca hélice", etapa: 5, prazo: 1, forn: "Geofund Engenharia", valor: 1240000, aberta: "2026-10-28" },
+  { id: "CT-2026-053", obra: "Aurora", prefixo: "CT/AU", servico: "Instalações hidrossanitárias", etapa: 6, prazo: -2, forn: "Hidrotec", valor: 276300, aberta: "2026-10-21", devolvida: "Contratos devolveu para Suprimentos em 12/11: falta o percentual de caução. Corrigido em 13/11." },
+  { id: "CT-2026-029", obra: "Aurora", prefixo: "CT/AU", servico: "Locação de obra e topografia", fim: "liberada", forn: "Topo Sul", valor: 38500, sienge: "CT/AU0012", aberta: "2026-08-03", liberadaEm: "22/09" },
+];
+
+const el = (id) => document.getElementById(id);
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const reais = (v) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+const dia = (iso, mais = 0) => { const d = new Date(iso + "T12:00:00"); d.setDate(d.getDate() + mais); return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }); };
+const areaDe = (c) => ETAPAS[c.etapa - 1].area;
+const ativa = (c) => !c.fim;
+const atrasada = (c) => ativa(c) && c.prazo != null && c.prazo < 0;
+
+const estado = { obra: "todas", sit: "todas", area: null, busca: "" };
+const SITS = [
+  ["todas", "Todas", () => true],
+  ["andamento", "Em andamento", ativa],
+  ["atraso", "Com atraso", atrasada],
+  ["urgente", "Urgentes", (c) => ativa(c) && !!c.urgente],
+  ["liberada", "Liberadas", (c) => c.fim === "liberada"],
+];
+
+function prazoSelo(c) {
+  if (c.fim === "liberada") return `<span class="selo ok">Liberada em ${c.liberadaEm}</span>`;
+  if (c.fim === "cancelada") return `<span class="selo neutro">Cancelada</span>`;
+  if (c.prazo == null) return "";
+  if (c.prazo < 0) return `<span class="selo bad">Atrasada ${-c.prazo} ${c.prazo === -1 ? "dia" : "dias"}</span>`;
+  if (c.prazo === 0) return `<span class="selo warn">Vence hoje</span>`;
+  if (c.prazo === 1) return `<span class="selo warn">Vence amanhã</span>`;
+  return `<span class="selo neutro">Faltam ${c.prazo} dias</span>`;
+}
+function situacaoPasso(c, n) {
+  if (c.na?.includes(n)) return "na";
+  if (c.fim === "liberada") return "feito";
+  if (c.fim === "cancelada") return "";
+  if (n < c.etapa) return "feito";
+  if (n === c.etapa) return c.prazo != null && c.prazo < 0 ? "tarde" : "agora";
+  return "";
+}
+function trilha(c) {
+  const rotulo = c.fim === "liberada" ? "Todas as etapas concluídas" : c.fim === "cancelada" ? "Contratação cancelada"
+    : `Etapa ${c.etapa} de 11: ${ETAPAS[c.etapa - 1].nome}`;
+  return `<span class="trilha" role="img" aria-label="${rotulo}">${BLOCOS.map((b) =>
+    `<i style="--n:${b.length}">${b.map((n) => `<i class="p ${situacaoPasso(c, n)}"></i>`).join("")}</i>`).join("")}</span>`;
+}
+function linha(c) {
+  const selos = [
+    c.urgente ? `<span class="selo urgente">Urgente · precisa em ${c.urgente.data}</span>` : "",
+    c.aditivo ? `<span class="selo azul">Aditivo de ${c.aditivo}</span>` : "",
+    c.fora ? `<span class="selo neutro">Fora do prazo do calendário</span>` : "",
+  ].join("");
+  const onde = c.fim ? (c.fim === "liberada" ? "Equipe liberada para a obra" : esc(c.motivo)) : `Etapa ${c.etapa} de 11 · ${ETAPAS[c.etapa - 1].nome}`;
+  return `<button type="button" class="linha" data-id="${c.id}" ${c.fim ? "data-fim" : ""}>
+    <span><span class="servico">${esc(c.servico)}</span>
+      <span class="sub"><span class="mono">${c.id}</span> · aberta em ${dia(c.aberta)}</span>
+      ${selos ? `<span class="selos">${selos}</span>` : ""}</span>
+    <span>${trilha(c)}<span class="sub">${onde}</span></span>
+    <span><span style="font-weight:500">${c.fim ? "—" : "Com " + QUEM[c.etapa]}</span><span class="selos">${prazoSelo(c)}</span>${c.nota ? `<span class="sub">${esc(c.nota)}</span>` : ""}</span>
+    <span><span>${c.forn ? esc(c.forn) : '<span class="t-cinza">Fornecedor a definir</span>'}</span>
+      <span class="sub num">${c.valor ? reais(c.valor) : "Sem valor contratado"}${c.sienge ? ` · <span class="mono">${c.sienge}</span>` : ""}</span></span>
+    <span class="seta" aria-hidden="true">›</span>
+  </button>`;
+}
+
+function visiveis() {
+  const sit = SITS.find((s) => s[0] === estado.sit)[2];
+  const q = estado.busca.trim().toLowerCase();
+  return DADOS.filter((c) =>
+    (estado.obra === "todas" || c.obra === estado.obra) && sit(c) &&
+    (!estado.area || (ativa(c) && areaDe(c) === estado.area)) &&
+    (!q || [c.servico, c.forn, c.id, c.sienge].some((t) => t && t.toLowerCase().includes(q))));
+}
+
+function desenhar() {
+  const daObra = DADOS.filter((c) => estado.obra === "todas" || c.obra === estado.obra);
+  const andamento = daObra.filter(ativa);
+  const k = (n, rotulo, extra = "", tom = "") => `<div><strong class="num ${n ? tom : "t-cinza"}">${n}</strong><span>${rotulo}</span>${extra ? `<small class="${tom || "t-cinza"}">${extra}</small>` : ""}</div>`;
+  const hoje = andamento.filter((c) => c.prazo === 0).length;
+  el("resumo").innerHTML =
+    k(andamento.length, "Em andamento", `em ${new Set(andamento.map((c) => c.obra)).size} ${estado.obra === "todas" ? "obras" : "obra"}`) +
+    k(andamento.filter(atrasada).length, "Com atraso", andamento.filter(atrasada).length ? "precisam de ação" : "", "t-bad") +
+    k(andamento.filter((c) => c.urgente).length, "Urgentes", "pedidos pela obra", "t-hot") +
+    k(hoje, "Vencem hoje", hoje ? "prazo termina hoje" : "") +
+    k(daObra.filter((c) => c.fim === "liberada").length, "Liberadas", "equipe na obra", "t-ok");
+
+  const max = Math.max(1, ...AREAS.map((a) => andamento.filter((c) => areaDe(c) === a).length));
+  el("areas").innerHTML = AREAS.map((a) => {
+    const lista = andamento.filter((c) => areaDe(c) === a), tarde = lista.filter(atrasada).length;
+    return `<button type="button" class="area" data-area="${a}" aria-pressed="${estado.area === a}" ${lista.length ? "" : "data-vazia"}
+      style="--peso:${Math.max(lista.length, .8)};--forca:${(.45 + .55 * lista.length / max).toFixed(2)}">
+      <span class="barra num">${lista.length}</span><span class="nome">${a}</span>
+      <span class="atraso">${tarde ? `${tarde} com atraso` : "&nbsp;"}</span></button>`;
+  }).join("");
+
+  const obras = [...new Set(DADOS.map((c) => c.obra))];
+  el("f-obra").innerHTML = [["todas", "Todas as obras"], ...obras.map((o) => [o, o])].map(([v, r]) =>
+    `<button type="button" data-obra="${v}" aria-pressed="${estado.obra === v}">${r}</button>`).join("");
+  el("f-sit").innerHTML = SITS.map(([v, r, f]) =>
+    `<button type="button" data-sit="${v}" aria-pressed="${estado.sit === v}">${r}<span class="num">${daObra.filter(f).length}</span></button>`).join("");
+
+  const lista = visiveis();
+  const ordem = (c) => (c.fim ? 9 : c.prazo < 0 ? 0 : c.urgente ? 1 : c.prazo <= 1 ? 2 : 3);
+  el("lista").innerHTML = lista.length === 0
+    ? `<div class="cartao vazio">Nenhuma contratação neste filtro. Escolha outra obra, situação ou área.</div>`
+    : obras.filter((o) => lista.some((c) => c.obra === o)).map((o) => {
+        const itens = lista.filter((c) => c.obra === o).sort((a, b) => ordem(a) - ordem(b));
+        const tarde = itens.filter(atrasada).length;
+        return `<section class="cartao obra" aria-label="Obra ${o}"><header><h2>${o}</h2>
+          <span>${itens.length} ${itens.length === 1 ? "contratação" : "contratações"}${tarde ? ` · <span class="t-bad">${tarde} com atraso</span>` : ""}</span>
+          <span class="mono">Sienge ${itens[0].prefixo}</span></header>${itens.map(linha).join("")}</section>`;
+      }).join("");
+}
+
+function abrir(id) {
+  const c = DADOS.find((x) => x.id === id);
+  const passos = ETAPAS.map((e) => {
+    const s = situacaoPasso(c, e.n);
+    const direita = s === "feito" ? `<time>${dia(c.aberta, (e.n - 1) * 3)}</time>` : s === "na" ? "<em>Não se aplica</em>"
+      : s === "agora" || s === "tarde" ? prazoSelo(c) : "";
+    return `<li data-s="${s}"><span class="bola"></span><span><b>${e.n}. ${e.nome}</b><small>${QUEM[e.n]}</small></span>${direita}</li>`;
+  }).join("");
+  el("g-corpo").innerHTML = `
+    <header><div><span class="mono t-cinza">${c.id} · ${c.obra}</span><h2 id="g-titulo">${esc(c.servico)}</h2></div>
+      <button type="button" class="fechar" id="g-fechar" aria-label="Fechar detalhe">×</button></header>
+    ${c.urgente ? `<div class="aviso"><b>Urgente · a obra precisa em ${c.urgente.data}</b>${esc(c.urgente.motivo)}</div>` : ""}
+    ${c.devolvida ? `<div class="aviso dev"><b>Etapa devolvida para ajuste</b>${esc(c.devolvida)}</div>` : ""}
+    ${c.fora ? `<div class="aviso dev"><b>Fora do prazo do calendário</b>${esc(c.fora)}</div>` : ""}
+    <dl class="dados">
+      <div><dt>Com quem está</dt><dd>${c.fim ? "—" : QUEM[c.etapa]}</dd></div>
+      <div><dt>Prazo da etapa</dt><dd>${prazoSelo(c) || "Sem prazo"}</dd></div>
+      <div><dt>Fornecedor</dt><dd>${c.forn ? esc(c.forn) : "A definir"}</dd></div>
+      <div><dt>Valor contratado</dt><dd class="num">${c.valor ? reais(c.valor) : "—"}</dd></div>
+      <div><dt>Contrato no Sienge</dt><dd class="mono">${c.sienge ?? "Ainda não lançado"}</dd></div>
+      <div><dt>${c.aditivo ? "Contrato original" : "Aberta em"}</dt><dd>${c.aditivo ? `<span class="mono">${c.aditivo}</span>` : dia(c.aberta)}</dd></div>
+    </dl>
+    <h3>Etapas</h3>
+    <ol class="passos">${passos}</ol>
+    <div class="rodape">
+      <button type="button" class="botao principal">Abrir contratação</button>
+      ${c.fim ? "" : `<button type="button" class="botao" data-agent-confirm="Devolve a etapa atual para ajuste e avisa o responsável.">Devolver para ajuste</button>`}
+    </div>
+    <p class="nota">Maquete: os botões desta janela são ilustrativos.</p>`;
+  el("gaveta").showModal();
+  el("g-fechar").focus();
+}
+
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b) { if (e.target === el("gaveta")) el("gaveta").close(); return; }
+  if (b.id === "g-fechar") return el("gaveta").close();
+  if (b.dataset.id) return abrir(b.dataset.id);
+  if (b.dataset.obra) { estado.obra = b.dataset.obra; estado.area = null; }
+  else if (b.dataset.sit) estado.sit = b.dataset.sit;
+  else if (b.dataset.area) { estado.area = estado.area === b.dataset.area ? null : b.dataset.area; if (estado.sit === "liberada") estado.sit = "todas"; }
+  else return;
+  const foco = b.dataset.obra ? `[data-obra="${b.dataset.obra}"]` : b.dataset.sit ? `[data-sit="${b.dataset.sit}"]` : `[data-area="${b.dataset.area}"]`;
+  desenhar();
+  document.querySelector(foco)?.focus();
+});
+el("busca").addEventListener("input", (e) => {
+  estado.busca = e.target.value;
+  desenhar();
+});
+desenhar();
+</script>

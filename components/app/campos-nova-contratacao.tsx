@@ -8,11 +8,26 @@ import { CampoSelecao, CampoTexto, GrupoOpcoes, Marcador } from "@/components/ap
 type ItemEap = { id: string; referencia: string; descricao: string };
 export type ObraComEap = { id: string; nome: string; eap: { grupo: ItemEap; filhos: ItemEap[] }[] };
 
+const somenteDigitos = (t: string) => t.replace(/\D/g, "");
 const paraNumero = (t: string) => {
   const n = Number(t.trim().replace(/\./g, "").replace(",", "."));
   return Number.isFinite(n) ? n : NaN;
 };
 const reais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+const formatarReais = (v: string) => {
+  const d = somenteDigitos(v);
+  if (!d) return "";
+  const n = Number(d);
+  const inteira = Math.floor(n / 100).toString();
+  const centavos = (n % 100).toString().padStart(2, "0");
+  const partes = inteira.split("");
+  let resultado = "";
+  for (let i = partes.length - 1; i >= 0; i--) {
+    if ((partes.length - i - 1) % 3 === 0 && resultado) resultado = "." + resultado;
+    resultado = partes[i] + resultado;
+  }
+  return resultado + "," + centavos;
+};
 
 // Campos da abertura: obra, serviço da EAP, valor orçado (opcional) e quem negocia.
 // As regras são conferidas de novo no banco (abrir_contratacao).
@@ -50,8 +65,8 @@ export function CamposNovaContratacao({ obras, limite }: { obras: ObraComEap[]; 
 
       <div className="flex flex-col gap-1.5">
         <Field className="flex flex-col gap-1.5" disabled={semValor}>
-          <FieldLabel className="text-[13px] font-semibold">Valor orçado (R$)</FieldLabel>
-          <Input name="valor" className="campo" value={semValor ? "" : valor} onChange={(e) => setValor(e.target.value)} placeholder={semValor ? "Não informado" : ""} />
+          <FieldLabel className="text-[13px] font-semibold">Valor Orçamento (R$)</FieldLabel>
+          <Input name="valor" className="campo" inputMode="numeric" value={semValor ? "" : valor} onChange={(e) => setValor(formatarReais(e.target.value))} placeholder={semValor ? "Não informado" : ""} />
           {obraNaoPodeNegociar && <FieldDescription className="text-xs text-muted-foreground">A partir de {reais(limite)} do orçamento, a negociação é de Suprimentos.</FieldDescription>}
         </Field>
         <Marcador nome="sem_valor" rotulo="Não informar / não se aplica" marcadoAgora={semValor} aoMudar={setSemValor} className="flex cursor-pointer items-center gap-2 text-[13px]" />
