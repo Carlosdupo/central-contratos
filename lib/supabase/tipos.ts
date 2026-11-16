@@ -2151,6 +2151,10 @@ export type Database = {
       }
       enviar_documentos_pessoa: { Args: { p_vinculo: string }; Returns: string }
       importar_eap: { Args: { p_itens: Json; p_obra: string }; Returns: number }
+      liberar_obra_empresa: {
+        Args: { p_empresa: string; p_obra: string }
+        Returns: undefined
+      }
       marcar_item: {
         Args: {
           p_contratacao: string

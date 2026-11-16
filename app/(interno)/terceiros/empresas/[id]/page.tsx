@@ -11,8 +11,8 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarCnpj } from "@/lib/documentos-br";
 import { ListaDocumentosEmpresa } from "@/components/app/lista-documentos-empresa";
 import { SITUACAO_EMPRESA } from "@/modules/terceiros/rotulos";
-import { reenviarConviteEmpresa } from "@/modules/terceiros/acoes";
-import { Formulario } from "@/components/app/formulario";
+import { liberarObraEmpresa, reenviarConviteEmpresa } from "@/modules/terceiros/acoes";
+import { CampoSelecao, Formulario } from "@/components/app/formulario";
 
 export const metadata: Metadata = { title: "Empresa" };
 
@@ -22,11 +22,12 @@ export default async function PaginaEmpresa({ params }: PageProps<"/terceiros/em
   if (!z.uuid().safeParse(id).success) notFound();
 
   const supabase = await criarClienteServidor();
-  const [{ data: empresa }, { data: obras }, { data: acessos }, documentos] = await Promise.all([
+  const [{ data: empresa }, { data: obras }, { data: acessos }, documentos, { data: obrasAtivas }] = await Promise.all([
     supabase.from("empresas_terceiras").select("id, razao_social, cnpj, email, telefone, situacao").eq("id", id).maybeSingle(),
-    supabase.from("empresa_obras").select("obras(nome, cidade, uf)").eq("empresa_id", id).eq("ativo", true),
+    supabase.from("empresa_obras").select("obra_id, obras(nome, cidade, uf)").eq("empresa_id", id).eq("ativo", true),
     supabase.from("empresa_usuarios").select("usuarios!empresa_usuarios_usuario_id_fkey(nome, email, ativo)").eq("empresa_id", id),
     documentosDaEmpresa(id),
+    supabase.from("obras").select("id, nome").eq("ativa", true).order("nome"),
   ]);
   if (!empresa) notFound();
   const equipe = await equipeDaEmpresa(id);
@@ -35,6 +36,9 @@ export default async function PaginaEmpresa({ params }: PageProps<"/terceiros/em
   // Quem abre arquivos (a RLS confere de novo; ASO só RH/SST).
   const podeAbrir = temAlgumPapel(usuario.papeis, ["admin", "suprimentos", "contratos", "rh", "sst"]);
   const [classe, rotulo] = SITUACAO_EMPRESA[empresa.situacao];
+  const ligadas = new Set((obras ?? []).map((o) => o.obra_id));
+  const obrasParaLiberar = (obrasAtivas ?? []).filter((o) => !ligadas.has(o.id)).map((o) => ({ value: o.id, label: o.nome }));
+  const podeLiberarObra = temAlgumPapel(usuario.papeis, ["admin", "suprimentos", "gerente_suprimentos", "contratos", "rh"]) && obrasParaLiberar.length > 0;
   const podeReenviar = temAlgumPapel(usuario.papeis, ["admin", "suprimentos", "gerente_suprimentos", "contratos"]) && (acessos ?? []).length > 0;
 
   return (
@@ -64,6 +68,24 @@ export default async function PaginaEmpresa({ params }: PageProps<"/terceiros/em
           />
         )}
       </div>
+
+      {podeLiberarObra && (
+        <section className="painel">
+          <div>
+            <h2 className="subtitulo">Liberar obra</h2>
+            <p className="mt-1 text-[13px] text-muted-foreground">Sem esperar a contratação: a empresa já pode cadastrar a equipe e enviar os documentos para a obra escolhida. A análise do RH e a integração seguem iguais.</p>
+          </div>
+          <Formulario
+            acao={liberarObraEmpresa.bind(null, empresa.id)}
+            textoBotao="Liberar obra"
+            className="flex flex-wrap items-end gap-3"
+            confirmar="A empresa passa a ver esta obra no portal e pode cadastrar pessoas para ela."
+            sensivel="Libera a obra para a empresa no portal, sem contratação"
+          >
+            <CampoSelecao nome="obra_liberar" rotulo="Obra a liberar" opcoes={obrasParaLiberar} className="min-w-[240px] flex-1" />
+          </Formulario>
+        </section>
+      )}
 
       <section className="painel">
         <div>

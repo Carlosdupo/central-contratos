@@ -72,6 +72,20 @@ export async function reenviarConviteEmpresa(empresaId: string): Promise<EstadoF
   return falha ?? { ok: resultados.map((r) => r.ok).join(" ") };
 }
 
+/** Libera uma obra para a empresa sem contratação autorizada: ela já pode cadastrar a equipe e mandar documentos. */
+export async function liberarObraEmpresa(empresaId: string, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
+  await exigirPapel("admin", "suprimentos", "gerente_suprimentos", "contratos", "rh");
+  const obra = z.uuid().safeParse(dados.get("obra_liberar"));
+  if (!z.uuid().safeParse(empresaId).success) return { erro: "Empresa inválida." };
+  if (!obra.success) return { erro: "Escolha a obra." };
+  const supabase = await criarClienteServidor();
+  const { error } = await supabase.rpc("liberar_obra_empresa", { p_empresa: empresaId, p_obra: obra.data });
+  if (error) return { erro: mensagemDeErro(error, "Não foi possível liberar a obra.") };
+  revalidatePath(`/terceiros/empresas/${empresaId}`);
+  revalidatePath("/terceiros/empresas");
+  return { ok: "Obra liberada. A empresa já pode cadastrar a equipe e enviar os documentos para ela." };
+}
+
 // Portal: arquivos (empresa, pessoa, foto, visita) ----------------------------------------
 
 const esquemaDono = z.discriminatedUnion("tipo", [
