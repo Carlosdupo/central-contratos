@@ -38,7 +38,7 @@ export default async function PaginaEmpresa({ params }: PageProps<"/terceiros/em
   const [classe, rotulo] = SITUACAO_EMPRESA[empresa.situacao];
   const ligadas = new Set((obras ?? []).map((o) => o.obra_id));
   const obrasParaLiberar = (obrasAtivas ?? []).filter((o) => !ligadas.has(o.id)).map((o) => ({ value: o.id, label: o.nome }));
-  const podeLiberarObra = temAlgumPapel(usuario.papeis, ["admin", "suprimentos", "gerente_suprimentos", "contratos", "rh"]) && obrasParaLiberar.length > 0;
+  const podeLiberarObra = temAlgumPapel(usuario.papeis, ["admin", "suprimentos", "gerente_suprimentos", "contratos", "rh"]) ;
   const podeReenviar = temAlgumPapel(usuario.papeis, ["admin", "suprimentos", "gerente_suprimentos", "contratos"]) && (acessos ?? []).length > 0;
 
   return (
@@ -75,6 +75,9 @@ export default async function PaginaEmpresa({ params }: PageProps<"/terceiros/em
             <h2 className="subtitulo">Liberar obra</h2>
             <p className="mt-1 text-[13px] text-muted-foreground">Sem esperar a contratação: a empresa já pode cadastrar a equipe e enviar os documentos para a obra escolhida. A análise do RH e a integração seguem iguais.</p>
           </div>
+          {obrasParaLiberar.length === 0 ? (
+            <p role="status" className="text-[14px] text-muted-foreground">A empresa já está liberada em todas as obras ativas. Quando uma obra nova for cadastrada, ela aparece aqui para liberar.</p>
+          ) : (
           <Formulario
             acao={liberarObraEmpresa.bind(null, empresa.id)}
             textoBotao="Liberar obra"
@@ -84,6 +87,7 @@ export default async function PaginaEmpresa({ params }: PageProps<"/terceiros/em
           >
             <CampoSelecao nome="obra_liberar" rotulo="Obra a liberar" opcoes={obrasParaLiberar} className="min-w-[240px] flex-1" />
           </Formulario>
+          )}
         </section>
       )}
 
