@@ -1,3 +1,4 @@
+-- migration: 20261116140000_escopo_por_pacote.sql
 -- Fase 1B: matriz de contratação e abertura pela atividade da matriz.
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -30,22 +31,22 @@ select throws_ok($$ insert into public.matriz_contratacao (ordem, grupo_codigo, 
 insert into ids select 'ped', id from public.matriz_contratacao where forma_legal = 'Pedido' order by ordem limit 1;
 insert into ids select 'ctt', id from public.matriz_contratacao where forma_legal = 'Contrato + Edital' order by ordem limit 1;
 
-select lives_ok(format($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000002aa', 'Pedido de teste', %L, 3000, false, 'obra') $$, (select id from ids where nome = 'ped')),
+select lives_ok(format($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000002aa', 'Pedido de teste', array[%L::uuid], null, 3000, false, 'obra') $$, (select id from ids where nome = 'ped')),
   'Abre pela atividade da matriz, sem escolher item da EAP (mesmo a obra tendo EAP)');
 select is((select forma_legal from public.contratacoes where servico = 'Pedido de teste'), 'Pedido', 'A forma legal da atividade é gravada na contratação');
 select is((select matriz_id from public.contratacoes where servico = 'Pedido de teste'), (select id from ids where nome = 'ped'), 'A atividade da matriz fica ligada à contratação');
 select is((select tipo::text from public.contratacoes where servico = 'Pedido de teste'), 'contrato', 'Sem marcar aditivo, o tipo é contrato');
-select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000002aa', 'Sem atividade', null, 3000, false, 'obra') $$,
-  'P0001', 'Escolha a atividade da matriz.', 'Sem atividade da matriz não abre');
-select throws_ok(format($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000002aa', 'Grande pela obra', %L, 50000, false, 'obra') $$, (select id from ids where nome = 'ctt')),
+select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000002aa', 'Sem atividade', null::uuid[], null, 3000, false, 'obra') $$,
+  'P0001', 'Escolha pelo menos uma atividade da matriz.', 'Sem atividade da matriz não abre');
+select throws_ok(format($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000002aa', 'Grande pela obra', array[%L::uuid], null, 50000, false, 'obra') $$, (select id from ids where nome = 'ctt')),
   'P0001', 'A partir de R$ 4.000 do orçamento, a negociação é de Suprimentos.', 'Regra dos R$ 4.000 continua');
-select throws_ok(format($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000002aa', 'Aditivo sem número', %L, 3000, true, 'obra') $$, (select id from ids where nome = 'ctt')),
+select throws_ok(format($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000002aa', 'Aditivo sem número', array[%L::uuid], null, 3000, true, 'obra') $$, (select id from ids where nome = 'ctt')),
   'P0001', 'Informe o nº do contrato original no Sienge.', 'Aditivo continua exigindo o contrato original');
-select lives_ok(format($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000002aa', 'Aditivo bom', %L, 3000, true, 'suprimentos', 'CT/BL0083') $$, (select id from ids where nome = 'ctt')),
+select lives_ok(format($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000002aa', 'Aditivo bom', array[%L::uuid], null, 3000, true, 'suprimentos', 'CT/BL0083') $$, (select id from ids where nome = 'ctt')),
   'Aditivo com contrato original abre');
 select is((select tipo::text from public.contratacoes where servico = 'Aditivo bom'), 'aditivo', 'Marcar aditivo grava o tipo aditivo');
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000002c2", "role": "authenticated", "aal": "aal1"}', true);
-select throws_ok(format($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000002aa', 'Outra obra', %L, 3000, false, 'obra') $$, (select id from ids where nome = 'ped')),
+select throws_ok(format($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000002aa', 'Outra obra', array[%L::uuid], null, 3000, false, 'obra') $$, (select id from ids where nome = 'ped')),
   '42501', null, 'Coordenador de outra obra não abre');
 
 select * from finish();

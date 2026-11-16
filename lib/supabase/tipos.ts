@@ -420,6 +420,36 @@ export type Database = {
         }
         Relationships: []
       }
+      contratacao_atividades: {
+        Row: {
+          contratacao_id: string
+          matriz_id: string
+        }
+        Insert: {
+          contratacao_id: string
+          matriz_id: string
+        }
+        Update: {
+          contratacao_id?: string
+          matriz_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratacao_atividades_contratacao_id_fkey"
+            columns: ["contratacao_id"]
+            isOneToOne: false
+            referencedRelation: "contratacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratacao_atividades_matriz_id_fkey"
+            columns: ["matriz_id"]
+            isOneToOne: false
+            referencedRelation: "matriz_contratacao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contratacao_devolucoes: {
         Row: {
           contratacao_id: string
@@ -1948,12 +1978,13 @@ export type Database = {
     Functions: {
       abrir_contratacao: {
         Args: {
-          p_contrato_original?: string
-          p_planejamento_item?: string
           p_aditivo: boolean
-          p_matriz: string
+          p_atividades: string[]
+          p_contrato_original?: string
+          p_escopo?: string
           p_negociacao: string
           p_obra: string
+          p_planejamento_item?: string
           p_servico: string
           p_valor: number
         }

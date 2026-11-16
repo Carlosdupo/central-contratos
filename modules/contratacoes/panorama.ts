@@ -7,6 +7,15 @@ import { areaDoPapel, type ContratacaoPanorama, type PassoPanorama } from "@/lib
 import { carregarFluxos } from "@/modules/contratacoes/consultas";
 
 const LIMITE = 500;
+
+type LinhaEscopo = { matriz_contratacao: { id: string; atividade: string; forma_legal: string; ordem: number } | null };
+const escopoDe = (rotulo: string | null, linhas: LinhaEscopo[]): ContratacaoPanorama["escopo"] => {
+  const atividades = linhas
+    .flatMap((l) => (l.matriz_contratacao ? [l.matriz_contratacao] : []))
+    .sort((a, b) => a.ordem - b.ordem)
+    .map((m) => ({ id: m.id, atividade: m.atividade, formaLegal: m.forma_legal }));
+  return atividades.length > 1 ? { rotulo, atividades } : null;
+};
 const dataDe = (instante: string) => agoraNoFuso(new Date(instante)).data;
 
 /**
@@ -19,7 +28,7 @@ export async function panoramaDasObras(): Promise<ContratacaoPanorama[]> {
     supabase
       .from("contratacoes")
       .select(
-        "id, codigo, created_at, servico, situacao, urgente, urgente_data, urgente_motivo, fora_do_prazo, contrato_original, tipo, fornecedor_nome, valor_negociado, sienge_contrato, cancelamento_motivo, empresa_ja_liberada, prazos, fluxo_versao, obra_id, obras(nome, prefixo_sienge), empresas_terceiras(vinculos(tipo, ativo, alocacoes(obra_id, situacao))), contratacao_etapas(etapa, situacao, iniciada_em, concluida_em), contratacao_devolucoes(tipo, para_etapa, motivo, em, usuarios:por(nome))",
+        "id, codigo, created_at, servico, pacote, situacao, urgente, urgente_data, urgente_motivo, fora_do_prazo, contrato_original, tipo, fornecedor_nome, valor_negociado, sienge_contrato, cancelamento_motivo, empresa_ja_liberada, prazos, fluxo_versao, obra_id, obras(nome, prefixo_sienge), empresas_terceiras(vinculos(tipo, ativo, alocacoes(obra_id, situacao))), contratacao_etapas(etapa, situacao, iniciada_em, concluida_em), contratacao_atividades(matriz_contratacao(id, atividade, forma_legal, ordem)), contratacao_devolucoes(tipo, para_etapa, motivo, em, usuarios:por(nome))",
       )
       .order("created_at", { ascending: false })
       .limit(LIMITE),
@@ -75,6 +84,7 @@ export async function panoramaDasObras(): Promise<ContratacaoPanorama[]> {
       sienge: c.sienge_contrato,
       motivoCancelamento: c.cancelamento_motivo,
       empresaJaLiberada: c.empresa_ja_liberada,
+      escopo: escopoDe(c.pacote, c.contratacao_atividades),
       equipe: c.empresas_terceiras ? resumoDaEquipePorObra(c.empresas_terceiras.vinculos ?? [], c.obra_id) : null,
       devolucao: ultima ? `${(ultima.usuarios as { nome: string } | null)?.nome ?? "Alguém"} devolveu a etapa em ${formatarData(dataDe(ultima.em)).slice(0, 5)}: ${ultima.motivo}` : null,
       passos,

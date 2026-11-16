@@ -1,3 +1,4 @@
+-- migration: 20261116140000_escopo_por_pacote.sql
 -- Fase 4: fluxo versão 2 (normal e aditivo). As contratações antigas (fluxo 1) são cobertas pelos testes das fases anteriores.
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -26,9 +27,9 @@ grant all on ids to authenticated;
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000005c1", "role": "authenticated", "aal": "aal1"}', true);
-insert into ids select 'a', public.abrir_contratacao('00000000-0000-0000-0000-0000000005aa', 'Contratação nova', (select id from public.matriz_contratacao order by ordem limit 1), 100000, false, 'suprimentos');
-insert into ids select 'b', public.abrir_contratacao('00000000-0000-0000-0000-0000000005aa', 'Empresa já liberada', (select id from public.matriz_contratacao order by ordem limit 1), 100000, false, 'suprimentos');
-insert into ids select 'ad', public.abrir_contratacao('00000000-0000-0000-0000-0000000005aa', 'Aditivo novo', (select id from public.matriz_contratacao order by ordem limit 1), 5000, true, 'suprimentos', 'CT/BL0083');
+insert into ids select 'a', public.abrir_contratacao('00000000-0000-0000-0000-0000000005aa', 'Contratação nova', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, 100000, false, 'suprimentos');
+insert into ids select 'b', public.abrir_contratacao('00000000-0000-0000-0000-0000000005aa', 'Empresa já liberada', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, 100000, false, 'suprimentos');
+insert into ids select 'ad', public.abrir_contratacao('00000000-0000-0000-0000-0000000005aa', 'Aditivo novo', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, 5000, true, 'suprimentos', 'CT/BL0083');
 
 -- Abertura entra no fluxo 2 e já conclui a etapa 1
 select is((select fluxo_versao from public.contratacoes where id = (select id from ids where nome = 'a')), 2, 'Contratação nova entra no fluxo 2');

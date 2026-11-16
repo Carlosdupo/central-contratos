@@ -1,3 +1,4 @@
+-- migration: 20261116140000_escopo_por_pacote.sql
 -- Fase 3: avisos internos (sino e e-mail) e urgência.
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -43,7 +44,7 @@ grant all on ids to authenticated;
 set local role authenticated;
 -- Aviso de chegada da etapa 1: coordenador e auxiliar da obra A, ninguém mais
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000004c1", "role": "authenticated", "aal": "aal1"}', true);
-select lives_ok($$ insert into ids select 'u', public.abrir_contratacao('00000000-0000-0000-0000-0000000004aa', 'Contratação com aviso', (select id from public.matriz_contratacao order by ordem limit 1), 100000, false, 'suprimentos') $$, 'Coordenador abre a contratação');
+select lives_ok($$ insert into ids select 'u', public.abrir_contratacao('00000000-0000-0000-0000-0000000004aa', 'Contratação com aviso', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, 100000, false, 'suprimentos') $$, 'Coordenador abre a contratação');
 reset role;
 do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
 set local role authenticated;
@@ -87,7 +88,7 @@ select lives_ok(format($$ select public.marcar_urgencia(%L, false, null, null) $
 select is((select urgente from public.contratacoes where id = (select id from ids where nome = 'u')), false, 'A urgência foi tirada');
 
 -- Devolução avisa quem recebe a etapa, com o motivo; contratação autorizada avisa a obra
-select lives_ok($$ insert into ids select 'd', public.abrir_contratacao('00000000-0000-0000-0000-0000000004aa', 'Contratação devolvida', (select id from public.matriz_contratacao order by ordem limit 1), 100000, false, 'suprimentos') $$, 'Abre outra contratação');
+select lives_ok($$ insert into ids select 'd', public.abrir_contratacao('00000000-0000-0000-0000-0000000004aa', 'Contratação devolvida', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, 100000, false, 'suprimentos') $$, 'Abre outra contratação');
 reset role;
 do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
 set local role authenticated;

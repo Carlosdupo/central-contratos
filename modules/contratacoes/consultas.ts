@@ -88,7 +88,7 @@ export const etapasEmAberto = cache(async (): Promise<EtapaAberta[]> => {
 
 export async function detalheDaContratacao(id: string) {
   const supabase = await criarClienteServidor();
-  const [{ data: c }, { data: etapas }, { data: checklist }, { data: cotacoes }, { data: assinaturas }, { data: assinantes }, { data: devolucoes }, fluxos, feriados] = await Promise.all([
+  const [{ data: c }, { data: etapas }, { data: checklist }, { data: cotacoes }, { data: assinaturas }, { data: assinantes }, { data: devolucoes }, { data: escopoRows }, fluxos, feriados] = await Promise.all([
     supabase.from("contratacoes").select("*, obras(nome, prefixo_sienge), empresas_terceiras(id, razao_social, situacao)").eq("id", id).maybeSingle(),
     supabase.from("contratacao_etapas").select("etapa, situacao, iniciada_em, concluida_em, usuarios:concluida_por(nome)").eq("contratacao_id", id),
     supabase.from("etapa_checklist").select("etapa, item, marcado").eq("contratacao_id", id),
@@ -96,6 +96,7 @@ export async function detalheDaContratacao(id: string) {
     supabase.from("assinaturas").select("ordem, assinado_em, usuarios:assinado_por(nome)").eq("contratacao_id", id),
     supabase.from("assinantes_fluxo").select("ordem, rotulo, papel").order("ordem"),
     supabase.from("contratacao_devolucoes").select("id, tipo, de_etapa, para_etapa, motivo, em, usuarios:por(nome)").eq("contratacao_id", id).order("em"),
+    supabase.from("contratacao_atividades").select("matriz_contratacao(id, atividade, forma_legal, ordem)").eq("contratacao_id", id),
     carregarFluxos(),
     carregarFeriados(),
   ]);
@@ -142,6 +143,10 @@ export async function detalheDaContratacao(id: string) {
     eventos,
     etapas: etapasDetalhe,
     cotacoes: cotacoes ?? [],
+    atividadesDoEscopo: (escopoRows ?? [])
+      .flatMap((r) => (r.matriz_contratacao ? [r.matriz_contratacao] : []))
+      .sort((a, b) => a.ordem - b.ordem)
+      .map((m) => ({ id: m.id, atividade: m.atividade, formaLegal: m.forma_legal })),
     devolucoes: (devolucoes ?? []).map((d) => ({
       id: d.id,
       tipo: d.tipo as "devolucao" | "reabertura",

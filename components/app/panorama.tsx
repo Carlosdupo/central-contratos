@@ -7,6 +7,7 @@ import { Drawer, DrawerBackdrop, DrawerClose, DrawerContent, DrawerTitle } from 
 import { Field, FieldLabel } from "@ui-sdk/react/field";
 import { Input } from "@ui-sdk/react/input";
 import { SeloUrgente } from "@/components/app/selo-urgente";
+import { EscopoContratacao } from "@/components/app/escopo-contratacao";
 import { formatarData } from "@/lib/datas";
 import {
   SITUACOES, blocosDaTrilha, contagemPorArea, descricaoDaTrilha, estadoDoSegmento, filtrar, passoPrincipal, passosAtuais, pesoNaLista, posicaoDoPasso, resumo, textoDoPrazo,
@@ -98,6 +99,7 @@ function Detalhe({ c, aoFechar }: { c: ContratacaoPanorama; aoFechar: () => void
         {c.urgente && <p className="rounded-xl bg-[var(--hot-soft)] px-3.5 py-2.5 text-[13px]"><strong>Urgente: a obra precisa em {c.urgenteData ? formatarData(c.urgenteData) : "—"}.</strong> {c.urgenteMotivo}</p>}
         {c.devolucao && <p className="rounded-xl bg-[var(--warn-soft)] px-3.5 py-2.5 text-[13px]"><strong>Etapa devolvida para ajuste.</strong> {c.devolucao}</p>}
         {c.foraDoPrazo && <p className="rounded-xl bg-[var(--warn-soft)] px-3.5 py-2.5 text-[13px]"><strong>Pedido fora do prazo.</strong> A obra solicitou depois da data que a planilha previa.</p>}
+        {c.escopo && <EscopoContratacao rotulo={c.escopo.rotulo} atividades={c.escopo.atividades} />}
         {c.empresaJaLiberada && <p className="rounded-xl bg-fill px-3.5 py-2.5 text-[13px]">Empresa já liberada na obra: documentação, integração e liberação não se aplicam.</p>}
         <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-[13.5px]">
           <div><dt className="text-xs text-muted-foreground">Com quem está</dt><dd>{c.situacao === "em_andamento" ? ([...new Set(passosAtuais(c).map((p) => p.responsavel))].join(" e ") || "—") : "—"}</dd></div>

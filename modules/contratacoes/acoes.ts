@@ -8,6 +8,8 @@ import { exigirInterno, exigirPapel } from "@/modules/acesso/sessao";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { cnpjValido, somenteDigitos } from "@/lib/documentos-br";
 import { lerValor, numeroOuNulo } from "@/lib/valor-reais";
+import { rotuloDoEscopo } from "@/lib/escopo";
+import { listarMatriz } from "@/modules/matriz/consultas";
 import { mensagemDeErro, type EstadoFormulario } from "@/lib/formulario";
 import { despacharPendentes } from "@/modules/notificacoes/enviar";
 import { liberarPortalDaContratacao } from "@/modules/terceiros/acesso-portal";
@@ -25,9 +27,16 @@ const recarregar = (id: string) => {
   revalidatePath("/painel");
 };
 
+// Pacote: uma "atividades" por atividade marcada. Atividade única: vem só o item escolhido ("a:<id>").
+const atividadesDoFormulario = (dados: FormData): string[] => {
+  const marcadas = dados.getAll("atividades").filter((v): v is string => typeof v === "string");
+  const chave = String(dados.get("matriz") ?? "");
+  return marcadas.length > 0 ? marcadas : chave.startsWith("a:") ? [chave.slice(2)] : [];
+};
+
 const esquemaAbertura = z.object({
   obra: z.uuid("Escolha a obra."),
-  matriz: z.uuid("Escolha a atividade da matriz."),
+  atividades: z.array(z.uuid("Atividade da matriz inválida."), { message: "Escolha pelo menos uma atividade da matriz." }).min(1, "Escolha pelo menos uma atividade da matriz.").max(100, "Escopo grande demais (até 100 atividades)."),
   servico: z.string().trim().min(3, "Descreva o escopo.").max(200),
   valor: z.number().positive("Informe o Valor Orçamento ou marque \"Não informar\".").max(1e11).nullable(),
   aditivo: z.boolean(),
@@ -55,7 +64,7 @@ export async function abrirContratacao(_: EstadoFormulario, dados: FormData): Pr
   if (!semValor && Number.isNaN(valor)) return { erro: "Informe o Valor Orçamento ou marque \"Não informar\"." };
   const lido = esquemaAbertura.safeParse({
     obra: dados.get("obra"),
-    matriz: dados.get("matriz"),
+    atividades: atividadesDoFormulario(dados),
     servico: dados.get("servico"),
     valor,
     aditivo: dados.get("aditivo") === "on",
@@ -67,11 +76,16 @@ export async function abrirContratacao(_: EstadoFormulario, dados: FormData): Pr
     urgente_data: String(dados.get("urgente_data") ?? "") || undefined,
   });
   if (!lido.success) return { erro: lido.error.issues[0].message };
+  // Rótulo do escopo (vira o "pacote"): "21.1 Elétrica (13 de 14 atividades)". Uma atividade só: o banco usa o nome dela.
+  const todas = await listarMatriz();
+  const escolhidas = todas.filter((a) => lido.data.atividades.includes(a.id));
+  const escopo = escolhidas.length > 1 ? rotuloDoEscopo(escolhidas, todas) : undefined;
   const supabase = await criarClienteServidor();
   const { data, error } = await supabase.rpc("abrir_contratacao", {
     p_obra: lido.data.obra,
     p_servico: lido.data.servico,
-    p_matriz: lido.data.matriz,
+    p_atividades: lido.data.atividades,
+    p_escopo: escopo,
     p_valor: lido.data.valor as number,
     p_aditivo: lido.data.aditivo,
     p_negociacao: lido.data.negociacao,

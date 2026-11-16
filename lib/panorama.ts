@@ -37,6 +37,8 @@ export type ContratacaoPanorama = {
   sienge: string | null;
   motivoCancelamento: string | null;
   empresaJaLiberada: boolean;
+  /** Escopo por pacote: o rótulo e as atividades incluídas (só quando são duas ou mais). */
+  escopo: { rotulo: string | null; atividades: { id: string; atividade: string; formaLegal: string }[] } | null;
   /** Equipe da empresa nesta obra aprovada pelo RH (só existe depois que a empresa é ligada à contratação). */
   equipe: { aprovados: number; total: number } | null;
   devolucao: string | null;

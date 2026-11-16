@@ -1,3 +1,4 @@
+-- migration: 20261116140000_escopo_por_pacote.sql
 -- Fase 2: auxiliar de obra (etapas 1 a 3) e devolução de etapa.
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -47,7 +48,7 @@ grant all on ids to authenticated;
 set local role authenticated;
 -- Auxiliar da obra A abre e leva a contratação até a etapa 3
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000003c2", "role": "authenticated", "aal": "aal1"}', true);
-select lives_ok($$ insert into ids select 'a', public.abrir_contratacao('00000000-0000-0000-0000-0000000003aa', 'Contratação do auxiliar', (select id from public.matriz_contratacao order by ordem limit 1), 100000, false, 'suprimentos') $$, 'Auxiliar abre a solicitação');
+select lives_ok($$ insert into ids select 'a', public.abrir_contratacao('00000000-0000-0000-0000-0000000003aa', 'Contratação do auxiliar', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, 100000, false, 'suprimentos') $$, 'Auxiliar abre a solicitação');
 reset role;
 do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
 set local role authenticated;
@@ -56,7 +57,7 @@ select lives_ok(format($$ select public.concluir_etapa(%L, 1::smallint) $$, (sel
 select throws_ok(format($$ select public.cancelar_contratacao(%L, 'Cancelar pelo auxiliar') $$, (select id from ids where nome = 'a')), '42501', null, 'Auxiliar não cancela');
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000003c3", "role": "authenticated", "aal": "aal1"}', true);
 select throws_ok(format($$ select public.marcar_item(%L, 2::smallint, 1::smallint, true) $$, (select id from ids where nome = 'a')), '42501', null, 'Auxiliar de outra obra não age');
-select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000003aa', 'Em outra obra', (select id from public.matriz_contratacao order by ordem limit 1), 100000, false, 'suprimentos') $$, '42501', null, 'Auxiliar de outra obra não abre');
+select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000003aa', 'Em outra obra', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, 100000, false, 'suprimentos') $$, '42501', null, 'Auxiliar de outra obra não abre');
 
 -- Etapa 4 (solicitação no Sienge): só o coordenador
 reset role;
@@ -69,7 +70,7 @@ select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000
 select lives_ok(format($$ select public.salvar_campo_etapa(%L, 4::smallint, '12345') $$, (select id from ids where nome = 'a')), 'Coordenador age na etapa 4');
 
 -- Devolução: Suprimentos (etapa 5) devolve para a obra (etapa 4)
-select lives_ok($$ insert into ids select 'd', public.abrir_contratacao('00000000-0000-0000-0000-0000000003aa', 'Contratação devolvida', (select id from public.matriz_contratacao order by ordem limit 1), 100000, false, 'suprimentos') $$, 'Coordenador abre outra contratação');
+select lives_ok($$ insert into ids select 'd', public.abrir_contratacao('00000000-0000-0000-0000-0000000003aa', 'Contratação devolvida', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, 100000, false, 'suprimentos') $$, 'Coordenador abre outra contratação');
 reset role;
 do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
 set local role authenticated;
@@ -95,7 +96,7 @@ select is((select count(*)::int from public.contratacao_devolucoes), 1, 'Quem po
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000003c1", "role": "authenticated", "aal": "aal1"}', true);
-select lives_ok($$ insert into ids select 'r', public.abrir_contratacao('00000000-0000-0000-0000-0000000003aa', 'Contratação reaberta', (select id from public.matriz_contratacao order by ordem limit 1), 100000, false, 'suprimentos') $$, 'Coordenador abre a contratação para a reabertura');
+select lives_ok($$ insert into ids select 'r', public.abrir_contratacao('00000000-0000-0000-0000-0000000003aa', 'Contratação reaberta', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, 100000, false, 'suprimentos') $$, 'Coordenador abre a contratação para a reabertura');
 reset role;
 do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
 set local role authenticated;

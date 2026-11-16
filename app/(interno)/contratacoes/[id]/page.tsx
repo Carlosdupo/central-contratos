@@ -24,6 +24,7 @@ import { resumoDaEquipe } from "@/lib/equipe-obra";
 import { MaisAcoes } from "@/components/app/mais-acoes";
 import { DevolverEtapa } from "@/components/app/devolver-etapa";
 import { LinhaDoTempo } from "@/components/app/linha-do-tempo";
+import { EscopoContratacao } from "@/components/app/escopo-contratacao";
 import { SeloUrgente } from "@/components/app/selo-urgente";
 import { dicaCodigoSienge } from "@/lib/sienge";
 import { ListaEquipe } from "@/components/app/lista-equipe";
@@ -42,7 +43,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
   if (!z.uuid().safeParse(id).success) notFound();
   const d = await detalheDaContratacao(id);
   if (!d) notFound();
-  const { c, etapas, cotacoes, assinantes, eventos, devolucoes } = d;
+  const { c, etapas, cotacoes, assinantes, eventos, devolucoes, atividadesDoEscopo } = d;
   // Nível da pessoa nesta obra: o auxiliar age só até a etapa 3 e não cancela.
   const supabaseNivel = await criarClienteServidor();
   const { data: vinculo } = await supabaseNivel.from("usuario_obras").select("nivel").eq("usuario_id", usuario.id).eq("obra_id", c.obra_id).maybeSingle();
@@ -130,6 +131,8 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
           <div key={r as string}><div className="text-xs font-medium text-faint">{r}</div>{v}</div>
         ))}
       </div>
+
+      <EscopoContratacao rotulo={c.pacote} atividades={atividadesDoEscopo} />
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
         <div className="flex flex-col gap-5">

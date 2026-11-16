@@ -1,3 +1,4 @@
+-- migration: 20261116140000_escopo_por_pacote.sql
 -- Fase 5: calendário de suprimentos, planilha de planejamento (datas calculadas), indicadores e abertura com item da planilha.
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -67,11 +68,11 @@ select is((select data_solicitar::text from public.planejamento_calculado where 
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000006c2", "role": "authenticated", "aal": "aal1"}', true);
 select is((select count(*)::int from public.planejamento_itens), 0, 'Coordenador de outra obra não vê a planilha');
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000006c1", "role": "authenticated", "aal": "aal1"}', true);
-select lives_ok($$ insert into ids select 'com', public.abrir_contratacao('00000000-0000-0000-0000-0000000006aa', 'Alvenaria do bloco A', (select id from public.matriz_contratacao order by ordem limit 1), 100000, false, 'suprimentos', null, (select id from public.planejamento_itens where descricao = 'Alvenaria de vedação')) $$, 'Abre a contratação escolhendo o item da planilha');
+select lives_ok($$ insert into ids select 'com', public.abrir_contratacao('00000000-0000-0000-0000-0000000006aa', 'Alvenaria do bloco A', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, 100000, false, 'suprimentos', null, (select id from public.planejamento_itens where descricao = 'Alvenaria de vedação')) $$, 'Abre a contratação escolhendo o item da planilha');
 select is((select data_real_obra from public.planejamento_itens where descricao = 'Alvenaria de vedação'), (now() at time zone 'America/Sao_Paulo')::date, 'O fluxo grava a data real da obra');
 select is((select fora_do_prazo from public.contratacoes where id = (select id from ids where nome = 'com')), true, 'Pediu depois da data que deveria solicitar: fora do prazo');
-select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000006aa', 'Outra', (select id from public.matriz_contratacao order by ordem limit 1), 100000, false, 'suprimentos', null, (select id from public.planejamento_itens where descricao = 'Alvenaria de vedação')) $$, 'P0001', 'Item da planilha inválido, já usado em outra contratação ou já atendido.', 'O item da planilha não serve para duas contratações');
-select lives_ok($$ insert into ids select 'sem', public.abrir_contratacao('00000000-0000-0000-0000-0000000006aa', 'Fora da planilha', (select id from public.matriz_contratacao order by ordem limit 1), 100000, false, 'suprimentos') $$, 'Abre sem item da planilha');
+select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000006aa', 'Outra', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, 100000, false, 'suprimentos', null, (select id from public.planejamento_itens where descricao = 'Alvenaria de vedação')) $$, 'P0001', 'Item da planilha inválido, já usado em outra contratação ou já atendido.', 'O item da planilha não serve para duas contratações');
+select lives_ok($$ insert into ids select 'sem', public.abrir_contratacao('00000000-0000-0000-0000-0000000006aa', 'Fora da planilha', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, 100000, false, 'suprimentos') $$, 'Abre sem item da planilha');
 select is((select negociacao_a_partir_de from public.contratacoes where id = (select id from ids where nome = 'sem')), (now() at time zone 'America/Sao_Paulo')::date + 4, 'Sem item: a negociação começa no ciclo do calendário');
 
 -- Fluxo grava a data real de compras e o Sienge
@@ -93,7 +94,7 @@ select is(public.importar_planejamento('00000000-0000-0000-0000-0000000006aa', '
 select is((select obra_no_prazo || '/' || obra_atrasada || '/' || previstos_obra from public.indicadores_planejamento(2026, 4) where obra_id = '00000000-0000-0000-0000-0000000006aa'), '1/2/3',
   'Indicador: feito sem data conta como no prazo, não se aplica fica fora, pendente passado conta como atrasado');
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000006c1", "role": "authenticated", "aal": "aal1"}', true);
-select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000006aa', 'Já atendido', (select id from public.matriz_contratacao order by ordem limit 1), 100000, false, 'suprimentos', null, (select id from public.planejamento_itens where descricao = 'Aço (ok sem data)')) $$,
+select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000006aa', 'Já atendido', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, 100000, false, 'suprimentos', null, (select id from public.planejamento_itens where descricao = 'Aço (ok sem data)')) $$,
   'P0001', 'Item da planilha inválido, já usado em outra contratação ou já atendido.', 'Item que a planilha já marca como feito não abre contratação');
 
 select * from finish();

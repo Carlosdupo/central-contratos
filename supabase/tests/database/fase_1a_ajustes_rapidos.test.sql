@@ -1,3 +1,4 @@
+-- migration: 20261116140000_escopo_por_pacote.sql
 -- Fase 1A: cancelar (admin e coordenador da obra), código do Sienge, contrato original no aditivo, botão único da etapa 6.
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -44,28 +45,28 @@ grant all on ids to authenticated;
 set local role authenticated;
 -- Coordenador da obra A abre as contratações da obra A
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000001c1", "role": "authenticated", "aal": "aal1"}', true);
-insert into ids select 'c1', public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Cancelar pelo coordenador', (select id from public.matriz_contratacao order by ordem limit 1), null, false, 'obra');
+insert into ids select 'c1', public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Cancelar pelo coordenador', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, null, false, 'obra');
 reset role;
 do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
 set local role authenticated;
-insert into ids select 'c2', public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Cancelar pelo admin', (select id from public.matriz_contratacao order by ordem limit 1), null, false, 'obra');
+insert into ids select 'c2', public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Cancelar pelo admin', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, null, false, 'obra');
 reset role;
 do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
 set local role authenticated;
-insert into ids select 'e7a', public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Etapa 7 com prefixo', (select id from public.matriz_contratacao order by ordem limit 1), null, false, 'obra');
+insert into ids select 'e7a', public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Etapa 7 com prefixo', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, null, false, 'obra');
 reset role;
 do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
 set local role authenticated;
-insert into ids select 'g1', public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Gerente autoriza', (select id from public.matriz_contratacao order by ordem limit 1), null, false, 'obra');
+insert into ids select 'g1', public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Gerente autoriza', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, null, false, 'obra');
 reset role;
 do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
 set local role authenticated;
-insert into ids select 'g2', public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Gerente com dados faltando', (select id from public.matriz_contratacao order by ordem limit 1), null, false, 'obra');
+insert into ids select 'g2', public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Gerente com dados faltando', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, null, false, 'obra');
 reset role;
 do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000001c2", "role": "authenticated", "aal": "aal1"}', true);
-insert into ids select 'e7b', public.abrir_contratacao('00000000-0000-0000-0000-0000000001bb', 'Etapa 7 sem prefixo', (select id from public.matriz_contratacao order by ordem limit 1), null, false, 'obra');
+insert into ids select 'e7b', public.abrir_contratacao('00000000-0000-0000-0000-0000000001bb', 'Etapa 7 sem prefixo', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, null, false, 'obra');
 reset role;
 do $$ begin perform pg_temp.para_fluxo_1(id) from ids; end $$;
 set local role authenticated;
@@ -86,16 +87,16 @@ select lives_ok(format($$ select public.cancelar_contratacao(%L, 'Cancelado pela
 
 -- Aditivo exige o contrato original (e no formato do prefixo da obra)
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000001c1", "role": "authenticated", "aal": "aal1"}', true);
-select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Aditivo', (select id from public.matriz_contratacao order by ordem limit 1), null, true, 'obra') $$,
+select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Aditivo', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, null, true, 'obra') $$,
   'P0001', 'Informe o nº do contrato original no Sienge.', 'Aditivo sem contrato original é recusado');
-select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Aditivo', (select id from public.matriz_contratacao order by ordem limit 1), null, true, 'obra', 'CT/BL83') $$,
+select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Aditivo', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, null, true, 'obra', 'CT/BL83') $$,
   'P0001', null, 'Contrato original com 2 números é recusado (obra com prefixo)');
-select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Aditivo', (select id from public.matriz_contratacao order by ordem limit 1), null, true, 'obra', 'XX/BL0083') $$,
+select throws_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Aditivo', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, null, true, 'obra', 'XX/BL0083') $$,
   'P0001', null, 'Contrato original com outro prefixo é recusado');
-select lives_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Aditivo bom', (select id from public.matriz_contratacao order by ordem limit 1), null, true, 'obra', 'CT/BL0083') $$, 'Aditivo com CT/BL0083 abre');
+select lives_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000001aa', 'Aditivo bom', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, null, true, 'obra', 'CT/BL0083') $$, 'Aditivo com CT/BL0083 abre');
 select is((select contrato_original from public.contratacoes where servico = 'Aditivo bom'), 'CT/BL0083', 'Contrato original gravado');
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000001c2", "role": "authenticated", "aal": "aal1"}', true);
-select lives_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000001bb', 'Aditivo livre', (select id from public.matriz_contratacao order by ordem limit 1), null, true, 'obra', 'QUALQUER-1') $$, 'Obra sem prefixo aceita o contrato original como vier');
+select lives_ok($$ select public.abrir_contratacao('00000000-0000-0000-0000-0000000001bb', 'Aditivo livre', array[(select id from public.matriz_contratacao order by ordem limit 1)], null, null, true, 'obra', 'QUALQUER-1') $$, 'Obra sem prefixo aceita o contrato original como vier');
 
 -- Código do contrato na etapa 7
 reset role;
