@@ -1,4 +1,3 @@
--- migration: 20261116120000_senha_provisoria.sql
 -- Auditoria da senha provisória: só administrador com verificação em duas etapas; grava os dois nomes e nunca a senha.
 begin;
 create extension if not exists pgtap with schema extensions;
