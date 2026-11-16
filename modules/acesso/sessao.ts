@@ -14,6 +14,7 @@ export type UsuarioAtual = {
   tipo: "interno" | "externo";
   papeis: Papel[];
   verificado: boolean; // concluiu a verificação em duas etapas nesta sessão (aal2)
+  trocarSenha: boolean; // entrou com senha provisória: só pode ir para /definir-senha até trocá-la
 };
 
 type LinhaUsuario = {
@@ -46,6 +47,8 @@ export const obterUsuarioAtual = cache(async (): Promise<UsuarioAtual | null> =>
     tipo: linha.tipo,
     papeis: (papeis ?? []).map((p) => p.papel as string).filter(ehPapel),
     verificado: claims.aal === "aal2",
+    // app_metadata só o servidor grava (user_metadata o próprio usuário consegue alterar).
+    trocarSenha: (claims.app_metadata as { trocar_senha?: unknown } | undefined)?.trocar_senha === true,
   };
 });
 
@@ -53,6 +56,8 @@ export const obterUsuarioAtual = cache(async (): Promise<UsuarioAtual | null> =>
 export async function exigirUsuario(): Promise<UsuarioAtual> {
   const usuario = await obterUsuarioAtual();
   if (!usuario) redirect("/login");
+  // A troca da senha provisória vem antes de tudo (e a verificação em duas etapas continua valendo depois dela).
+  if (usuario.trocarSenha) redirect("/definir-senha");
   if (exigeMfa(usuario.papeis) && !usuario.verificado) redirect("/verificacao");
   return usuario;
 }

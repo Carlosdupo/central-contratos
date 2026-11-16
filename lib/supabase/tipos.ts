@@ -2058,6 +2058,10 @@ export type Database = {
           previstos_obra: number
         }[]
       }
+      registrar_senha_provisoria: {
+        Args: { p_conta_nova?: boolean; p_usuario: string }
+        Returns: undefined
+      }
       salvar_calendario: {
         Args: { p_ano: number; p_ciclos: Json }
         Returns: number

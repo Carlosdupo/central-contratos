@@ -8,6 +8,8 @@ import { alterarSituacaoUsuario, reenviarConviteUsuario, salvarObrasDoUsuario, s
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
 import { Formulario, Marcador } from "@/components/app/formulario";
+import { GerarSenhaUsuario } from "@/components/app/gerar-senha-usuario";
+import { gerarNovaSenhaProvisoria } from "@/modules/admin/senha-provisoria";
 
 export const metadata: Metadata = { title: "Usuário" };
 
@@ -85,6 +87,22 @@ export default async function PaginaUsuario({ params }: PageProps<"/admin/usuari
             <Formulario acao={reenviarConviteUsuario.bind(null, usuario.id)} textoBotao={jaEntrou ? "Enviar link de nova senha" : "Reenviar convite"} variante="neutro" />
           ) : (
             <p className="text-[13px] text-faint">Reative o usuário para enviar um novo acesso.</p>
+          )}
+        </section>
+
+        <section className="painel">
+          <div>
+            <h3 className="subtitulo">Senha provisória</h3>
+            <p className="mt-1 text-[13px] text-muted-foreground">
+              Para quem esqueceu a senha e não recebe e-mail. Gera uma senha nova que aparece uma única vez; a pessoa é obrigada a trocá-la no próximo acesso.
+            </p>
+          </div>
+          {proprio ? (
+            <p className="text-[13px] text-faint">Para a sua própria senha, use &ldquo;Esqueci minha senha&rdquo; ou peça a outro administrador.</p>
+          ) : usuario.ativo ? (
+            <GerarSenhaUsuario acao={gerarNovaSenhaProvisoria.bind(null, usuario.id)} nome={usuario.nome} />
+          ) : (
+            <p className="text-[13px] text-faint">Reative o usuário para gerar uma senha provisória.</p>
           )}
         </section>
 

@@ -13,6 +13,7 @@ export default function PaginaDefinirSenha() {
         <p className="mt-1 text-[13.5px] text-muted-foreground">
           Pelo menos 10 caracteres, com letra maiúscula, letra minúscula e número.
         </p>
+        <p className="mt-1 text-[13.5px] text-muted-foreground">Se você entrou com uma senha provisória, crie agora a sua. Sem isso não dá para usar o sistema.</p>
       </div>
       <FormularioAcesso acao={definirSenha} textoBotao="Salvar senha">
         <Campo id="senha" rotulo="Nova senha" tipo="password" autoComplete="new-password" />

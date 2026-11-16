@@ -98,5 +98,13 @@ export async function definirSenha(_: EstadoFormulario, dados: FormData): Promis
   const { error } = await supabase.auth.updateUser({ password: lido.data.senha });
   if (error) return { erro: "Não foi possível salvar a senha. Tente outra." };
 
+  // Senha provisória trocada: o servidor tira a marca (null remove a chave) e renova a sessão para o token novo não trazê-la.
+  const marcas = data.claims.app_metadata as { trocar_senha?: unknown } | undefined;
+  if (marcas?.trocar_senha) {
+    const { error: erroMarca } = await criarClienteAdmin().auth.admin.updateUserById(data.claims.sub, { app_metadata: { trocar_senha: null } });
+    if (erroMarca) return { erro: "A senha foi salva, mas não conseguimos liberar o acesso. Tente salvar de novo." };
+    await supabase.auth.refreshSession();
+  }
+
   redirect("/");
 }

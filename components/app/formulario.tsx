@@ -30,8 +30,14 @@ const CLASSE_BOTAO: Record<Variante, string> = {
   neutro: "botao",
 };
 
+// Estado de uma ação: erro/ok e, nas ações que devolvem um dado para mostrar uma vez (a senha provisória), esse dado.
+type EstadoDaAcao = EstadoFormulario & { senha?: string; email?: string };
+
 type Props = {
-  acao: (estado: EstadoFormulario, dados: FormData) => Promise<EstadoFormulario>;
+  // Sintaxe de método de propósito: aceita ações que declaram só parte do estado (EstadoFormulario ou EstadoSenha).
+  acao(estado: EstadoDaAcao, dados: FormData): Promise<EstadoDaAcao>;
+  /** Conteúdo extra a partir do resultado da ação (ex.: a senha provisória, que aparece uma vez). */
+  resultado?: (estado: EstadoDaAcao) => ReactNode;
   textoBotao: string;
   children?: ReactNode;
   variante?: Variante;
@@ -45,8 +51,8 @@ type Props = {
 };
 
 // Formulário com Server Action: mostra o resultado (erro ou confirmação) ao lado do botão.
-export function Formulario({ acao, textoBotao, children, variante = "primario", confirmar, className, desabilitado, sensivel }: Props) {
-  const [estado, enviar, enviando] = useActionState(acao, {});
+export function Formulario({ acao, textoBotao, children, variante = "primario", confirmar, className, desabilitado, sensivel, resultado }: Props) {
+  const [estado, enviar, enviando] = useActionState<EstadoDaAcao, FormData>(acao, {});
   const formulario = useRef<HTMLFormElement>(null);
   const classe = CLASSE_BOTAO[variante];
 
@@ -79,6 +85,7 @@ export function Formulario({ acao, textoBotao, children, variante = "primario", 
           </Button>
         )}
       </div>
+      {resultado?.(estado)}
     </form>
   );
 }
