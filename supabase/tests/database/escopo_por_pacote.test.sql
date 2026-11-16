@@ -1,4 +1,3 @@
--- migration: 20261116140000_escopo_por_pacote.sql
 -- Escopo da contratação por pacote da matriz: lista de atividades, forma legal mais rigorosa calculada no banco.
 begin;
 create extension if not exists pgtap with schema extensions;
