@@ -25,10 +25,12 @@ export function ProcessarLinkAcesso() {
     window.history.replaceState(null, "", window.location.pathname + window.location.search);
     const expirado = "O link expirou ou já foi usado.";
 
+    // O motivo técnico vai junto (entre parênteses) para dar para diagnosticar sem abrir o console.
+    const motivo = (t: string | null | undefined) => (t ? ` (${t.slice(0, 160)})` : "");
     (async () => {
-      if (falhou || !accessToken || !refreshToken) return setMensagem(expirado);
+      if (falhou || !accessToken || !refreshToken) return setMensagem(expirado + motivo(p.get("error_description") ?? p.get("error_code") ?? p.get("error")));
       const { error } = await criarClienteNavegador().auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-      if (error) return setMensagem(expirado);
+      if (error) return setMensagem(expirado + motivo(error.message));
       const tipo = p.get("type");
       router.replace(tipo === "invite" || tipo === "recovery" ? "/definir-senha" : "/");
       router.refresh();
