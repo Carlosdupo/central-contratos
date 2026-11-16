@@ -13,7 +13,7 @@ const passo = (etapa: number, chave: string, situacao: PassoPanorama["situacao"]
   etapa, chave, nome: `Etapa ${chave}`, area: "Obra", responsavel: "Obra", situacao, concluidaEm: null, prazo: null, ...extra,
 });
 const base = (extra: Partial<ContratacaoPanorama>): ContratacaoPanorama => ({
-  id: "c1", codigo: "CT-2026-001", servico: "Alvenaria de vedação", obraId: "o1", obra: "Block", prefixoSienge: "CT/BL", situacao: "em_andamento", urgente: false, urgenteData: null, urgenteMotivo: null,
+  id: "c1", codigo: "CT-2026-001", codigoInterno: "CT-2026-001", servico: "Alvenaria de vedação", obraId: "o1", obra: "Block", prefixoSienge: "CT/BL", situacao: "em_andamento", urgente: false, urgenteData: null, urgenteMotivo: null,
   aditivoDe: null, foraDoPrazo: false, abertaEm: "2026-10-01", fornecedor: "Construtora Pilar", valor: 486000, sienge: null, motivoCancelamento: null, empresaJaLiberada: false, escopo: null, equipe: null, devolucao: null,
   passos: [], ...extra,
 });

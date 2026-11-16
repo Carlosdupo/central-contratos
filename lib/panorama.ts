@@ -20,7 +20,9 @@ export type PassoPanorama = {
 
 export type ContratacaoPanorama = {
   id: string;
+  /** Contrato do Sienge, senão SS, senão o código interno (ver codigoExibicao). */
   codigo: string;
+  codigoInterno: string;
   servico: string;
   obraId: string;
   obra: string;
@@ -144,7 +146,7 @@ export function filtrar(lista: ContratacaoPanorama[], f: FiltrosPanorama): Contr
       (!f.obra || c.obraId === f.obra) &&
       testa(c) &&
       (!f.area || passosAtuais(c).some((p) => p.area === f.area)) &&
-      (!q || semAcento([c.servico, c.fornecedor ?? "", c.codigo, c.sienge ?? ""].join(" ")).includes(q)),
+      (!q || semAcento([c.servico, c.fornecedor ?? "", c.codigo, c.codigoInterno, c.sienge ?? ""].join(" ")).includes(q)),
   );
 }
 

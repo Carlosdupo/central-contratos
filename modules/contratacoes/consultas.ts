@@ -1,4 +1,5 @@
 import "server-only";
+import { codigoExibicao } from "@/lib/sienge";
 import { cache } from "react";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { carregarFeriados } from "@/lib/configuracao";
@@ -60,7 +61,7 @@ export const etapasEmAberto = cache(async (): Promise<EtapaAberta[]> => {
     carregarFeriados(),
     supabase
       .from("contratacao_etapas")
-      .select("etapa, iniciada_em, contratacoes!inner(id, codigo, servico, prazos, situacao, obra_id, urgente, fluxo_versao, obras(nome))")
+      .select("etapa, iniciada_em, contratacoes!inner(id, codigo, sienge_contrato, sienge_solicitacao, servico, prazos, situacao, obra_id, urgente, fluxo_versao, obras(nome))")
       .eq("situacao", "em_andamento")
       .eq("contratacoes.situacao", "em_andamento"),
   ]);
@@ -72,7 +73,7 @@ export const etapasEmAberto = cache(async (): Promise<EtapaAberta[]> => {
       const desde = dataNoFuso(l.iniciada_em ?? new Date().toISOString());
       return {
         contratacaoId: l.contratacoes.id,
-        codigo: l.contratacoes.codigo,
+        codigo: codigoExibicao(l.contratacoes),
         servico: l.contratacoes.servico,
         obra: l.contratacoes.obras?.nome ?? "—",
         obraId: l.contratacoes.obra_id,
@@ -238,7 +239,7 @@ export async function panoramaDasContratacoes(obraId?: string): Promise<LinhaPan
     });
     return {
       id: c.id,
-      codigo: c.codigo,
+      codigo: codigoExibicao(c),
       urgente: c.urgente,
       urgenteData: c.urgente_data,
       abertaEm: dataNoFuso(c.created_at),

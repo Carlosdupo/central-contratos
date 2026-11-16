@@ -26,7 +26,7 @@ import { DevolverEtapa } from "@/components/app/devolver-etapa";
 import { LinhaDoTempo } from "@/components/app/linha-do-tempo";
 import { EscopoContratacao } from "@/components/app/escopo-contratacao";
 import { SeloUrgente } from "@/components/app/selo-urgente";
-import { dicaCodigoSienge } from "@/lib/sienge";
+import { codigoExibicao, dicaCodigoSienge } from "@/lib/sienge";
 import { ListaEquipe } from "@/components/app/lista-equipe";
 
 export const metadata: Metadata = { title: "Contratação" };
@@ -103,7 +103,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
         <Link href="/contratacoes" className="text-[14px] text-primary">← Contratações</Link>
         <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <div className="font-mono text-[13px] text-muted-foreground">{c.codigo}</div>
+            <div className="font-mono text-[13px] text-muted-foreground">{codigoExibicao(c)}{codigoExibicao(c) !== c.codigo && <span className="ml-2 text-[12px]">({c.codigo})</span>}</div>
             <h1 className="titulo">{c.servico}</h1>
           </div>
           {c.urgente && <SeloUrgente data={c.urgente_data} />}

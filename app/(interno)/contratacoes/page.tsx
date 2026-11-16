@@ -5,6 +5,7 @@ import { exigirInterno } from "@/modules/acesso/sessao";
 import { carregarFluxo, etapasEmAberto } from "@/modules/contratacoes/consultas";
 import { TIPO_CONTRATACAO, formatarReais } from "@/modules/contratacoes/rotulos";
 import { criarClienteServidor } from "@/lib/supabase/server";
+import { codigoExibicao } from "@/lib/sienge";
 import { SeloPrazo } from "@/components/app/selo-prazo";
 import { CampoSelecao, CampoTexto } from "@/components/app/formulario";
 import { Button } from "@ui-sdk/react/button";
@@ -30,7 +31,7 @@ export default async function PaginaContratacoes({ searchParams }: PageProps<"/c
 
   const supabase = await criarClienteServidor();
   const [{ data: contratacoes }, { data: etapas }, abertas, fluxo] = await Promise.all([
-    supabase.from("contratacoes").select("id, codigo, servico, tipo, situacao, urgente, urgente_data, valor_orcado, valor_negociado, fornecedor_nome, obra_id, obras(nome)").order("created_at", { ascending: false }),
+    supabase.from("contratacoes").select("id, codigo, sienge_contrato, sienge_solicitacao, servico, tipo, situacao, urgente, urgente_data, valor_orcado, valor_negociado, fornecedor_nome, obra_id, obras(nome)").order("created_at", { ascending: false }),
     supabase.from("contratacao_etapas").select("contratacao_id, situacao"),
     etapasEmAberto(),
     carregarFluxo(),
@@ -42,7 +43,7 @@ export default async function PaginaContratacoes({ searchParams }: PageProps<"/c
   const obras = [...new Map(todas.map((c) => [c.obra_id, c.obras?.nome ?? "—"])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
   const termo = semAcento(busca);
   const lista = todas
-    .filter((c) => !termo || semAcento(`${c.servico} ${c.codigo} ${c.fornecedor_nome ?? ""} ${c.obras?.nome ?? ""}`).includes(termo))
+    .filter((c) => !termo || semAcento(`${c.servico} ${c.codigo} ${codigoExibicao(c)} ${c.fornecedor_nome ?? ""} ${c.obras?.nome ?? ""}`).includes(termo))
     .filter((c) => !obraFiltro || c.obra_id === obraFiltro)
     .filter((c) => !etapaFiltro || atuaisDe(c.id).some((a) => a.etapa.etapa === etapaFiltro))
     .sort((a, b) => {
@@ -109,7 +110,7 @@ export default async function PaginaContratacoes({ searchParams }: PageProps<"/c
                     <tr key={c.id}>
                       <td className="max-w-[300px] pl-[18px]">
                         <Link href={`/contratacoes/${c.id}`} className="line-clamp-2 font-semibold hover:text-primary" title={c.servico}>{c.servico}</Link>
-                        <div className="text-[12.5px] text-muted-foreground"><span className="font-mono">{c.codigo}</span> · {TIPO_CONTRATACAO[c.tipo]} {c.urgente && <SeloUrgente data={c.urgente_data} />}</div>
+                        <div className="text-[12.5px] text-muted-foreground"><span className="font-mono">{codigoExibicao(c)}</span> · {TIPO_CONTRATACAO[c.tipo]} {c.urgente && <SeloUrgente data={c.urgente_data} />}</div>
                       </td>
                       <td className="text-[13px]">{c.obras?.nome}</td>
                       <td className="text-[13px]">{c.fornecedor_nome ?? <span className="text-muted-foreground">a definir</span>}</td>

@@ -12,3 +12,14 @@ export function dicaCodigoSienge(prefixo: string | null | undefined): string {
   const p = prefixo?.trim();
   return p ? `Prefixo ${p} seguido de 4 números, como ${p}0083.` : "Esta obra não tem prefixo cadastrado: escreva o código como está no Sienge.";
 }
+
+/**
+ * Número que aparece na tela para identificar a contratação: o contrato do Sienge quando já foi
+ * lançado (etapa 7); antes disso, a solicitação (SS, etapa 4); antes disso, o código interno (CT-2026-001).
+ */
+export function codigoExibicao(c: { codigo: string; sienge_contrato?: string | null; sienge_solicitacao?: string | null }): string {
+  const contrato = c.sienge_contrato?.trim();
+  if (contrato) return contrato;
+  const solicitacao = c.sienge_solicitacao?.trim();
+  return solicitacao ? `SS ${solicitacao}` : c.codigo;
+}

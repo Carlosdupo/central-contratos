@@ -1,4 +1,5 @@
 import "server-only";
+import { codigoExibicao } from "@/lib/sienge";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { agoraNoFuso, formatarData, situacaoPrazo, type Prazo } from "@/lib/datas";
 import { carregarFeriados } from "@/lib/configuracao";
@@ -28,7 +29,7 @@ export async function panoramaDasObras(): Promise<ContratacaoPanorama[]> {
     supabase
       .from("contratacoes")
       .select(
-        "id, codigo, created_at, servico, pacote, situacao, urgente, urgente_data, urgente_motivo, fora_do_prazo, contrato_original, tipo, fornecedor_nome, valor_negociado, sienge_contrato, cancelamento_motivo, empresa_ja_liberada, prazos, fluxo_versao, obra_id, obras(nome, prefixo_sienge), empresas_terceiras(vinculos(tipo, ativo, alocacoes(obra_id, situacao))), contratacao_etapas(etapa, situacao, iniciada_em, concluida_em), contratacao_atividades(matriz_contratacao(id, atividade, forma_legal, ordem)), contratacao_devolucoes(tipo, para_etapa, motivo, em, usuarios:por(nome))",
+        "id, codigo, created_at, servico, pacote, situacao, urgente, urgente_data, urgente_motivo, fora_do_prazo, contrato_original, tipo, fornecedor_nome, valor_negociado, sienge_contrato, sienge_solicitacao, cancelamento_motivo, empresa_ja_liberada, prazos, fluxo_versao, obra_id, obras(nome, prefixo_sienge), empresas_terceiras(vinculos(tipo, ativo, alocacoes(obra_id, situacao))), contratacao_etapas(etapa, situacao, iniciada_em, concluida_em), contratacao_atividades(matriz_contratacao(id, atividade, forma_legal, ordem)), contratacao_devolucoes(tipo, para_etapa, motivo, em, usuarios:por(nome))",
       )
       .order("created_at", { ascending: false })
       .limit(LIMITE),
@@ -67,7 +68,8 @@ export async function panoramaDasObras(): Promise<ContratacaoPanorama[]> {
       .at(-1);
     return {
       id: c.id,
-      codigo: c.codigo,
+      codigo: codigoExibicao(c),
+      codigoInterno: c.codigo,
       servico: c.servico,
       obraId: c.obra_id,
       obra: c.obras?.nome ?? "—",
