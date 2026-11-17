@@ -10,20 +10,24 @@ import { SeloPrazo } from "@/components/app/selo-prazo";
 import { BotaoAbrir } from "@/components/app/documentos";
 import {CampoEmLinha,Formulario} from "@/components/app/formulario";
 
-export const metadata: Metadata = { title: "Análise do RH" };
+export const metadata: Metadata = { title: "Análise de documentos" };
 
-export default async function PaginaFilaRh() {
-  const usuario = await exigirPapel("rh");
+export default async function PaginaFilaRh({ searchParams }: PageProps<"/terceiros/analise">) {
+  const usuario = await exigirPapel("rh", "sst");
   const ehAdmin = usuario.papeis.includes("admin");
-  const [fila, visitas, parametros] = await Promise.all([filaDeAnalise(), visitasSolicitadas(), lerParametros()]);
+  const ehRh = usuario.papeis.includes("rh");
+  const minhas = (["rh", "sst"] as const).filter((p) => usuario.papeis.includes(p));
+  const soMeus = (await searchParams).ver === "meus";
+  const [todos, visitas, parametros] = await Promise.all([filaDeAnalise(), ehRh ? visitasSolicitadas() : Promise.resolve([]), lerParametros()]);
+  const fila = soMeus ? todos.filter((e) => minhas.some((p) => e.faltam[p] > 0)) : todos;
   const prazo = parametros.prazoAnaliseRh;
 
   return (
     <>
       <div>
-        <h1 className="titulo">Análise do RH</h1>
+        <h1 className="titulo">Análise de documentos</h1>
         <p className="mt-1.5 max-w-[66ch] text-[15px] text-muted-foreground">
-          Envios das empresas esperando conferência. Prazo: {prazo.dias} {prazo.uteis ? "dias úteis" : "dias"} a partir do envio. Aprovado até as {parametros.horarioCorte}h entra na integração do próximo dia útil.
+          Envios das empresas esperando conferência. Cada documento é aprovado pelo RH ou pela Segurança do Trabalho, conforme o tipo. Prazo: {prazo.dias} {prazo.uteis ? "dias úteis" : "dias"} a partir do envio. Aprovado até as {parametros.horarioCorte}h entra na integração do próximo dia útil.
         </p>
       </div>
       {!emailConfigurado() &&
@@ -36,13 +40,19 @@ export default async function PaginaFilaRh() {
         ))}
 
       <section className="painel">
-        <h2 className="subtitulo">Documentos para conferir</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="subtitulo">Documentos para conferir</h2>
+          <nav aria-label="Filtro da fila" className="flex gap-2">
+            <Link href="/terceiros/analise" aria-current={soMeus ? undefined : "page"} className="filtro-pilula">Todos ({todos.length})</Link>
+            <Link href="/terceiros/analise?ver=meus" aria-current={soMeus ? "page" : undefined} className="filtro-pilula">Com itens meus ({todos.filter((e) => minhas.some((p) => e.faltam[p] > 0)).length})</Link>
+          </nav>
+        </div>
         {fila.length === 0 ? (
-          <p className="text-[14px] text-muted-foreground">Nenhum envio esperando análise. Quando uma empresa enviar documentos, eles aparecem aqui com o prazo.</p>
+          <p className="text-[14px] text-muted-foreground">{soMeus ? "Nenhum envio com itens seus esperando decisão." : "Nenhum envio esperando análise."} Quando uma empresa enviar documentos, eles aparecem aqui com o prazo.</p>
         ) : (
           <div className="-mx-1.5 overflow-x-auto">
             <table className="tabela">
-              <thead><tr><th>Enviado por</th><th>O que</th><th>Enviado em</th><th>Prazo</th></tr></thead>
+              <thead><tr><th>Enviado por</th><th>O que</th><th>Falta decidir</th><th>Enviado em</th><th>Prazo</th></tr></thead>
               <tbody>
                 {fila.map((e) => (
                   <tr key={e.id}>
@@ -51,6 +61,13 @@ export default async function PaginaFilaRh() {
                       {e.pessoa && <div className="text-[12.5px] text-muted-foreground">{e.empresa}</div>}
                     </td>
                     <td className="text-[13px]">{e.pessoa ? "Documentos da pessoa" : "Documentos da empresa"}</td>
+                    <td>
+                      <div className="flex flex-wrap gap-1.5">
+                        {e.faltam.rh > 0 && <span className="selo selo-alerta">Falta RH ({e.faltam.rh})</span>}
+                        {e.faltam.sst > 0 && <span className="selo selo-alerta">Falta Segurança ({e.faltam.sst})</span>}
+                        {e.faltam.rh + e.faltam.sst === 0 && <span className="selo selo-ok">Pronto para concluir</span>}
+                      </div>
+                    </td>
                     <td className="text-[13px]">{formatarData(e.enviadoEm)}</td>
                     <td><SeloPrazo prazo={e.prazo} uteis={prazo.uteis} /></td>
                   </tr>
@@ -61,6 +78,7 @@ export default async function PaginaFilaRh() {
         )}
       </section>
 
+      {ehRh && (
       <section className="painel">
         <div>
           <h2 className="subtitulo">Pedidos de visita</h2>
@@ -90,6 +108,7 @@ export default async function PaginaFilaRh() {
           </div>
         )}
       </section>
+      )}
     </>
   );
 }

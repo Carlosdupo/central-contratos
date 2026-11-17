@@ -15,7 +15,7 @@ import { despacharPendentes } from "@/modules/notificacoes/enviar";
 import { detalheDoEnvio } from "./analise";
 import { dataDaIntegracao } from "./dominio/integracao";
 
-// Análise de documentos: só RH (exigirPapel já exige a verificação em duas etapas; o banco confere de novo).
+// Análise de documentos: RH e Segurança, cada um os itens do seu tipo (o banco confere quem decide o quê). Visitas: só RH.
 
 const uuid = z.uuid();
 const DIAS = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
@@ -23,7 +23,7 @@ const diaPorExtenso = (data: string) => `${DIAS[new Date(`${data}T12:00:00Z`).ge
 const rodape = () => `\n\nAcesse o portal: ${envPublico.NEXT_PUBLIC_SITE_URL}/portal\n\nNexus`;
 
 export async function aprovarDocumento(itemId: string): Promise<EstadoFormulario> {
-  await exigirPapel("rh");
+  await exigirPapel("rh", "sst");
   if (!uuid.safeParse(itemId).success) return { erro: "Item inválido." };
   const supabase = await criarClienteServidor();
   const { error } = await supabase.rpc("decidir_documento", { p_item: itemId, p_decisao: "aprovado" });
@@ -33,7 +33,7 @@ export async function aprovarDocumento(itemId: string): Promise<EstadoFormulario
 }
 
 export async function reprovarDocumento(itemId: string, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
-  await exigirPapel("rh");
+  await exigirPapel("rh", "sst");
   if (!uuid.safeParse(itemId).success) return { erro: "Item inválido." };
   const motivo = String(dados.get("motivo") ?? "").trim().slice(0, 300);
   if (motivo.length < 3) return { erro: "Escreva o motivo para a empresa saber o que corrigir." };
@@ -45,7 +45,7 @@ export async function reprovarDocumento(itemId: string, _: EstadoFormulario, dad
 }
 
 export async function concluirAnalise(envioId: string): Promise<EstadoFormulario> {
-  await exigirPapel("rh");
+  await exigirPapel("rh", "sst");
   if (!uuid.safeParse(envioId).success) return { erro: "Envio inválido." };
   const detalhe = await detalheDoEnvio(envioId);
   if (!detalhe || detalhe.envio.situacao !== "aberto") return { erro: "Envio não encontrado ou já concluído." };

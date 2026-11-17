@@ -3,17 +3,25 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { exigirPapel } from "@/modules/acesso/sessao";
-import { detalheDoEnvio } from "@/modules/terceiros/analise";
+import { detalheDoEnvio, type Responsavel } from "@/modules/terceiros/analise";
 import { aprovarDocumento, concluirAnalise, reprovarDocumento } from "@/modules/terceiros/acoes-rh";
-import { formatarCompetencia } from "@/modules/terceiros/dominio/documentos";
+import { BlocoAnalise, type ItemAnalise } from "@/components/app/bloco-analise";
+import { progressoDocumentos, type EstadoItem } from "@/modules/terceiros/dominio/documentos";
 import { agoraNoFuso, formatarData } from "@/lib/datas";
-import { BotaoAbrirArquivo } from "@/components/app/documentos";
-import {CampoEmLinha,Formulario} from "@/components/app/formulario";
+import { Formulario } from "@/components/app/formulario";
+import { ProgressoDocumentos } from "@/components/app/progresso-documentos";
 
 export const metadata: Metadata = { title: "Analisar documentos" };
 
+const BLOCOS: { chave: Responsavel; titulo: string; area: string }[] = [
+  { chave: "rh", titulo: "Para o RH", area: "RH" },
+  { chave: "sst", titulo: "Para a Segurança do Trabalho", area: "Segurança" },
+];
+
+const estadoDaDecisao = (i: ItemAnalise): EstadoItem => (i.decisao === "aprovado" ? "aprovado" : i.decisao === "reprovado" ? "reprovado" : "enviado");
+
 export default async function PaginaAnaliseEnvio({ params }: PageProps<"/terceiros/analise/[envioId]">) {
-  await exigirPapel("rh");
+  const usuario = await exigirPapel("rh", "sst");
   const { envioId } = await params;
   if (!z.uuid().safeParse(envioId).success) notFound();
   const d = await detalheDoEnvio(envioId);
@@ -21,57 +29,53 @@ export default async function PaginaAnaliseEnvio({ params }: PageProps<"/terceir
 
   const aberto = d.envio.situacao === "aberto";
   const faltam = d.itens.filter((i) => !i.decisao).length;
+  const blocos = BLOCOS.map((b) => ({ ...b, itens: d.itens.filter((i) => i.responsavel === b.chave), meu: usuario.papeis.includes(b.chave) }))
+    .filter((b) => b.itens.length > 0)
+    .sort((a, b) => Number(b.meu) - Number(a.meu));
 
   return (
     <>
       <div>
-        <Link href="/terceiros/analise" className="text-[14px] text-primary">← Análise do RH</Link>
+        <Link href="/terceiros/analise" className="text-[14px] text-primary">← Análise de documentos</Link>
         <h1 className="titulo mt-2">{d.pessoa ?? d.empresa}</h1>
         <p className="text-[15px] text-muted-foreground">
           {d.pessoa ? `${d.empresa} · ${d.obras.join(", ") || "sem obra"}` : "Documentos da empresa"} · enviado em {formatarData(agoraNoFuso(new Date(d.envio.enviado_em)).data)}
         </p>
       </div>
 
-      <section className="painel">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 className="subtitulo">Documentos</h2>
-          <span className="text-[13px] text-muted-foreground">{aberto ? (faltam ? `Faltam ${faltam} para decidir` : "Tudo decidido") : "Análise concluída"}</span>
-        </div>
-        <div className="lista-agrupada">
-          {d.itens.map((item) => (
-            <div key={item.id} className="flex flex-col gap-2.5 px-3.5 py-3">
-              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-                <div className="min-w-0">
-                  <div className="font-medium">{item.nome}{item.sensivel && <span className="ml-2 text-xs font-normal text-faint">dado de saúde</span>}</div>
-                  <div className="text-[12.5px] text-muted-foreground">
-                    {[item.valorTexto, item.competencia && `Competência ${formatarCompetencia(item.competencia)}`, item.validade && `Válido até ${formatarData(item.validade)}`].filter(Boolean).join(" · ") || "Sem validade"}
-                  </div>
-                  {item.decisao === "reprovado" && <div className="text-[12.5px] text-bad">Reprovado: {item.motivo}</div>}
-                </div>
-                <div className="flex items-center gap-3">
-                  {item.arquivoId && <BotaoAbrirArquivo arquivoId={item.arquivoId} />}
-                  {item.decisao === "aprovado" && <span className="selo selo-ok">Aprovado</span>}
-                  {item.decisao === "reprovado" && <span className="selo selo-erro">Reprovado</span>}
-                </div>
-              </div>
-              {aberto && !item.decisao && (
-                <div className="flex flex-wrap items-start gap-3">
-                  <Formulario acao={aprovarDocumento.bind(null, item.id)} textoBotao="Aprovar documento" sensivel="Aprova este documento da empresa terceirizada." className="flex" />
-                  <Formulario acao={reprovarDocumento.bind(null, item.id)} textoBotao="Devolver documento" variante="perigo" sensivel="Devolve o documento para a empresa corrigir, com o motivo." className="flex flex-wrap items-center gap-2">
-                    <CampoEmLinha nome="motivo" placeholder="Motivo (a empresa vai ver)" rotulo="Motivo da devolução" className="max-w-[300px]" />
-                  </Formulario>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-        {aberto && (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t-[.5px] border-sep pt-4">
-            <p className="text-[13px] text-muted-foreground">Ao concluir, a empresa recebe o resultado e, se aprovado, a data da integração.</p>
-            <Formulario acao={concluirAnalise.bind(null, envioId)} textoBotao="Concluir análise" desabilitado={faltam > 0} sensivel="Conclui a análise e avisa a empresa; quem foi aprovado entra na integração." />
+      <section className="painel" aria-label="Andamento da análise">
+        <ProgressoDocumentos progresso={progressoDocumentos(d.itens.map(estadoDaDecisao))} rotulo="Aprovados neste envio" />
+        {blocos.length > 1 && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {blocos.map((b) => (
+              <ProgressoDocumentos key={b.chave} progresso={progressoDocumentos(b.itens.map(estadoDaDecisao))} rotulo={`Aprovados pelo ${b.area}`} />
+            ))}
           </div>
         )}
       </section>
+
+      {blocos.map((b) => (
+        <BlocoAnalise
+          key={b.chave}
+          bloco={b}
+          aberto={aberto}
+          aprovar={(id) => aprovarDocumento.bind(null, id)}
+          devolver={(id) => reprovarDocumento.bind(null, id)}
+        />
+      ))}
+
+      {aberto && (
+        <section className="painel">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="max-w-[60ch] text-[13px] text-muted-foreground">
+              {faltam
+                ? `Faltam ${faltam} documentos. A análise pode ser concluída quando RH e Segurança decidirem todos.`
+                : "Tudo decidido. Ao concluir, a empresa recebe o resultado e, se aprovado, a data da integração."}
+            </p>
+            <Formulario acao={concluirAnalise.bind(null, envioId)} textoBotao="Concluir análise" desabilitado={faltam > 0} sensivel="Conclui a análise e avisa a empresa; quem foi aprovado entra na integração." />
+          </div>
+        </section>
+      )}
     </>
   );
 }

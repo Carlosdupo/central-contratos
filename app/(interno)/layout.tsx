@@ -28,7 +28,7 @@ export default async function LayoutInterno({ children }: LayoutProps<"/">) {
     { href: "/terceiros/empresas", rotulo: "Empresas", icone: <IconeEmpresas /> },
     { href: "/terceiros/pessoas", rotulo: "Consultar pessoas", icone: <IconeBusca /> },
   ];
-  if (usuario.papeis.includes("rh")) terceiros.push({ href: "/terceiros/analise", rotulo: "Análise do RH", icone: <IconeAnalise /> });
+  if (usuario.papeis.includes("rh") || usuario.papeis.includes("sst")) terceiros.push({ href: "/terceiros/analise", rotulo: "Análise de documentos", icone: <IconeAnalise /> });
   if (usuario.papeis.includes("sst")) terceiros.push({ href: "/terceiros/integracao", rotulo: "Integração", icone: <IconeIntegracao /> });
 
   const grupos: GrupoMenu[] = [

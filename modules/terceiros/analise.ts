@@ -12,29 +12,39 @@ export type EnvioNaFila = {
   pessoa: string | null;
   enviadoEm: DataISO;
   prazo: SituacaoPrazo;
+  faltam: Record<Responsavel, number>;
 };
+
+export type Responsavel = "rh" | "sst";
 
 const dataNoFuso = (instante: string): DataISO => agoraNoFuso(new Date(instante)).data;
 const ORDEM: Record<string, number> = { atrasada: 0, vence_hoje: 1, vence_amanha: 2, no_prazo: 3, sem_prazo: 4 };
 
-/** Envios esperando o RH, com o prazo (dias úteis com feriados), os mais urgentes primeiro. */
+// Envios abertos com o prazo (dias úteis com feriados) e quantos itens faltam para RH e Segurança; os mais urgentes primeiro.
 export async function filaDeAnalise(): Promise<EnvioNaFila[]> {
   const supabase = await criarClienteServidor();
-  const [{ data, error }, parametros, feriados] = await Promise.all([
+  const [{ data, error }, parametros, feriados, catalogo] = await Promise.all([
     supabase
       .from("envios_analise")
-      .select("id, enviado_em, empresa_id, empresas_terceiras(razao_social), vinculos(pessoas(nome))")
+      .select("id, enviado_em, empresa_id, empresas_terceiras(razao_social), vinculos(pessoas(nome)), envio_itens(decisao, documentos(tipo_documento))")
       .eq("situacao", "aberto")
       .order("enviado_em"),
     lerParametros(),
     carregarFeriados(),
+    carregarCatalogo(),
   ]);
   if (error) throw new Error("Falha ao carregar a fila.");
   const hoje = agoraNoFuso().data;
   return (data ?? [])
     .map((e) => {
       const enviadoEm = dataNoFuso(e.enviado_em);
+      const faltam: Record<Responsavel, number> = { rh: 0, sst: 0 };
+      for (const i of e.envio_itens ?? []) {
+        if (i.decisao) continue;
+        faltam[catalogo.tipos.get(i.documentos?.tipo_documento ?? "")?.responsavel ?? "rh"] += 1;
+      }
       return {
+        faltam,
         id: e.id,
         empresa: e.empresas_terceiras?.razao_social ?? "—",
         empresaId: e.empresa_id,
@@ -88,6 +98,7 @@ export async function detalheDoEnvio(envioId: string) {
         motivo: i.motivo,
         nome: tipo?.nome ?? doc?.tipo_documento ?? "Documento",
         sensivel: tipo?.sensivel ?? false,
+        responsavel: (tipo?.responsavel ?? "rh") as Responsavel,
         ordem: tipo?.ordem ?? 999,
         valorTexto: doc?.valor_texto ?? null,
         competencia: doc?.competencia ?? null,
