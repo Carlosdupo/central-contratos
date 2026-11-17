@@ -79,7 +79,9 @@ export async function abrirContratacao(_: EstadoFormulario, dados: FormData): Pr
   // Rótulo do escopo (vira o "pacote"): "21.1 Elétrica (13 de 14 atividades)". Uma atividade só: o banco usa o nome dela.
   const todas = await listarMatriz();
   const escolhidas = todas.filter((a) => lido.data.atividades.includes(a.id));
-  const escopo = escolhidas.length > 1 ? rotuloDoEscopo(escolhidas, todas) : undefined;
+  // Sempre enviar p_escopo: no banco ele não tem valor padrão, e sem ele o Supabase não acha a função.
+  // Texto vazio = uma atividade só (o banco usa o nome dela).
+  const escopo = escolhidas.length > 1 ? rotuloDoEscopo(escolhidas, todas) : "";
   const supabase = await criarClienteServidor();
   const { data, error } = await supabase.rpc("abrir_contratacao", {
     p_obra: lido.data.obra,
