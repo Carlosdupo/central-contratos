@@ -91,6 +91,14 @@ describe("Leitura da planilha (trecho anonimizado no formato do Excel)", () => {
     expect(lerPlanilha(decodificarCsv(ansi))).toEqual(lerPlanilha(utf8));
   });
 
+  test("linhas coladas do Excel (Ctrl+C: tabulação, aspas só onde a célula tem quebra de linha) dão o mesmo resultado", () => {
+    const celula = (c: string) => (/[\t\n"]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c);
+    const copiado = lerCsv(utf8).map((l) => l.map(celula).join("\t")).join("\r\n") + "\r\n";
+    expect(lerPlanilha(copiado)).toEqual(lerPlanilha(utf8));
+    const comVirgulas = "Descrição\tPrazo que compras precisa\tPrazo até chegar na obra\tCausa do atraso\r\nMaterial A, B e C\t15\t30\t\"esperando, ver com\nfornecedor\"\r\n";
+    expect(lerPlanilha(comVirgulas).itens[0]).toMatchObject({ descricao: "Material A, B e C", prazo_compras_dias: 15, observacao: "esperando, ver com\nfornecedor" });
+  });
+
   test("avisa a linha com valor inválido e a falta do cabeçalho", () => {
     expect(lerPlanilha("Descrição;Prazo que compras precisa;Prazo até chegar na obra\nX;abc;30").erro).toContain("Linha 2");
     expect(lerPlanilha("Fase;ID\nA;B").erro).toContain("cabeçalho");
@@ -107,6 +115,9 @@ describe("Leitura do cronograma", () => {
       { id_pacote: "9004", inicio: "2026-11-12" },
       { id_pacote: "13019812", inicio: "2025-07-31" },
     ]);
+  });
+  test("cronograma colado do Excel (tabulação)", () => {
+    expect(lerCronograma("ID\tPacote de trabalho\tData de Início\r\n30040340\tele - ligação de luz, padrão\t01/04/2025\r\n").pacotes).toEqual([{ id_pacote: "30040340", inicio: "2025-04-01" }]);
   });
   test("data inválida aponta a linha", () => {
     expect(lerCronograma("ID;Data de Início\nP1;31/02/2026").erro).toContain("Linha 2");

@@ -7,7 +7,7 @@ import { itensDaPlanilha, obrasDaPlanilha } from "@/modules/suprimentos/consulta
 import { editarItemPlanejamento, importarPlanilha } from "@/modules/suprimentos/acoes";
 import { TabelaPlanejamento } from "@/components/app/tabela-planejamento";
 import { Formulario } from "@/components/app/formulario";
-import { CampoArquivo } from "@/components/app/campo-arquivo";
+import { CampoArquivo, CampoColar } from "@/components/app/campo-arquivo";
 
 export const metadata: Metadata = { title: "Planilha de suprimentos" };
 
@@ -48,11 +48,12 @@ export default async function PaginaPlanilha({ params, searchParams }: PageProps
               <div>
                 <h2 className="subtitulo">Importar a planilha de {obra.nome}</h2>
                 <p className="mt-1 text-[13px] text-muted-foreground">
-                  Salve a aba no Excel como CSV (Arquivo &gt; Salvar como &gt; CSV) e envie. Colunas lidas pelo nome: Fase, ID do pacote, Descrição, Responsável, Prazo que compras precisa (dias), Prazo até chegar na obra (dias), Início, Data real da obra, Data real de compras e Observação. Itens que já viraram contratação são mantidos.
+                  Copie a aba IMPORTAR {tipo.sigla} no Excel (Ctrl+A, Ctrl+C) e cole na caixa, ou envie a aba salva como CSV. Colunas lidas pelo nome: Fase, ID do pacote, Descrição, Responsável, Prazo que compras precisa (dias), Prazo até chegar na obra (dias), Início, Data real da obra, Data real de compras e Causa do atraso. Itens que já viraram contratação são mantidos.
                 </p>
               </div>
               <Formulario acao={importarPlanilha.bind(null, obra.id, tipo.sigla)} textoBotao="Importar planilha" className="flex flex-wrap items-end gap-3">
-                <CampoArquivo rotulo={`CSV da planilha ${tipo.sigla}`} aceita=".csv,text/csv" className="min-w-[260px] flex-1" />
+                <CampoColar rotulo={`Colar da planilha ${tipo.sigla}`} className="basis-full" />
+                <CampoArquivo rotulo={`Ou envie o CSV da planilha ${tipo.sigla}`} aceita=".csv,text/csv" className="min-w-[260px] flex-1" />
               </Formulario>
             </section>
           )}

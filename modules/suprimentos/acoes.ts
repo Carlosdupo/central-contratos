@@ -24,6 +24,18 @@ async function lerArquivoCsv(dados: FormData, campo: string): Promise<{ texto: s
   return { texto: decodificarCsv(await arquivo.arrayBuffer()) };
 }
 
+/** Linhas coladas do Excel (Ctrl+C vira texto separado por tabulação) ou, se a caixa estiver vazia, o arquivo CSV. */
+async function lerTextoDaPlanilha(dados: FormData): Promise<{ texto: string } | { erro: string }> {
+  const colado = dados.get("colado");
+  if (typeof colado === "string" && colado.trim() !== "") {
+    if (colado.length > LIMITE_ARQUIVO) return { erro: "Texto colado grande demais (até 1,5 MB). Cole em partes ou envie o CSV." };
+    return { texto: colado };
+  }
+  const arquivo = dados.get("arquivo");
+  if (!(arquivo instanceof File) || arquivo.size === 0) return { erro: "Cole as linhas copiadas da planilha ou escolha o arquivo CSV." };
+  return lerArquivoCsv(dados, "arquivo");
+}
+
 export async function salvarCalendario(ano: number, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
   await exigirInterno();
   if (!Number.isInteger(ano)) return { erro: "Ano inválido." };
@@ -50,7 +62,7 @@ export async function salvarCalendario(ano: number, _: EstadoFormulario, dados: 
 export async function importarPlanilha(obra: string, tipo: "MO" | "MAT", _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
   await exigirInterno();
   if (!uuid.safeParse(obra).success || (tipo !== "MO" && tipo !== "MAT")) return { erro: "Dados inválidos." };
-  const arquivo = await lerArquivoCsv(dados, "arquivo");
+  const arquivo = await lerTextoDaPlanilha(dados);
   if ("erro" in arquivo) return arquivo;
   const lida = lerPlanilha(arquivo.texto);
   if (lida.erro) return { erro: lida.erro };
@@ -64,7 +76,7 @@ export async function importarPlanilha(obra: string, tipo: "MO" | "MAT", _: Esta
 export async function importarCronograma(obra: string, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
   await exigirInterno();
   if (!uuid.safeParse(obra).success) return { erro: "Dados inválidos." };
-  const arquivo = await lerArquivoCsv(dados, "arquivo");
+  const arquivo = await lerTextoDaPlanilha(dados);
   if ("erro" in arquivo) return arquivo;
   const lido = lerCronograma(arquivo.texto);
   if (lido.erro) return { erro: lido.erro };

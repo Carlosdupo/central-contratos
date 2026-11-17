@@ -8,7 +8,7 @@ import { agruparEap } from "@/lib/eap";
 import { formatarData, agoraNoFuso } from "@/lib/datas";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { CampoTexto, Formulario, Marcador } from "@/components/app/formulario";
-import { CampoArquivo } from "@/components/app/campo-arquivo";
+import { CampoArquivo, CampoColar } from "@/components/app/campo-arquivo";
 import { importarCronograma } from "@/modules/suprimentos/acoes";
 
 export const metadata: Metadata = { title: "Obra" };
@@ -53,11 +53,12 @@ export default async function PaginaObra({ params }: PageProps<"/admin/obras/[id
         <div>
           <h3 className="subtitulo">Cronograma da obra (planilha de suprimentos)</h3>
           <p className="mt-1 text-[13px] text-muted-foreground">
-            Envie o cronograma (aba PREVISION) salvo como CSV, com as colunas ID do pacote e Início. Ele substitui o anterior e as datas da planilha de suprimentos são recalculadas. Reimporte sempre que o cronograma mudar.
+            Copie a aba PREVISION no Excel (Ctrl+A, Ctrl+C) e cole na caixa, ou envie a aba salva como CSV, com as colunas ID e Data de Início. Ele substitui o anterior e as datas da planilha de suprimentos são recalculadas. Reimporte sempre que o cronograma mudar.
           </p>
         </div>
         <Formulario acao={importarCronograma.bind(null, obra.id)} textoBotao="Importar cronograma" className="flex flex-wrap items-end gap-3">
-          <CampoArquivo rotulo="CSV do cronograma" aceita=".csv,text/csv" className="min-w-[260px] flex-1" />
+          <CampoColar rotulo="Colar o cronograma" className="basis-full" />
+          <CampoArquivo rotulo="Ou envie o CSV do cronograma" aceita=".csv,text/csv" className="min-w-[260px] flex-1" />
         </Formulario>
       </section>
 
