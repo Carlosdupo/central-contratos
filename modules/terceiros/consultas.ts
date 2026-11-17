@@ -20,7 +20,7 @@ import {
 export const carregarCatalogo = cache(async () => {
   const supabase = await criarClienteServidor();
   const [tipos, matriz, validade] = await Promise.all([
-    supabase.from("tipos_documento").select("codigo, nome, regra_validade, chave_validade, sensivel, aceita_texto, observacao, ordem").eq("ativo", true).order("ordem"),
+    supabase.from("tipos_documento").select("codigo, nome, regra_validade, chave_validade, sensivel, aceita_texto, observacao, ordem, etapa, responsavel").eq("ativo", true).order("ordem"),
     supabase.from("matriz_documental").select("tipo_documento, aplica_a, condicao").eq("ativo", true),
     supabase.from("parametros").select("valor").eq("chave", "validade_documentos_meses").maybeSingle(),
   ]);

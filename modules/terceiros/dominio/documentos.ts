@@ -15,6 +15,8 @@ export type TipoDocumento = {
   aceita_texto: boolean;
   observacao: string | null;
   ordem: number;
+  etapa: "entrada" | "mensal";
+  responsavel: "rh" | "sst";
 };
 export type ItemMatriz = { tipo_documento: string; aplica_a: AplicaA; condicao: Condicao };
 export type ValidadeMeses = { aso: number; nr: number; rg_cnh: number };
@@ -86,4 +88,17 @@ export function podeEnviarParaAnalise(estados: EstadoItem[]): boolean {
 /** Validade mínima: arquivo de documento que vence precisa estar válido hoje. */
 export function dentroDaValidade(validade: DataISO | null, hoje: DataISO): boolean {
   return validade === null || validade >= hoje;
+}
+
+export type FaixaProgresso = "completo" | "andamento" | "pendencia";
+export type Progresso = { aprovados: number; exigidos: number; percentual: number; faixa: FaixaProgresso };
+
+// Vencido conta como não aceito (estadoDoItem já troca aprovado vencido por "vencido").
+export function progressoDocumentos(estados: EstadoItem[]): Progresso {
+  const exigidos = estados.length;
+  const aprovados = estados.filter((e) => e === "aprovado").length;
+  const percentual = exigidos === 0 ? 0 : Math.floor((aprovados / exigidos) * 100);
+  const faixa: FaixaProgresso =
+    exigidos > 0 && aprovados === exigidos ? "completo" : estados.some((e) => e === "reprovado" || e === "vencido") ? "pendencia" : "andamento";
+  return { aprovados, exigidos, percentual, faixa };
 }

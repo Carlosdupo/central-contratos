@@ -5,7 +5,9 @@ import {
   documentosExigidos,
   estadoDoItem,
   podeEnviarParaAnalise,
+  progressoDocumentos,
   validadeDoDocumento,
+  type EstadoItem,
   type ItemMatriz,
 } from "@/modules/terceiros/dominio/documentos";
 import { dataDaIntegracao } from "@/modules/terceiros/dominio/integracao";
@@ -91,5 +93,25 @@ describe("data da integração (corte às 18h)", () => {
     // quinta 19/11 antes das 18h: sexta 20 é feriado, vai para segunda 23
     expect(dataDaIntegracao({ data: "2026-11-19", hora: 9 }, 18, feriados)).toBe("2026-11-23");
     expect(dataDaIntegracao({ data: "2026-11-19", hora: 19 }, 18, feriados)).toBe("2026-11-24");
+  });
+});
+
+describe("percentual de documentos aceitos", () => {
+  it("conta só os aprovados sobre os exigidos", () => {
+    expect(progressoDocumentos(["aprovado", "aprovado", "enviado", "falta"])).toEqual({ aprovados: 2, exigidos: 4, percentual: 50, faixa: "andamento" });
+  });
+  it("arredonda para baixo: 99% não vira 100%", () => {
+    const estados = [...Array(199).fill("aprovado"), "enviado"] as EstadoItem[];
+    expect(progressoDocumentos(estados).percentual).toBe(99);
+  });
+  it("completo só com tudo aprovado", () => {
+    expect(progressoDocumentos(["aprovado", "aprovado"]).faixa).toBe("completo");
+  });
+  it("reprovado ou vencido marca pendência", () => {
+    expect(progressoDocumentos(["aprovado", "reprovado"]).faixa).toBe("pendencia");
+    expect(progressoDocumentos(["aprovado", "vencido"]).faixa).toBe("pendencia");
+  });
+  it("sem nada exigido fica em 0% e não completo", () => {
+    expect(progressoDocumentos([])).toEqual({ aprovados: 0, exigidos: 0, percentual: 0, faixa: "andamento" });
   });
 });

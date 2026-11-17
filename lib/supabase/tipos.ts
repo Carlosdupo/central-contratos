@@ -547,6 +547,7 @@ export type Database = {
           codigo: string
           contrato_original: string | null
           forma_legal: string | null
+          fora_da_matriz: string | null
           matriz_id: string | null
           aditivo_destino: string | null
           empresa_ja_liberada: boolean
@@ -596,6 +597,7 @@ export type Database = {
           codigo: string
           contrato_original?: string | null
           forma_legal?: string | null
+          fora_da_matriz?: string | null
           matriz_id?: string | null
           aditivo_destino?: string | null
           empresa_ja_liberada?: boolean
@@ -645,6 +647,7 @@ export type Database = {
           codigo?: string
           contrato_original?: string | null
           forma_legal?: string | null
+          fora_da_matriz?: string | null
           matriz_id?: string | null
           aditivo_destino?: string | null
           empresa_ja_liberada?: boolean
@@ -1663,10 +1666,12 @@ export type Database = {
           chave_validade: string | null
           codigo: string
           escopo: Database["public"]["Enums"]["escopo_documento"]
+          etapa: string
           nome: string
           observacao: string | null
           ordem: number
           regra_validade: Database["public"]["Enums"]["regra_validade"]
+          responsavel: string
           sensivel: boolean
         }
         Insert: {
@@ -1675,10 +1680,12 @@ export type Database = {
           chave_validade?: string | null
           codigo: string
           escopo: Database["public"]["Enums"]["escopo_documento"]
+          etapa?: string
           nome: string
           observacao?: string | null
           ordem?: number
           regra_validade: Database["public"]["Enums"]["regra_validade"]
+          responsavel?: string
           sensivel?: boolean
         }
         Update: {
@@ -1687,10 +1694,12 @@ export type Database = {
           chave_validade?: string | null
           codigo?: string
           escopo?: Database["public"]["Enums"]["escopo_documento"]
+          etapa?: string
           nome?: string
           observacao?: string | null
           ordem?: number
           regra_validade?: Database["public"]["Enums"]["regra_validade"]
+          responsavel?: string
           sensivel?: boolean
         }
         Relationships: []
@@ -1982,6 +1991,7 @@ export type Database = {
           p_atividades: string[]
           p_contrato_original?: string
           p_escopo?: string
+          p_fora_matriz?: string
           p_negociacao: string
           p_obra: string
           p_planejamento_item?: string

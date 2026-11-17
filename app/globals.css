@@ -219,6 +219,12 @@
   [data-slot="tabs-tab"] { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--separador-forte); background: var(--superficie); color: var(--texto); font-size: 13.5px; font-weight: 600; cursor: pointer; }
   [data-slot="tabs-tab"]:hover { background: var(--preenchimento); }
   [data-slot="tabs-tab"][data-selected] { background: var(--texto); border-color: var(--texto); color: var(--fundo); }
+  .progresso-docs { display: flex; flex-direction: column; gap: 8px; --cor-faixa: var(--warn); }
+  .progresso-docs[data-faixa="completo"] { --cor-faixa: var(--ok); }
+  .progresso-docs[data-faixa="pendencia"] { --cor-faixa: var(--bad); }
+  .progresso-docs .progresso-docs-faixa { color: var(--cor-faixa); }
+  .progresso-docs [data-slot="meter-track"] { height: 8px; border-radius: 999px; background: var(--preenchimento-2); border: 1px solid var(--separador-forte); overflow: hidden; }
+  .progresso-docs [data-slot="meter-indicator"] { height: 100%; background: var(--cor-faixa); }
   [data-slot="autocomplete-content"] { background: var(--superficie); border: 1px solid var(--separador); border-radius: var(--raio-campo); box-shadow: 0 8px 24px rgb(0 0 0 / .12); width: var(--anchor-width); max-height: min(320px, var(--available-height)); overflow-y: auto; padding: 4px; z-index: 50; }
   [data-slot="autocomplete-item"] { display: flex; flex-direction: column; gap: 1px; padding: 8px 10px; border-radius: 8px; cursor: pointer; }
   [data-slot="autocomplete-item"][data-highlighted] { background: var(--azul-suave); }
