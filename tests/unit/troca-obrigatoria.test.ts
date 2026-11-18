@@ -11,10 +11,14 @@ type Claims = { sub: string; aal?: string; app_metadata?: Record<string, unknown
 let claims: Claims = null;
 let papeis: { papel: string }[] = [];
 let tipo: "interno" | "externo" = "interno";
+let temAutenticador = false;
 
 vi.mock("@/lib/supabase/server", () => ({
   criarClienteServidor: async () => ({
-    auth: { getClaims: async () => ({ data: claims ? { claims } : null }) },
+    auth: {
+      getClaims: async () => ({ data: claims ? { claims } : null }),
+      mfa: { getAuthenticatorAssuranceLevel: async () => ({ data: { currentLevel: claims?.aal ?? null, nextLevel: temAutenticador ? "aal2" : "aal1" } }) },
+    },
     from: (tabela: string) => ({
       select: () => ({
         eq: () => ({
@@ -56,6 +60,15 @@ describe("Troca obrigatória da senha provisória", () => {
     expect(await para(() => exigirInterno())).toBe("REDIRECT:/verificacao");
     claims = { sub: "u1", aal: "aal2" };
     expect(await para(() => exigirInterno())).toBe("sem redirecionar");
+  });
+
+  test("RH sem autenticador entra só com a senha; com autenticador configurado, precisa do código", async () => {
+    papeis = [{ papel: "rh" }];
+    claims = { sub: "u1", aal: "aal1" };
+    expect(await para(() => exigirInterno())).toBe("sem redirecionar");
+    temAutenticador = true;
+    expect(await para(() => exigirInterno())).toBe("REDIRECT:/verificacao");
+    temAutenticador = false;
   });
 
   test("sem a marca (ou com a marca já tirada), a pessoa entra normalmente", async () => {

@@ -14,6 +14,7 @@ export type UsuarioAtual = {
   tipo: "interno" | "externo";
   papeis: Papel[];
   verificado: boolean; // concluiu a verificação em duas etapas nesta sessão (aal2)
+  temVerificacao: boolean; // configurou o aplicativo autenticador (então precisa do código)
   trocarSenha: boolean; // entrou com senha provisória: só pode ir para /definir-senha até trocá-la
 };
 
@@ -30,6 +31,7 @@ export const obterUsuarioAtual = cache(async (): Promise<UsuarioAtual | null> =>
   const { data } = await supabase.auth.getClaims();
   const claims = data?.claims;
   if (!claims?.sub) return null;
+  const { data: nivel } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
   // Duas consultas: usuario_papeis tem duas ligações com usuarios (usuario_id e created_by),
   // e o embed do PostgREST fica ambíguo.
@@ -47,6 +49,7 @@ export const obterUsuarioAtual = cache(async (): Promise<UsuarioAtual | null> =>
     tipo: linha.tipo,
     papeis: (papeis ?? []).map((p) => p.papel as string).filter(ehPapel),
     verificado: claims.aal === "aal2",
+    temVerificacao: nivel?.nextLevel === "aal2",
     // app_metadata só o servidor grava (user_metadata o próprio usuário consegue alterar).
     trocarSenha: (claims.app_metadata as { trocar_senha?: unknown } | undefined)?.trocar_senha === true,
   };
@@ -58,7 +61,7 @@ export async function exigirUsuario(): Promise<UsuarioAtual> {
   if (!usuario) redirect("/login");
   // A troca da senha provisória vem antes de tudo (e a verificação em duas etapas continua valendo depois dela).
   if (usuario.trocarSenha) redirect("/definir-senha");
-  if (exigeMfa(usuario.papeis) && !usuario.verificado) redirect("/verificacao");
+  if ((exigeMfa(usuario.papeis) || usuario.temVerificacao) && !usuario.verificado) redirect("/verificacao");
   return usuario;
 }
 

@@ -7,9 +7,10 @@ describe("papéis", () => {
     expect(ehPapel("empresa")).toBe(false);
     expect(ehPapel(undefined)).toBe(false);
   });
-  it("exige verificação em duas etapas para admin, RH e segurança do trabalho", () => {
+  it("verificação em duas etapas obrigatória só para o admin (opcional para RH e Segurança desde 18/11)", () => {
     expect(exigeMfa(["admin"])).toBe(true);
-    expect(exigeMfa(["coordenador_obra", "sst"])).toBe(true);
+    expect(exigeMfa(["coordenador_obra", "sst"])).toBe(false);
+    expect(exigeMfa(["rh"])).toBe(false);
     expect(exigeMfa(["coordenador_obra", "suprimentos"])).toBe(false);
     expect(exigeMfa([])).toBe(false);
   });

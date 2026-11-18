@@ -26,8 +26,9 @@ export const ROTULO_PAPEL: Record<Papel, string> = {
   financeiro: "Financeiro",
 };
 
-// Decisão P22 (proposta aprovada no plano): verificação em duas etapas obrigatória para estes papéis.
-export const PAPEIS_COM_MFA: readonly Papel[] = ["admin", "rh", "sst"];
+// Verificação em duas etapas obrigatória só para o admin (18/11/2026: opcional para RH e Segurança).
+// Quem configurar o código, de qualquer perfil, passa a usá-lo em todo acesso.
+export const PAPEIS_COM_MFA: readonly Papel[] = ["admin"];
 
 export const ehPapel = (valor: unknown): valor is Papel => typeof valor === "string" && (PAPEIS as readonly string[]).includes(valor);
 export const exigeMfa = (papeis: readonly Papel[]): boolean => papeis.some((p) => PAPEIS_COM_MFA.includes(p));

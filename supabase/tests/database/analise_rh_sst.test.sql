@@ -33,6 +33,8 @@ select is((select count(*)::int from public.avisos_internos where usuario_id = '
 select is((select count(*)::int from public.avisos_internos where usuario_id = '00000000-0000-0000-0000-0000000000f4' and tipo = 'analise'), 1, 'Segurança recebe aviso do envio novo');
 select ok((select count(*) > 0 from public.notificacoes where destinatario = 'sst@teste.local'), 'Chegada de documentos vai também por e-mail');
 
+-- Com autenticador configurado, a verificação em duas etapas continua obrigatória.
+insert into auth.mfa_factors (id, user_id, factor_type, status, created_at, updated_at) values (gen_random_uuid(), '00000000-0000-0000-0000-0000000000f4', 'totp', 'verified', now(), now());
 set local role authenticated;
 
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000000f3", "role": "authenticated", "aal": "aal2"}', true);

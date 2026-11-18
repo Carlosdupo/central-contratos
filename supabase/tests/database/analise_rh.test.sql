@@ -35,6 +35,8 @@ insert into public.envio_itens (id, envio_id, documento_id) values
   ('00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000d2'),
   ('00000000-0000-0000-0000-000000000013', '00000000-0000-0000-0000-0000000000b2', '00000000-0000-0000-0000-0000000000d3');
 
+-- Com autenticador configurado, a verificação em duas etapas continua obrigatória.
+insert into auth.mfa_factors (id, user_id, factor_type, status, created_at, updated_at) values (gen_random_uuid(), '00000000-0000-0000-0000-0000000000f3', 'totp', 'verified', now(), now());
 set local role authenticated;
 
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000000f2", "role": "authenticated", "aal": "aal1"}', true);

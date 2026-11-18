@@ -27,6 +27,8 @@ insert into public.documentos (id, tipo_documento, empresa_id, vinculo_id, situa
   ('00000000-0000-0000-0000-0000000000d1', 'aso', '00000000-0000-0000-0000-00000000aaaa', '00000000-0000-0000-0000-0000000000a1', 'aprovado', (now() at time zone 'America/Sao_Paulo')::date - interval '13 months'),
   ('00000000-0000-0000-0000-0000000000d2', 'nr18', '00000000-0000-0000-0000-00000000aaaa', '00000000-0000-0000-0000-0000000000a2', 'aprovado', ((now() at time zone 'America/Sao_Paulo')::date + 31) - interval '24 months');
 
+-- Com autenticador configurado, a verificação em duas etapas continua obrigatória.
+insert into auth.mfa_factors (id, user_id, factor_type, status, created_at, updated_at) values (gen_random_uuid(), '00000000-0000-0000-0000-0000000000f4', 'totp', 'verified', now(), now());
 set local role authenticated;
 
 -- F4: integração
