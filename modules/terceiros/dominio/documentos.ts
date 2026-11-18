@@ -110,6 +110,34 @@ export function dentroDaValidade(validade: DataISO | null, hoje: DataISO): boole
   return validade === null || validade >= hoje;
 }
 
+// Para cobrar a empresa: o que falta enviar, o que voltou e o que está com o RH ou com a Segurança.
+export type ResumoPendencias = { aprovados: number; exigidos: number; faltaEnviar: string[]; corrigir: string[]; comRh: string[]; comSst: string[] };
+export function resumoPendencias(itens: { estado: EstadoItem; tipo: Pick<TipoDocumento, "nome" | "responsavel"> }[]): ResumoPendencias {
+  const nomes = (f: (i: (typeof itens)[number]) => boolean) => itens.filter(f).map((i) => i.tipo.nome);
+  return {
+    aprovados: itens.filter((i) => i.estado === "aprovado").length,
+    exigidos: itens.length,
+    faltaEnviar: nomes((i) => i.estado === "falta" || i.estado === "anexado"),
+    corrigir: nomes((i) => i.estado === "reprovado" || i.estado === "vencido"),
+    comRh: nomes((i) => i.estado === "enviado" && i.tipo.responsavel === "rh"),
+    comSst: nomes((i) => i.estado === "enviado" && i.tipo.responsavel === "sst"),
+  };
+}
+const listar = (nomes: string[], max = 3) => (nomes.length <= max ? nomes.join(", ") : `${nomes.slice(0, max).join(", ")} e mais ${nomes.length - max}`);
+export function textoPendencias(r: ResumoPendencias): string {
+  if (r.exigidos === 0) return "";
+  const partes = [`${r.aprovados} de ${r.exigidos} aprovados`];
+  if (r.faltaEnviar.length) partes.push(`a empresa não enviou: ${listar(r.faltaEnviar)}`);
+  if (r.corrigir.length) partes.push(`a empresa precisa corrigir: ${listar(r.corrigir)}`);
+  if (r.comRh.length) partes.push(`com o RH: ${listar(r.comRh)}`);
+  if (r.comSst.length) partes.push(`com a Segurança: ${listar(r.comSst)}`);
+  return `${partes.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(". ")}.`;
+}
+// Quem precisa decidir agora (para o selo "Em análise").
+export function quemAnalisa(r: ResumoPendencias): string | null {
+  return r.comRh.length && r.comSst.length ? "RH E SEGURANÇA" : r.comSst.length ? "SEGURANÇA" : r.comRh.length ? "RH" : null;
+}
+
 export type FaixaProgresso = "completo" | "andamento" | "pendencia";
 export type Progresso = { aprovados: number; exigidos: number; percentual: number; faixa: FaixaProgresso };
 

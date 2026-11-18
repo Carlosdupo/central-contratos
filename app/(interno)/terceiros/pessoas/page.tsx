@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { exigirInterno } from "@/modules/acesso/sessao";
 import { TIPO_VINCULO } from "@/modules/terceiros/rotulos";
+import { documentosDosVinculos } from "@/modules/terceiros/consultas";
+import { quemAnalisa, resumoPendencias, textoPendencias, type ResumoPendencias } from "@/modules/terceiros/dominio/documentos";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarData } from "@/lib/datas";
 import { CampoTexto } from "@/components/app/formulario";
@@ -29,13 +31,13 @@ const CHECK = "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm-4 9.5 3 3 5-6";
 const RELOGIO = "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 4v5l3 2";
 const BLOQUEIO = "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM6 6l12 12";
 
-function Selo({ l }: { l: Linha }) {
+function Selo({ l, resumo }: { l: Linha; resumo?: ResumoPendencias }) {
   const base = "inline-flex items-center gap-2 rounded-[10px] px-3.5 py-2.5 font-heading text-[13px] leading-none font-bold tracking-[.08em] whitespace-nowrap";
   if (l.situacao === "liberado") return <span className={`${base} bg-ok text-[var(--superficie)]`}><Icone d={CHECK} />LIBERADA</span>;
   if (l.situacao === "bloqueado") return <span className={`${base} bg-bad text-[var(--superficie)]`}><Icone d={BLOQUEIO} />BLOQUEADA</span>;
   const texto =
     l.situacao === "integracao_agendada" ? `INTEGRAÇÃO ${l.integracao ? formatarData(l.integracao).slice(0, 5) : ""}`.trim()
-    : l.situacao === "em_analise" ? "EM ANÁLISE DO RH"
+    : l.situacao === "em_analise" ? (resumo && quemAnalisa(resumo) ? `EM ANÁLISE: ${quemAnalisa(resumo)}` : "EM ANÁLISE")
     : l.situacao === "pendente" ? "DOCUMENTOS PENDENTES"
     : l.situacao === "aguardando_empresa" ? "AGUARDA A EMPRESA"
     : l.situacao === "rascunho" ? "EM CADASTRO"
@@ -80,8 +82,13 @@ export default async function PaginaConsultaPessoas({ searchParams }: PageProps<
         supabase.from("tipos_documento").select("codigo, nome"),
       ])
     : [{ data: [] }, { data: [] }];
+  // Para quem cobra a empresa (coordenação, suprimentos): quantos aprovados, o que falta e com quem está.
+  const aguardando = linhas.filter((l) => l.situacao && ["rascunho", "em_analise", "pendente", "aguardando_empresa"].includes(l.situacao)).map((l) => l.vinculoId);
+  const resumos = new Map([...(await documentosDosVinculos([...new Set(aguardando)]).catch(() => new Map()))].map(([id, itens]) => [id, resumoPendencias(itens)] as const));
   const nomeDoc = new Map((tipos ?? []).map((t) => [t.codigo, t.nome]));
   const motivo = (l: Linha): string => {
+    const resumo = resumos.get(l.vinculoId);
+    if (resumo && resumo.exigidos > 0 && l.situacao !== "aguardando_empresa") return textoPendencias(resumo);
     const meus = (docs ?? []).filter((d) => d.vinculo_id === l.vinculoId);
     const vencidos = meus.filter((d) => d.situacao === "vencido");
     const reprovados = meus.filter((d) => d.situacao === "reprovado");
@@ -147,7 +154,7 @@ export default async function PaginaConsultaPessoas({ searchParams }: PageProps<
                     {[l.funcao, l.empresa, l.obra, TIPO_VINCULO[l.tipo], l.cpf ? `CPF ${l.cpf}` : null].filter(Boolean).join(" · ")}
                   </span>
                 </div>
-                <Selo l={l} />
+                <Selo l={l} resumo={resumos.get(l.vinculoId)} />
                 {motivo(l) && <p className="w-full text-[12.5px] text-muted-foreground">{motivo(l)}</p>}
               </li>
             ))}

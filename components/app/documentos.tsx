@@ -20,9 +20,10 @@ export const ROTULO_ESTADO: Record<EstadoItem, [string, string]> = {
   vencido: ["selo-erro", "Vencido"],
 };
 
-export function SeloEstado({ estado }: { estado: EstadoItem }) {
+export function SeloEstado({ estado, responsavel }: { estado: EstadoItem; responsavel?: "rh" | "sst" }) {
   const [classe, texto] = ROTULO_ESTADO[estado];
-  return <span className={`selo ${classe}`}>{texto}</span>;
+  const com = estado === "enviado" && responsavel ? (responsavel === "sst" ? " (Segurança)" : " (RH)") : "";
+  return <span className={`selo ${classe}`}>{texto}{com}</span>;
 }
 
 /** Abre o arquivo por link temporário; a abertura fica registrada (LGPD). */

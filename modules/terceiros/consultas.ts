@@ -86,31 +86,21 @@ export async function documentosDaEmpresa(empresaId: string): Promise<{ itens: I
 
 export type ItemDocumentoPessoa = Omit<ItemDocumentoEmpresa, "valorTexto">;
 
-/** Documentos exigidos de uma pessoa (pela matriz, conforme tipo e eletricidade), com a situação de cada um. */
-export async function documentosDoVinculo(vinculoId: string) {
-  const supabase = await criarClienteServidor();
-  const hoje = agoraNoFuso().data;
-  const [catalogo, { data: vinculo }, { data: docs, error }] = await Promise.all([
-    carregarCatalogo(),
-    supabase.from("vinculos").select("id, tipo, eletricidade, empresa_id, alocacoes(situacao)").eq("id", vinculoId).maybeSingle(),
-    supabase
-      .from("documentos")
-      .select("id, tipo_documento, competencia, situacao, data_emissao, data_validade, arquivo_atual_id, motivo_reprovacao")
-      .eq("vinculo_id", vinculoId),
-  ]);
-  if (error) throw new Error("Falha ao carregar os documentos.");
-  if (!vinculo) return null;
-  if (vinculo.tipo === "socio_esporadico") return { vinculo, itens: [] as ItemDocumentoPessoa[], hoje };
+type Catalogo = Awaited<ReturnType<typeof carregarCatalogo>>;
+type DocLido = { id: string; tipo_documento: string; competencia: string | null; situacao: string; data_emissao: string | null; data_validade: string | null; arquivo_atual_id: string | null; motivo_reprovacao: string | null };
+type VinculoLido = { tipo: "funcionario" | "socio_diario" | "socio_esporadico"; eletricidade: boolean; alocacoes: { situacao: string }[] | null };
+const COLUNAS_DOC = "id, tipo_documento, competencia, situacao, data_emissao, data_validade, arquivo_atual_id, motivo_reprovacao";
 
+function itensDaPessoa(catalogo: Catalogo, vinculo: VinculoLido, docs: DocLido[], hoje: DataISO): ItemDocumentoPessoa[] {
+  if (vinculo.tipo === "socio_esporadico") return [];
   const competencia = competenciaAtual(hoje);
   const liberado = (vinculo.alocacoes ?? []).some((a) => a.situacao === "liberado");
-  const exigidos = documentosExigidos(catalogo.matriz, vinculo.tipo, { eletricidade: vinculo.eletricidade });
-  const itens: ItemDocumentoPessoa[] = exigidos
+  return documentosExigidos(catalogo.matriz, vinculo.tipo, { eletricidade: vinculo.eletricidade })
     .map((codigo) => catalogo.tipos.get(codigo))
     .filter((t): t is TipoDocumento => !!t && exigeNoMes(t, { liberado }))
     .map((tipo) => {
       const mensal = tipo.regra_validade === "mensal";
-      const doc = (docs ?? []).find((d) => d.tipo_documento === tipo.codigo && (mensal ? d.competencia === competencia : d.competencia === null));
+      const doc = docs.find((d) => d.tipo_documento === tipo.codigo && (mensal ? d.competencia === competencia : d.competencia === null));
       const validade = doc ? validadeDoDocumento(tipo, doc, catalogo.meses) : null;
       return {
         tipo,
@@ -122,7 +112,36 @@ export async function documentosDoVinculo(vinculoId: string) {
         motivo: doc?.motivo_reprovacao ?? null,
       };
     });
-  return { vinculo, itens, hoje };
+}
+
+/** Documentos exigidos de uma pessoa (pela matriz, conforme tipo e eletricidade), com a situação de cada um. */
+export async function documentosDoVinculo(vinculoId: string) {
+  const supabase = await criarClienteServidor();
+  const hoje = agoraNoFuso().data;
+  const [catalogo, { data: vinculo }, { data: docs, error }] = await Promise.all([
+    carregarCatalogo(),
+    supabase.from("vinculos").select("id, tipo, eletricidade, empresa_id, alocacoes(situacao)").eq("id", vinculoId).maybeSingle(),
+    supabase.from("documentos").select(COLUNAS_DOC).eq("vinculo_id", vinculoId),
+  ]);
+  if (error) throw new Error("Falha ao carregar os documentos.");
+  if (!vinculo) return null;
+  return { vinculo, itens: itensDaPessoa(catalogo, vinculo, docs ?? [], hoje), hoje };
+}
+
+/** O mesmo para várias pessoas de uma vez (lista de Consultar pessoas), em três consultas. */
+export async function documentosDosVinculos(vinculoIds: string[]): Promise<Map<string, ItemDocumentoPessoa[]>> {
+  const resultado = new Map<string, ItemDocumentoPessoa[]>();
+  if (vinculoIds.length === 0) return resultado;
+  const supabase = await criarClienteServidor();
+  const hoje = agoraNoFuso().data;
+  const [catalogo, { data: vinculos, error: e1 }, { data: docs, error: e2 }] = await Promise.all([
+    carregarCatalogo(),
+    supabase.from("vinculos").select("id, tipo, eletricidade, alocacoes(situacao)").in("id", vinculoIds),
+    supabase.from("documentos").select(`vinculo_id, ${COLUNAS_DOC}`).in("vinculo_id", vinculoIds),
+  ]);
+  if (e1 || e2) throw new Error("Falha ao carregar os documentos.");
+  for (const v of vinculos ?? []) resultado.set(v.id, itensDaPessoa(catalogo, v, (docs ?? []).filter((d) => d.vinculo_id === v.id), hoje));
+  return resultado;
 }
 
 export type MembroEquipe = {

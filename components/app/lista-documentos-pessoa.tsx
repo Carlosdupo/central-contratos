@@ -43,7 +43,7 @@ function Grupo({ vinculoId, itens, editavel, podeAbrir, titulo }: Props & { titu
                 <div className="flex items-center gap-3">
                   {podeAbrir(item.tipo.sensivel) && item.arquivoId && <BotaoAbrirArquivo arquivoId={item.arquivoId} />}
                   {item.estado === "aprovado" && item.validade && diasAte(item.validade) <= 30 && <span className="selo selo-alerta">Vence em {diasAte(item.validade)} d</span>}
-                  <SeloEstado estado={item.estado} />
+                  <SeloEstado estado={item.estado} responsavel={item.tipo.responsavel} />
                 </div>
               </div>
               {aceitaNovo && <EnviarArquivo dono={{ tipo: "pessoa", vinculo: vinculoId }} tipoDoc={item.tipo.codigo} regra={item.tipo.regra_validade} competencia={item.competencia} />}
