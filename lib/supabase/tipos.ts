@@ -1539,6 +1539,60 @@ export type Database = {
           },
         ]
       }
+      negociacoes: {
+        Row: {
+          atividades: string | null
+          contratacao_id: string | null
+          coluna: string
+          criado_em: string
+          criado_por: string
+          empresa: string | null
+          fora_da_matriz: boolean
+          id: string
+          movido_em: string
+          obra_id: string
+          observacao: string | null
+          tipo: string
+          titulo: string
+          valor_estimado: number | null
+          valor_negociado: number | null
+        }
+        Insert: {
+          atividades?: string | null
+          contratacao_id?: string | null
+          coluna?: string
+          criado_em?: string
+          criado_por?: string
+          empresa?: string | null
+          fora_da_matriz?: boolean
+          id?: string
+          movido_em?: string
+          obra_id: string
+          observacao?: string | null
+          tipo?: string
+          titulo: string
+          valor_estimado?: number | null
+          valor_negociado?: number | null
+        }
+        Update: {
+          atividades?: string | null
+          contratacao_id?: string | null
+          coluna?: string
+          criado_em?: string
+          criado_por?: string
+          empresa?: string | null
+          fora_da_matriz?: boolean
+          id?: string
+          movido_em?: string
+          obra_id?: string
+          observacao?: string | null
+          tipo?: string
+          titulo?: string
+          valor_estimado?: number | null
+          valor_negociado?: number | null
+        }
+        Relationships: []
+      }
       obras: {
         Row: {
           ativa: boolean

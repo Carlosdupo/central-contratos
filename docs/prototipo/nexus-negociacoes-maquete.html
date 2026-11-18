@@ -1,0 +1,224 @@
+<title>Negociações da obra</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Quadro em 4 colunas (fluxo da negociação até o contrato); no celular as colunas rolam de lado dentro do quadro. */
+:root {
+  --fundo: #F4F6F9; --superficie: #FFFFFF; --preenchimento: #EEF1F6; --separador: #DDE2EA; --separador-forte: #778296;
+  --texto: #101827; --cinza: #5B6678; --azul: #1D5FE0; --azul-tinta: #FFFFFF; --azul-suave: #E4EDFD;
+  --ok: #0E7A4B; --ok-soft: #DDF3E8; --warn: #8A5A00; --warn-soft: #FBEBC8; --hot: #B4410A; --hot-soft: #FCE3D3;
+  --fonte: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Roboto, Arial, sans-serif;
+  --fonte-titulo: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Roboto, Arial, sans-serif;
+  --raio: 14px; --raio-campo: 10px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --fundo: #0C0F14; --superficie: #151A22; --preenchimento: #1C222C; --separador: #262D39; --separador-forte: #66738A;
+  --texto: #E8ECF3; --cinza: #9AA5B6; --azul: #5B8DFF; --azul-tinta: #0A1226; --azul-suave: #17274A;
+  --ok: #4CD39A; --ok-soft: #10301F; --warn: #F2BD52; --warn-soft: #382A0A; --hot: #FF9A62; --hot-soft: #3A1F10; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --fundo: #0C0F14; --superficie: #151A22; --preenchimento: #1C222C; --separador: #262D39; --separador-forte: #66738A;
+  --texto: #E8ECF3; --cinza: #9AA5B6; --azul: #5B8DFF; --azul-tinta: #0A1226; --azul-suave: #17274A;
+  --ok: #4CD39A; --ok-soft: #10301F; --warn: #F2BD52; --warn-soft: #382A0A; --hot: #FF9A62; --hot-soft: #3A1F10; color-scheme: dark; }
+body { background: var(--fundo); color: var(--texto); font-family: var(--fonte); font-size: 14px; }
+.pagina { max-width: 1320px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 20px; }
+.aviso-maquete { font-size: 12.5px; color: var(--warn); background: var(--warn-soft); border-radius: var(--raio-campo); padding: 8px 12px; }
+.topo { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+h1 { font-family: var(--fonte-titulo); font-size: 28px; line-height: 1.15; letter-spacing: -.02em; margin: 0; text-wrap: balance; }
+.sub { color: var(--cinza); margin: 4px 0 0; max-width: 62ch; }
+.acoes { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+label.filtro { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+select, input, textarea { font: inherit; color: var(--texto); background: var(--superficie); border: 1px solid var(--separador-forte); border-radius: var(--raio-campo); padding: 8px 10px; min-height: 38px; }
+textarea { min-height: 70px; resize: vertical; }
+button { font: inherit; cursor: pointer; border-radius: 999px; min-height: 38px; padding: 0 16px; border: 1px solid var(--separador-forte); background: var(--superficie); color: var(--texto); font-weight: 600; }
+button.primario { background: var(--azul); color: var(--azul-tinta); border-color: var(--azul); }
+button.pequeno { min-height: 32px; padding: 0 12px; font-size: 12.5px; }
+:focus-visible { outline: 2px solid var(--azul); outline-offset: 2px; }
+.resumo { display: flex; flex-wrap: wrap; gap: 8px; font-size: 13px; color: var(--cinza); }
+.resumo strong { color: var(--texto); font-variant-numeric: tabular-nums; }
+.resumo span { background: var(--superficie); border: 1px solid var(--separador); border-radius: 999px; padding: 5px 12px; }
+.quadro { display: grid; grid-template-columns: repeat(4, minmax(260px, 1fr)); gap: 14px; overflow-x: auto; padding-bottom: 6px; align-items: start; }
+.coluna { background: var(--preenchimento); border-radius: var(--raio); padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.coluna h2 { font-family: var(--fonte-titulo); font-size: 14px; margin: 0; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.coluna h2 .n { font-size: 12px; color: var(--cinza); font-variant-numeric: tabular-nums; background: var(--superficie); border-radius: 999px; padding: 2px 9px; }
+.coluna p.dica { margin: -4px 0 0; font-size: 12px; color: var(--cinza); }
+.coluna[data-coluna="falta_contrato"] h2 { color: var(--hot); }
+.vazio { font-size: 12.5px; color: var(--cinza); border: 1px dashed var(--separador-forte); border-radius: var(--raio-campo); padding: 14px; text-align: center; }
+.cartao { background: var(--superficie); border: 1px solid var(--separador); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.cartao[data-parado] { border-color: var(--hot); }
+.linha { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.selo { font-size: 11.5px; font-weight: 600; border-radius: 999px; padding: 2px 8px; background: var(--preenchimento); color: var(--cinza); }
+.selo.aditivo { background: var(--azul-suave); color: var(--azul); }
+.selo.nova { background: var(--ok-soft); color: var(--ok); }
+.selo.fora { background: var(--warn-soft); color: var(--warn); }
+.selo.alerta { background: var(--hot-soft); color: var(--hot); }
+.cartao h3 { margin: 0; font-size: 14.5px; line-height: 1.3; }
+.empresa { font-size: 13px; }
+.empresa.sem { color: var(--cinza); font-style: italic; }
+.ativ { margin: 0; padding-left: 16px; font-size: 12.5px; color: var(--cinza); }
+.valores { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; font-size: 12px; color: var(--cinza); }
+.valores b { display: block; font-size: 13.5px; color: var(--texto); font-variant-numeric: tabular-nums; }
+.obs { font-size: 12.5px; background: var(--preenchimento); border-radius: 8px; padding: 6px 8px; margin: 0; }
+.rodape { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; border-top: 1px solid var(--separador); padding-top: 8px; font-size: 11.5px; color: var(--cinza); }
+.rodape select { min-height: 32px; padding: 4px 8px; font-size: 12.5px; }
+.ct { font-weight: 700; color: var(--azul); font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; }
+dialog { border: 1px solid var(--separador); border-radius: 16px; padding: 0; width: min(520px, calc(100vw - 32px)); background: var(--superficie); color: var(--texto); }
+dialog::backdrop { background: rgb(10 15 25 / .45); }
+dialog form { display: flex; flex-direction: column; gap: 12px; padding: 20px; }
+dialog h2 { margin: 0; font-family: var(--fonte-titulo); font-size: 18px; }
+.campo { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 600; }
+.campo small { font-weight: 400; color: var(--cinza); }
+.duas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+fieldset { border: 0; padding: 0; margin: 0; display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; }
+legend { font-weight: 600; margin-bottom: 6px; }
+.fim { display: flex; justify-content: flex-end; gap: 8px; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--texto); color: var(--fundo); border-radius: 999px; padding: 10px 18px; font-size: 13px; font-weight: 600; }
+@media (max-width: 560px) { .duas { grid-template-columns: 1fr; } h1 { font-size: 24px; } }
+@media (prefers-reduced-motion: no-preference) { .cartao { transition: border-color .15s; } }
+</style>
+
+<div class="pagina">
+  <p class="aviso-maquete">Maquete para aprovação. Os dados são exemplos e nada é gravado.</p>
+  <div class="topo">
+    <div>
+      <h1>Negociações da obra</h1>
+      <p class="sub">Anote o que precisa negociar e acompanhe até virar contratação. O que já foi negociado fica lembrando de abrir o contrato.</p>
+    </div>
+    <div class="acoes">
+      <label class="filtro" for="filtro-obra">Obra
+        <select id="filtro-obra"><option value="">Todas as minhas obras</option><option>Block</option><option>Vértice</option></select>
+      </label>
+      <button class="primario" id="novo" type="button">Novo item</button>
+    </div>
+  </div>
+  <div class="resumo" id="resumo" aria-live="polite"></div>
+  <div class="quadro" id="quadro"></div>
+</div>
+
+<dialog id="janela" aria-labelledby="janela-titulo">
+  <form id="form-novo" method="dialog">
+    <h2 id="janela-titulo">Novo item para negociar</h2>
+    <div class="duas">
+      <label class="campo" for="n-obra">Obra do item<select id="n-obra" required><option>Block</option><option>Vértice</option></select></label>
+      <label class="campo" for="n-coluna">Situação<select id="n-coluna"></select></label>
+    </div>
+    <label class="campo" for="n-titulo">O que negociar<input id="n-titulo" required placeholder="Ex.: Pintura externa torre B"></label>
+    <label class="campo" for="n-ativ">Atividades<input id="n-ativ" placeholder="Busca na matriz ou &quot;Não consta na matriz&quot;"><small>No sistema, a mesma busca da matriz da abertura de contratação.</small></label>
+    <label class="campo" for="n-empresa">Empresa (se já tiver)<input id="n-empresa" placeholder="Ex.: Pinturas Oeste Ltda"></label>
+    <fieldset><legend>Vai virar</legend>
+      <label><input type="radio" name="n-tipo" value="nova" checked> Nova contratação</label>
+      <label><input type="radio" name="n-tipo" value="aditivo"> Aditivo</label>
+    </fieldset>
+    <div class="duas">
+      <label class="campo" for="n-estimado">Valor estimado (R$)<input id="n-estimado" inputmode="decimal" placeholder="0"></label>
+      <label class="campo" for="n-negociado">Valor negociado (R$)<input id="n-negociado" inputmode="decimal" placeholder="0"></label>
+    </div>
+    <label class="campo" for="n-obs">Observação<textarea id="n-obs" placeholder="Ex.: Empresa pediu 30 dias para começar"></textarea></label>
+    <div class="fim">
+      <button type="button" id="cancelar">Cancelar</button>
+      <button type="submit" class="primario">Adicionar ao quadro</button>
+    </div>
+  </form>
+</dialog>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+const COLUNAS = [
+  { id: "a_negociar", nome: "A negociar", dica: "A obra anota o que vai precisar contratar." },
+  { id: "em_negociacao", nome: "Em negociação", dica: "Já conversando com empresas." },
+  { id: "falta_contrato", nome: "Negociado, falta contrato", dica: "Lembrete: abrir a contratação ou o aditivo." },
+  { id: "contratacao_aberta", nome: "Contratação aberta", dica: "Segue no fluxo de contratação." },
+];
+const LIMITE_DIAS = 5;
+let itens = [
+  { id: 1, obra: "Block", coluna: "a_negociar", titulo: "Impermeabilização das floreiras", atividades: ["Impermeabilização com manta asfáltica"], empresa: "", tipo: "nova", estimado: 18500, negociado: null, obs: "Precisa antes do contrapiso do 3º pavimento.", por: "Auxiliar Obra - Ana Carolina", dias: 2 },
+  { id: 2, obra: "Vértice", coluna: "a_negociar", titulo: "Limpeza de fachada com balancim", atividades: ["Não consta na matriz"], empresa: "", tipo: "nova", estimado: null, negociado: null, obs: "", por: "Coordenador Obra - Carlos Dupont", dias: 1, fora: true },
+  { id: 3, obra: "Block", coluna: "em_negociacao", titulo: "Elétrica completa torre B", atividades: ["21.1 Elétrica (13 de 14 atividades)"], empresa: "Eletro Chapecó Ltda", tipo: "nova", estimado: 142000, negociado: null, obs: "2 propostas recebidas, falta a terceira.", por: "Coordenador Obra - Carlos Dupont", dias: 4 },
+  { id: 4, obra: "Block", coluna: "falta_contrato", titulo: "Acréscimo de alvenaria no térreo", atividades: ["Alvenaria de vedação"], empresa: "Construtora Irmãos Lima", tipo: "aditivo", estimado: 9000, negociado: 8400, obs: "Contrato original BLK-0042.", por: "Auxiliar Obra - Ana Carolina", dias: 8 },
+  { id: 5, obra: "Vértice", coluna: "falta_contrato", titulo: "Forro de gesso dos halls", atividades: ["Forro de gesso acartonado"], empresa: "Gesso Sul", tipo: "nova", estimado: 3600, negociado: 3200, obs: "", por: "Coordenador Obra - Carlos Dupont", dias: 2 },
+  { id: 6, obra: "Block", coluna: "contratacao_aberta", titulo: "Pintura interna aptos", atividades: ["Pintura látex PVA"], empresa: "Pinturas Oeste Ltda", tipo: "nova", estimado: 54000, negociado: 51200, obs: "", por: "Coordenador Obra - Carlos Dupont", dias: 0, ct: "CT-2026-031" },
+];
+let proximoId = 7, proximoCt = 32;
+const reais = (v) => v == null ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+const quadro = document.getElementById("quadro");
+const filtro = document.getElementById("filtro-obra");
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function cartao(i) {
+  const parado = i.coluna === "falta_contrato" && i.dias > LIMITE_DIAS;
+  const opcoes = COLUNAS.filter((c) => c.id !== "contratacao_aberta").map((c) => `<option value="${c.id}" ${c.id === i.coluna ? "selected" : ""}>${c.nome}</option>`).join("");
+  const acao = i.coluna === "contratacao_aberta"
+    ? `<span class="ct">${i.ct}</span>`
+    : `<label for="mover-${i.id}" style="display:flex;gap:6px;align-items:center">Mover para <select id="mover-${i.id}" data-mover="${i.id}">${opcoes}</select></label>`;
+  return `<article class="cartao" ${parado ? "data-parado" : ""} aria-label="${esc(i.titulo)}">
+    <div class="linha">
+      <span class="selo ${i.tipo}">${i.tipo === "aditivo" ? "Aditivo" : "Nova contratação"}</span>
+      <span class="selo">${i.obra}</span>
+      ${i.fora ? '<span class="selo fora">Não consta na matriz</span>' : ""}
+      ${parado ? `<span class="selo alerta">Sem contrato há ${i.dias} dias</span>` : ""}
+    </div>
+    <h3>${esc(i.titulo)}</h3>
+    <div class="empresa ${i.empresa ? "" : "sem"}">${i.empresa ? esc(i.empresa) : "Empresa a definir"}</div>
+    <ul class="ativ">${i.atividades.map((a) => `<li>${esc(a)}</li>`).join("")}</ul>
+    <div class="valores"><span>Estimado<b>${reais(i.estimado)}</b></span><span>Negociado<b>${reais(i.negociado)}</b></span></div>
+    ${i.obs ? `<p class="obs">${esc(i.obs)}</p>` : ""}
+    ${i.coluna === "falta_contrato" ? `<button class="primario pequeno" type="button" data-abrir="${i.id}">${i.tipo === "aditivo" ? "Abrir aditivo" : "Abrir contratação"}</button>` : ""}
+    <div class="rodape"><span>${esc(i.por)}${i.dias ? ` · há ${i.dias} ${i.dias === 1 ? "dia" : "dias"}` : " · hoje"}</span>${acao}</div>
+  </article>`;
+}
+
+function desenhar() {
+  const visiveis = itens.filter((i) => !filtro.value || i.obra === filtro.value);
+  quadro.innerHTML = COLUNAS.map((c) => {
+    const lista = visiveis.filter((i) => i.coluna === c.id);
+    return `<section class="coluna" data-coluna="${c.id}" aria-label="${c.nome}">
+      <h2>${c.nome}<span class="n">${lista.length}</span></h2>
+      <p class="dica">${c.dica}</p>
+      ${lista.length ? lista.map(cartao).join("") : '<div class="vazio">Nada aqui.</div>'}
+    </section>`;
+  }).join("");
+  const falta = visiveis.filter((i) => i.coluna === "falta_contrato");
+  const parados = falta.filter((i) => i.dias > LIMITE_DIAS).length;
+  document.getElementById("resumo").innerHTML =
+    `<span><strong>${visiveis.filter((i) => i.coluna !== "contratacao_aberta").length}</strong> itens em aberto</span>
+     <span><strong>${falta.length}</strong> negociados sem contrato${parados ? ` · <strong style="color:var(--hot)">${parados}</strong> parado há mais de ${LIMITE_DIAS} dias` : ""}</span>
+     <span>Negociado sem contrato: <strong>${reais(falta.reduce((s, i) => s + (i.negociado ?? 0), 0))}</strong></span>`;
+}
+
+const toast = document.getElementById("toast");
+let tempo;
+function avisar(t) { toast.textContent = t; toast.hidden = false; clearTimeout(tempo); tempo = setTimeout(() => (toast.hidden = true), 3200); }
+
+quadro.addEventListener("change", (e) => {
+  const id = Number(e.target.dataset.mover);
+  if (!id) return;
+  const i = itens.find((x) => x.id === id);
+  i.coluna = e.target.value; i.dias = 0;
+  desenhar();
+  avisar(`"${i.titulo}" movido para ${COLUNAS.find((c) => c.id === i.coluna).nome}.`);
+  document.getElementById(`mover-${id}`)?.focus();
+});
+quadro.addEventListener("click", (e) => {
+  const id = Number(e.target.dataset.abrir);
+  if (!id) return;
+  const i = itens.find((x) => x.id === id);
+  i.coluna = "contratacao_aberta"; i.ct = `CT-2026-0${proximoCt++}`; i.dias = 0;
+  desenhar();
+  avisar(`No sistema abre a tela de ${i.tipo === "aditivo" ? "aditivo" : "nova contratação"} já preenchida. Aqui: ${i.ct} criada.`);
+});
+filtro.addEventListener("change", desenhar);
+
+const janela = document.getElementById("janela");
+document.getElementById("n-coluna").innerHTML = COLUNAS.slice(0, 3).map((c) => `<option value="${c.id}">${c.nome}</option>`).join("");
+document.getElementById("novo").addEventListener("click", () => janela.showModal());
+document.getElementById("cancelar").addEventListener("click", () => janela.close());
+const num = (v) => { const n = Number(String(v).replace(/\./g, "").replace(",", ".")); return v && Number.isFinite(n) ? n : null; };
+document.getElementById("form-novo").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const v = (id) => document.getElementById(id).value.trim();
+  const ativ = v("n-ativ");
+  itens.push({ id: proximoId++, obra: v("n-obra"), coluna: v("n-coluna"), titulo: v("n-titulo"), atividades: [ativ || "A definir"], empresa: v("n-empresa"),
+    tipo: document.querySelector('input[name="n-tipo"]:checked').value, estimado: num(v("n-estimado")), negociado: num(v("n-negociado")), obs: v("n-obs"),
+    por: "Coordenador Obra - Carlos Dupont", dias: 0, fora: /não consta/i.test(ativ) });
+  e.target.reset(); janela.close(); desenhar(); avisar("Item adicionado ao quadro.");
+});
+desenhar();
+</script>

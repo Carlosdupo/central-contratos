@@ -107,6 +107,12 @@ export async function abrirContratacao(_: EstadoFormulario, dados: FormData): Pr
     // Os campos já foram conferidos acima; se mesmo assim falhar, a pessoa marca de novo na tela da contratação.
     await supabase.rpc("marcar_urgencia", { p_contratacao: data, p_urgente: true, p_motivo: lido.data.urgente_motivo as string, p_data: lido.data.urgente_data as string });
   }
+  // Veio do quadro de negociações: liga o item à contratação (o banco confere a obra e move para "Contratação aberta").
+  const doQuadro = uuid.safeParse(dados.get("negociacao_item"));
+  if (doQuadro.success) {
+    await supabase.from("negociacoes").update({ contratacao_id: data }).eq("id", doQuadro.data);
+    revalidatePath("/contratacoes/negociacoes");
+  }
   recarregar(data);
   redirect(`/contratacoes/${data}`);
 }

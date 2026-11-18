@@ -38,6 +38,7 @@ export default async function LayoutInterno({ children }: LayoutProps<"/">) {
         { href: "/painel", rotulo: "Painel", icone: <IconePainel />, contador: pendencias },
         { href: "/contratacoes", rotulo: "Contratações", icone: <IconeContratos /> },
         { href: "/contratacoes/panorama", rotulo: "Panorama das obras", icone: <IconePanorama /> },
+        { href: "/contratacoes/negociacoes", rotulo: "Negociações da obra", icone: <IconeContratos /> },
       ],
     },
     { titulo: "Terceiros", itens: terceiros },
