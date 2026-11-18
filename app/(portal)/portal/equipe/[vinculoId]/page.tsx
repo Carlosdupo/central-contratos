@@ -6,7 +6,7 @@ import { exigirExterno } from "@/modules/acesso/sessao";
 import { documentosDoVinculo } from "@/modules/terceiros/consultas";
 import { enviarDocumentosPessoa } from "@/modules/terceiros/acoes";
 import { linksDasFotos } from "@/modules/terceiros/fotos";
-import { podeEnviarParaAnalise } from "@/modules/terceiros/dominio/documentos";
+import { podeEnviarAlgumaEtapa } from "@/modules/terceiros/dominio/documentos";
 import { SITUACAO_ALOCACAO, TIPO_VINCULO } from "@/modules/terceiros/rotulos";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { agoraNoFuso, formatarData, somarDias } from "@/lib/datas";
@@ -41,7 +41,7 @@ export default async function PaginaPessoaPortal({ params }: PageProps<"/portal/
   const { data: cpf } = await supabase.rpc("cpf_mascarado", { p_pessoa: v.pessoas.id });
   const fotos = await linksDasFotos([v.pessoas.foto_path]);
   const esporadico = v.tipo === "socio_esporadico";
-  const podeEnviar = podeEnviarParaAnalise(dados.itens.map((i) => i.estado));
+  const podeEnviar = podeEnviarAlgumaEtapa(dados.itens);
   const faltam = dados.itens.filter((i) => ["falta", "reprovado", "vencido"].includes(i.estado)).length;
 
   return (

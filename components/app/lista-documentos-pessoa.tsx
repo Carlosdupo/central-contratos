@@ -1,18 +1,30 @@
 import { agoraNoFuso, diasCorridosEntre, formatarData } from "@/lib/datas";
-import { progressoDocumentos } from "@/modules/terceiros/dominio/documentos";
+import { formatarCompetencia, progressoDocumentos } from "@/modules/terceiros/dominio/documentos";
 import type { ItemDocumentoPessoa } from "@/modules/terceiros/consultas";
 import { BotaoAbrirArquivo, EnviarArquivo, SeloEstado } from "./documentos";
 import { ProgressoDocumentos } from "./progresso-documentos";
 
 const diasAte = (data: string) => diasCorridosEntre(agoraNoFuso().data, data);
 
-// Documentos de uma pessoa. "editavel" no portal; só leitura para a equipe interna.
-export function ListaDocumentosPessoa({ vinculoId, itens, editavel, podeAbrir }: { vinculoId: string; itens: ItemDocumentoPessoa[]; editavel: boolean; podeAbrir: (sensivel: boolean) => boolean }) {
+type Props = { vinculoId: string; itens: ItemDocumentoPessoa[]; editavel: boolean; podeAbrir: (sensivel: boolean) => boolean };
+
+// Documentos de uma pessoa ("editavel" no portal; só leitura para a equipe interna). A mensal só aparece para quem está liberado em obra.
+export function ListaDocumentosPessoa(props: Props) {
+  const entrada = props.itens.filter((i) => i.tipo.etapa !== "mensal");
+  const mensal = props.itens.filter((i) => i.tipo.etapa === "mensal");
+  const competencia = mensal.find((i) => i.competencia)?.competencia;
   return (
-    <>
-      <div className="mb-3">
-        <ProgressoDocumentos progresso={progressoDocumentos(itens.map((i) => i.estado))} />
-      </div>
+    <div className="flex flex-col gap-6">
+      {entrada.length > 0 && <Grupo {...props} titulo="Documentos de entrada" itens={entrada} />}
+      {mensal.length > 0 && <Grupo {...props} titulo={competencia ? `Documentação mensal: competência ${formatarCompetencia(competencia)}` : "Documentação mensal"} itens={mensal} />}
+    </div>
+  );
+}
+
+function Grupo({ vinculoId, itens, editavel, podeAbrir, titulo }: Props & { titulo: string }) {
+  return (
+    <div className="flex flex-col gap-3">
+      <ProgressoDocumentos progresso={progressoDocumentos(itens.map((i) => i.estado))} rotulo={titulo} />
       <div className="lista-agrupada">
         {itens.map((item) => {
           const aceitaNovo = editavel && ["falta", "anexado", "reprovado", "vencido"].includes(item.estado);
@@ -34,11 +46,11 @@ export function ListaDocumentosPessoa({ vinculoId, itens, editavel, podeAbrir }:
                   <SeloEstado estado={item.estado} />
                 </div>
               </div>
-              {aceitaNovo && <EnviarArquivo dono={{ tipo: "pessoa", vinculo: vinculoId }} tipoDoc={item.tipo.codigo} regra={item.tipo.regra_validade} />}
+              {aceitaNovo && <EnviarArquivo dono={{ tipo: "pessoa", vinculo: vinculoId }} tipoDoc={item.tipo.codigo} regra={item.tipo.regra_validade} competencia={item.competencia} />}
             </div>
           );
         })}
       </div>
-    </>
+    </div>
   );
 }

@@ -101,6 +101,7 @@ export async function detalheDoEnvio(envioId: string) {
         nome: tipo?.nome ?? doc?.tipo_documento ?? "Documento",
         sensivel: tipo?.sensivel ?? false,
         responsavel: (tipo?.responsavel ?? "rh") as Responsavel,
+        etapa: tipo?.etapa ?? "entrada",
         ordem: tipo?.ordem ?? 999,
         valorTexto: doc?.valor_texto ?? null,
         competencia: doc?.competencia ?? null,

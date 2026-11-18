@@ -6,6 +6,7 @@ import {
   competenciaAtual,
   documentosExigidos,
   estadoDoItem,
+  exigeNoMes,
   validadeDoDocumento,
   type EstadoItem,
   type ItemMatriz,
@@ -20,7 +21,7 @@ import {
 export const carregarCatalogo = cache(async () => {
   const supabase = await criarClienteServidor();
   const [tipos, matriz, validade] = await Promise.all([
-    supabase.from("tipos_documento").select("codigo, nome, regra_validade, chave_validade, sensivel, aceita_texto, observacao, ordem, etapa, responsavel").eq("ativo", true).order("ordem"),
+    supabase.from("tipos_documento").select("codigo, nome, regra_validade, chave_validade, sensivel, aceita_texto, observacao, ordem, etapa, responsavel, so_optante_simples").eq("ativo", true).order("ordem"),
     supabase.from("matriz_documental").select("tipo_documento, aplica_a, condicao").eq("ativo", true),
     supabase.from("parametros").select("valor").eq("chave", "validade_documentos_meses").maybeSingle(),
   ]);
@@ -48,7 +49,7 @@ export async function documentosDaEmpresa(empresaId: string): Promise<{ itens: I
   const supabase = await criarClienteServidor();
   const hoje = agoraNoFuso().data;
   const competencia = competenciaAtual(hoje);
-  const [catalogo, { data: docs, error }, pessoasNaObra] = await Promise.all([
+  const [catalogo, { data: docs, error }, pessoasNaObra, { data: empresa }] = await Promise.all([
     carregarCatalogo(),
     supabase
       .from("documentos")
@@ -56,13 +57,14 @@ export async function documentosDaEmpresa(empresaId: string): Promise<{ itens: I
       .eq("empresa_id", empresaId)
       .is("vinculo_id", null),
     pessoasNaObraDaEmpresa(empresaId),
+    supabase.from("empresas_terceiras").select("optante_simples").eq("id", empresaId).maybeSingle(),
   ]);
   if (error) throw new Error("Falha ao carregar os documentos.");
 
   const exigidos = documentosExigidos(catalogo.matriz, "empresa", { pessoasNaObra });
   const itens = exigidos
     .map((codigo) => catalogo.tipos.get(codigo))
-    .filter((t): t is TipoDocumento => !!t)
+    .filter((t): t is TipoDocumento => !!t && exigeNoMes(t, { optanteSimples: !!empresa?.optante_simples }))
     .map((tipo) => {
       const doc = (docs ?? []).find((d) => d.tipo_documento === tipo.codigo && (tipo.regra_validade !== "mensal" || d.competencia === competencia));
       const validade = doc ? validadeDoDocumento(tipo, doc, catalogo.meses) : null;
@@ -82,7 +84,7 @@ export async function documentosDaEmpresa(empresaId: string): Promise<{ itens: I
 
 // Equipe (F2) ---------------------------------------------------------------------------------
 
-export type ItemDocumentoPessoa = Omit<ItemDocumentoEmpresa, "competencia" | "valorTexto">;
+export type ItemDocumentoPessoa = Omit<ItemDocumentoEmpresa, "valorTexto">;
 
 /** Documentos exigidos de uma pessoa (pela matriz, conforme tipo e eletricidade), com a situação de cada um. */
 export async function documentosDoVinculo(vinculoId: string) {
@@ -90,22 +92,25 @@ export async function documentosDoVinculo(vinculoId: string) {
   const hoje = agoraNoFuso().data;
   const [catalogo, { data: vinculo }, { data: docs, error }] = await Promise.all([
     carregarCatalogo(),
-    supabase.from("vinculos").select("id, tipo, eletricidade, empresa_id").eq("id", vinculoId).maybeSingle(),
+    supabase.from("vinculos").select("id, tipo, eletricidade, empresa_id, alocacoes(situacao)").eq("id", vinculoId).maybeSingle(),
     supabase
       .from("documentos")
-      .select("id, tipo_documento, situacao, data_emissao, data_validade, arquivo_atual_id, motivo_reprovacao")
+      .select("id, tipo_documento, competencia, situacao, data_emissao, data_validade, arquivo_atual_id, motivo_reprovacao")
       .eq("vinculo_id", vinculoId),
   ]);
   if (error) throw new Error("Falha ao carregar os documentos.");
   if (!vinculo) return null;
   if (vinculo.tipo === "socio_esporadico") return { vinculo, itens: [] as ItemDocumentoPessoa[], hoje };
 
+  const competencia = competenciaAtual(hoje);
+  const liberado = (vinculo.alocacoes ?? []).some((a) => a.situacao === "liberado");
   const exigidos = documentosExigidos(catalogo.matriz, vinculo.tipo, { eletricidade: vinculo.eletricidade });
   const itens: ItemDocumentoPessoa[] = exigidos
     .map((codigo) => catalogo.tipos.get(codigo))
-    .filter((t): t is TipoDocumento => !!t)
+    .filter((t): t is TipoDocumento => !!t && exigeNoMes(t, { liberado }))
     .map((tipo) => {
-      const doc = (docs ?? []).find((d) => d.tipo_documento === tipo.codigo);
+      const mensal = tipo.regra_validade === "mensal";
+      const doc = (docs ?? []).find((d) => d.tipo_documento === tipo.codigo && (mensal ? d.competencia === competencia : d.competencia === null));
       const validade = doc ? validadeDoDocumento(tipo, doc, catalogo.meses) : null;
       return {
         tipo,
@@ -113,6 +118,7 @@ export async function documentosDoVinculo(vinculoId: string) {
         documentoId: doc?.id ?? null,
         arquivoId: doc?.arquivo_atual_id ?? null,
         validade,
+        competencia: mensal ? competencia : null,
         motivo: doc?.motivo_reprovacao ?? null,
       };
     });

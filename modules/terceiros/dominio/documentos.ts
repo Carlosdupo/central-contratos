@@ -17,11 +17,18 @@ export type TipoDocumento = {
   ordem: number;
   etapa: "entrada" | "mensal";
   responsavel: "rh" | "sst";
+  so_optante_simples: boolean;
 };
 export type ItemMatriz = { tipo_documento: string; aplica_a: AplicaA; condicao: Condicao };
 export type ValidadeMeses = { aso: number; nr: number; rg_cnh: number };
 
 export type Contexto = { pessoasNaObra?: number; eletricidade?: boolean };
+
+// Documento mensal só para funcionário liberado em obra; Simples só para optante.
+export function exigeNoMes(tipo: Pick<TipoDocumento, "etapa" | "so_optante_simples">, ctx: { liberado?: boolean; optanteSimples?: boolean }): boolean {
+  if (tipo.so_optante_simples && !ctx.optanteSimples) return false;
+  return tipo.etapa !== "mensal" || ctx.liberado !== false;
+}
 
 /** Códigos dos documentos exigidos para empresa, funcionário ou sócio diário, conforme a matriz. */
 export function documentosExigidos(matriz: ItemMatriz[], aplicaA: AplicaA, ctx: Contexto = {}): string[] {
@@ -83,6 +90,12 @@ export function estadoDoItem(
 /** Pode enviar para análise: nada faltando, reprovado ou vencido, e pelo menos um anexado novo. */
 export function podeEnviarParaAnalise(estados: EstadoItem[]): boolean {
   return estados.length > 0 && estados.every((e) => e === "anexado" || e === "enviado" || e === "aprovado") && estados.includes("anexado");
+}
+
+// Entrada e mensal são enviadas cada uma quando estiver completa (a mensal não espera a entrada e vice-versa).
+export function podeEnviarAlgumaEtapa(itens: { estado: EstadoItem; tipo: { etapa: "entrada" | "mensal" } }[]): boolean {
+  const porEtapa = (etapa: "entrada" | "mensal") => itens.filter((i) => i.tipo.etapa === etapa).map((i) => i.estado);
+  return podeEnviarParaAnalise(porEtapa("entrada")) || podeEnviarParaAnalise(porEtapa("mensal"));
 }
 
 /** Validade mínima: arquivo de documento que vence precisa estar válido hoje. */

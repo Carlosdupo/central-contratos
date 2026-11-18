@@ -13,7 +13,7 @@ import { mensagemDeErro, type EstadoFormulario } from "@/lib/formulario";
 import { reenviarAcesso } from "@/modules/acesso/reenvio";
 import { convidarResponsavel } from "./acesso-portal";
 import { documentosDaEmpresa, documentosDoVinculo } from "./consultas";
-import { podeEnviarParaAnalise } from "./dominio/documentos";
+import { podeEnviarAlgumaEtapa } from "./dominio/documentos";
 
 const BUCKET = "documentos";
 const TAMANHO_MAXIMO = 10 * 1024 * 1024;
@@ -187,7 +187,7 @@ export async function confirmarArquivo(entrada: z.input<typeof esquemaConfirmaca
       : dono.tipo === "pessoa"
         ? await supabase.rpc("registrar_arquivo_pessoa", {
             p_vinculo: dono.vinculo, p_tipo: tipoDoc, p_storage_path: caminho, p_nome: nome, p_mime: mime,
-            p_tamanho: bytes.byteLength, p_sha256: sha256, p_data_emissao: dataEmissao, p_data_validade: dataValidade,
+            p_tamanho: bytes.byteLength, p_sha256: sha256, p_data_emissao: dataEmissao, p_data_validade: dataValidade, p_competencia: competencia,
           })
         : dono.tipo === "foto"
           ? await supabase.rpc("registrar_foto_pessoa", { p_vinculo: dono.vinculo, p_storage_path: caminho })
@@ -244,7 +244,7 @@ export async function enviarDocumentosPessoa(vinculo: string): Promise<EstadoFor
   const { empresaId } = await exigirExterno();
   if (!z.uuid().safeParse(vinculo).success || !(await vinculoDaEmpresa(vinculo, empresaId))) return { erro: "Pessoa não encontrada." };
   const dados = await documentosDoVinculo(vinculo);
-  if (!dados || !podeEnviarParaAnalise(dados.itens.map((i) => i.estado))) return { erro: "Anexe todos os documentos pendentes antes de enviar." };
+  if (!dados || !podeEnviarAlgumaEtapa(dados.itens)) return { erro: "Anexe todos os documentos pendentes antes de enviar." };
   const supabase = await criarClienteServidor();
   const { error } = await supabase.rpc("enviar_documentos_pessoa", { p_vinculo: vinculo });
   if (error) return { erro: mensagemDeErro(error, "Não foi possível enviar.") };
@@ -263,10 +263,20 @@ export async function salvarTextoEmpresa(tipo: string, _: EstadoFormulario, dado
   return { ok: "Salvo." };
 }
 
+export async function salvarOptanteSimples(_: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
+  const { empresaId } = await exigirExterno();
+  const optante = dados.get("optante_simples") === "on";
+  const supabase = await criarClienteServidor();
+  const { error } = await supabase.rpc("definir_optante_simples", { p_empresa: empresaId, p_optante: optante });
+  if (error) return { erro: mensagemDeErro(error, "Não foi possível salvar.") };
+  revalidatePath("/portal", "layout");
+  return { ok: optante ? "Salvo: a guia e o comprovante do Simples entram na documentação mensal." : "Salvo: a documentação mensal não pede o Simples." };
+}
+
 export async function enviarDocumentosEmpresa(): Promise<EstadoFormulario> {
   const { empresaId } = await exigirExterno();
   const { itens } = await documentosDaEmpresa(empresaId);
-  if (!podeEnviarParaAnalise(itens.map((i) => i.estado))) return { erro: "Anexe todos os documentos pendentes antes de enviar." };
+  if (!podeEnviarAlgumaEtapa(itens)) return { erro: "Anexe todos os documentos pendentes antes de enviar." };
   const supabase = await criarClienteServidor();
   const { error } = await supabase.rpc("enviar_documentos_empresa", { p_empresa: empresaId });
   if (error) return { erro: mensagemDeErro(error, "Não foi possível enviar.") };

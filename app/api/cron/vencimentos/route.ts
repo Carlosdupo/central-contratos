@@ -15,6 +15,8 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await criarClienteAdmin().rpc("processar_vencimentos", { p_hoje: agoraNoFuso().data });
   if (error) return NextResponse.json({ erro: "falha ao processar vencimentos" }, { status: 500 });
+  // Lembretes da documentação mensal (dias 20, 25 e 28); a função ignora os outros dias.
+  const { data: lembretes } = await criarClienteAdmin().rpc("lembretes_documentacao_mensal", { p_hoje: agoraNoFuso().data });
   const envio = await despacharPendentes(50);
-  return NextResponse.json({ vencimentos: data, email: envio });
+  return NextResponse.json({ vencimentos: data, lembretesMensais: lembretes ?? 0, email: envio });
 }

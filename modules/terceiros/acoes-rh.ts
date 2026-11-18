@@ -60,7 +60,19 @@ export async function concluirAnalise(envioId: string): Promise<EstadoFormulario
   // O texto segue o resultado que o banco vai aplicar (mesma regra de concluir_envio).
   let assunto: string;
   let texto: string;
-  if (!detalhe.pessoa) {
+  const soMensal = detalhe.itens.every((i) => i.etapa === "mensal");
+  const competencia = detalhe.itens.find((i) => i.competencia)?.competencia;
+  const mes = competencia ? `${competencia.slice(5, 7)}/${competencia.slice(0, 4)}` : "do mês";
+  const quem = detalhe.pessoa ? ` de ${detalhe.pessoa}` : "";
+  if (soMensal) {
+    assunto = reprovados.length ? `Documentação mensal ${mes}${quem} com pendência` : `Documentação mensal ${mes}${quem} aprovada`;
+    texto = reprovados.length
+      ? `A documentação mensal ${mes}${quem} tem pendências:
+${pendencias}
+
+Corrija pelo portal e envie de novo. Enquanto houver pendência, o pagamento do mês não é liberado.`
+      : `A documentação mensal ${mes}${quem} foi aprovada.`;
+  } else if (!detalhe.pessoa) {
     assunto = reprovados.length ? "Documentos da empresa com pendência" : "Documentos da empresa aprovados";
     texto = reprovados.length
       ? `Os documentos de ${detalhe.empresa} foram analisados e há pendências:\n${pendencias}\n\nCorrija pelo portal e envie de novo.`

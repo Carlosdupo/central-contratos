@@ -6,6 +6,8 @@ import {
   estadoDoItem,
   podeEnviarParaAnalise,
   progressoDocumentos,
+  exigeNoMes,
+  podeEnviarAlgumaEtapa,
   validadeDoDocumento,
   type EstadoItem,
   type ItemMatriz,
@@ -128,5 +130,24 @@ describe("percentual de documentos aceitos", () => {
   });
   it("sem nada exigido fica em 0% e não completo", () => {
     expect(progressoDocumentos([])).toEqual({ aprovados: 0, exigidos: 0, percentual: 0, faixa: "andamento" });
+  });
+});
+
+describe("documentação mensal", () => {
+  const tipo = (etapa: "entrada" | "mensal", so_optante_simples = false) => ({ etapa, so_optante_simples });
+  it("mensal só para funcionário liberado; entrada sempre", () => {
+    expect(exigeNoMes(tipo("mensal"), { liberado: false })).toBe(false);
+    expect(exigeNoMes(tipo("mensal"), { liberado: true })).toBe(true);
+    expect(exigeNoMes(tipo("entrada"), { liberado: false })).toBe(true);
+  });
+  it("Simples só para optante", () => {
+    expect(exigeNoMes(tipo("mensal", true), { optanteSimples: false })).toBe(false);
+    expect(exigeNoMes(tipo("mensal", true), { optanteSimples: true })).toBe(true);
+  });
+  it("entrada e mensal são enviadas cada uma quando completa", () => {
+    const i = (etapa: "entrada" | "mensal", estado: EstadoItem) => ({ estado, tipo: { etapa } });
+    expect(podeEnviarAlgumaEtapa([i("entrada", "aprovado"), i("mensal", "anexado"), i("mensal", "anexado")])).toBe(true);
+    expect(podeEnviarAlgumaEtapa([i("entrada", "falta"), i("mensal", "anexado")])).toBe(true);
+    expect(podeEnviarAlgumaEtapa([i("entrada", "aprovado"), i("mensal", "anexado"), i("mensal", "falta")])).toBe(false);
   });
 });

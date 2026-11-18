@@ -5,11 +5,11 @@ import { documentosDaEmpresa, equipeDaEmpresa } from "@/modules/terceiros/consul
 import { linksDasFotos } from "@/modules/terceiros/fotos";
 import { ListaEquipe } from "@/components/app/lista-equipe";
 import Link from "next/link";
-import { enviarDocumentosEmpresa } from "@/modules/terceiros/acoes";
-import { podeEnviarParaAnalise } from "@/modules/terceiros/dominio/documentos";
+import { enviarDocumentosEmpresa, salvarOptanteSimples } from "@/modules/terceiros/acoes";
+import { podeEnviarAlgumaEtapa } from "@/modules/terceiros/dominio/documentos";
 import { ListaDocumentosEmpresa } from "@/components/app/lista-documentos-empresa";
 import { agoraNoFuso, formatarData } from "@/lib/datas";
-import { Formulario } from "@/components/app/formulario";
+import { Formulario, Marcador } from "@/components/app/formulario";
 
 export const metadata: Metadata = { title: "Portal da empresa" };
 
@@ -28,7 +28,7 @@ export default async function PaginaPortal() {
   // Primeiro acesso: a empresa deixa de aparecer como "convidada" para a equipe interna.
   await supabase.rpc("registrar_primeiro_acesso", { p_empresa: empresaId });
   const [{ data: empresa }, { itens }, { data: prazo }] = await Promise.all([
-    supabase.from("empresas_terceiras").select("situacao").eq("id", empresaId).single(),
+    supabase.from("empresas_terceiras").select("situacao, optante_simples").eq("id", empresaId).single(),
     documentosDaEmpresa(empresaId),
     supabase.from("parametros").select("valor").eq("chave", "prazo_analise_rh").maybeSingle(),
   ]);
@@ -40,7 +40,7 @@ export default async function PaginaPortal() {
   const [classe, rotulo, explicacao] = SITUACAO[empresa?.situacao ?? "cadastro_incompleto"];
   const faltam = itens.filter((i) => ["falta", "reprovado", "vencido"].includes(i.estado)).length;
   const aprovados = itens.filter((i) => i.estado === "aprovado").length;
-  const podeEnviar = podeEnviarParaAnalise(itens.map((i) => i.estado));
+  const podeEnviar = podeEnviarAlgumaEtapa(itens);
 
   return (
     <>
@@ -63,11 +63,17 @@ export default async function PaginaPortal() {
           <h2 className="subtitulo">O que precisa ser enviado</h2>
           <p className="mt-1 text-[13px] text-muted-foreground">PDF legível, assinado pela empresa (e pelo funcionário, quando for dele), de até 10 MB. Documentos com validade pedem a data.</p>
         </div>
+        <div className="rounded-[10px] bg-info-soft px-4 py-3 text-[13px] text-info">
+          Documentação mensal (para liberar o pagamento): envie de 25 a 30 de cada mês a competência do mês anterior. Os documentos mensais de cada funcionário liberado ficam na página dele, em Equipe.
+        </div>
+        <Formulario acao={salvarOptanteSimples} textoBotao="Salvar" className="flex flex-wrap items-center gap-3">
+          <div className="lista-agrupada min-w-[280px]"><Marcador nome="optante_simples" marcado={!!empresa?.optante_simples} rotulo="Empresa optante do Simples Nacional" /></div>
+        </Formulario>
         <ListaDocumentosEmpresa itens={itens} editavel podeAbrir />
         {podeEnviar ? (
           <Formulario acao={enviarDocumentosEmpresa} textoBotao="Enviar para análise" />
         ) : (
-          faltam > 0 && <p className="text-right text-[13px] text-muted-foreground">O envio para análise libera quando todos os documentos estiverem anexados.</p>
+          faltam > 0 && <p className="text-right text-[13px] text-muted-foreground">O envio libera quando a documentação de entrada, ou a mensal, estiver toda anexada.</p>
         )}
       </section>
 

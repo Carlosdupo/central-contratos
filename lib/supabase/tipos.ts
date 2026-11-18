@@ -1065,6 +1065,7 @@ export type Database = {
           created_by: string | null
           email: string
           id: string
+          optante_simples: boolean
           razao_social: string
           situacao: Database["public"]["Enums"]["situacao_empresa"]
           telefone: string | null
@@ -1076,6 +1077,7 @@ export type Database = {
           created_by?: string | null
           email: string
           id?: string
+          optante_simples?: boolean
           razao_social: string
           situacao?: Database["public"]["Enums"]["situacao_empresa"]
           telefone?: string | null
@@ -1087,6 +1089,7 @@ export type Database = {
           created_by?: string | null
           email?: string
           id?: string
+          optante_simples?: boolean
           razao_social?: string
           situacao?: Database["public"]["Enums"]["situacao_empresa"]
           telefone?: string | null
@@ -1730,6 +1733,7 @@ export type Database = {
           regra_validade: Database["public"]["Enums"]["regra_validade"]
           responsavel: string
           sensivel: boolean
+          so_optante_simples: boolean
         }
         Insert: {
           aceita_texto?: boolean
@@ -1744,6 +1748,7 @@ export type Database = {
           regra_validade: Database["public"]["Enums"]["regra_validade"]
           responsavel?: string
           sensivel?: boolean
+          so_optante_simples?: boolean
         }
         Update: {
           aceita_texto?: boolean
@@ -1758,6 +1763,7 @@ export type Database = {
           regra_validade?: Database["public"]["Enums"]["regra_validade"]
           responsavel?: string
           sensivel?: boolean
+          so_optante_simples?: boolean
         }
         Relationships: []
       }
@@ -2208,6 +2214,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      definir_optante_simples: {
+        Args: { p_empresa: string; p_optante: boolean }
+        Returns: undefined
+      }
+      lembretes_documentacao_mensal: {
+        Args: { p_hoje?: string }
+        Returns: number
+      }
       definir_fornecedor: {
         Args: { p_cotacao: string; p_valor: number }
         Returns: undefined
@@ -2259,6 +2273,7 @@ export type Database = {
       }
       registrar_arquivo_pessoa: {
         Args: {
+          p_competencia?: string
           p_data_emissao?: string
           p_data_validade?: string
           p_mime: string
