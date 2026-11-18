@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { exigirPapel } from "@/modules/acesso/sessao";
 import { salvarParametro } from "@/modules/admin/acoes";
-import { ESQUEMAS, ROTULO_PARAMETRO, ehChaveParametro, type ChaveParametro } from "@/modules/admin/parametros";
+import { DIAS_SEMANA, ESQUEMAS, ROTULO_PARAMETRO, ehChaveParametro, type ChaveParametro } from "@/modules/admin/parametros";
 import { ETAPAS_CONTRATACAO } from "@/modules/contratacoes/etapas";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import {CampoEmLinha,CampoTexto,Formulario,Marcador} from "@/components/app/formulario";
@@ -11,7 +11,9 @@ export const metadata: Metadata = { title: "Parâmetros" };
 const ORDEM: ChaveParametro[] = [
   "limite_escolha_obra_reais",
   "prazo_analise_rh",
+  "prazo_reapresentacao",
   "horario_corte_integracao",
+  "dias_integracao",
   "antecedencia_visita_dias",
   "validade_documentos_meses",
   "prazos_etapas",
@@ -60,7 +62,18 @@ function Editor({ chave, valor }: { chave: ChaveParametro; valor: unknown }) {
       return <Formulario acao={acao} textoBotao="Salvar parâmetro"><CampoTexto nome="valor" rotulo="Hora (0 a 23)" tipo="number" min={0} max={23} padrao={valor as number} /></Formulario>;
     case "antecedencia_visita_dias":
       return <Formulario acao={acao} textoBotao="Salvar parâmetro"><CampoTexto nome="valor" rotulo="Dias de antecedência" tipo="number" min={0} padrao={valor as number} /></Formulario>;
-    case "prazo_analise_rh": {
+    case "dias_integracao": {
+      const v = valor as number[];
+      return (
+        <Formulario acao={acao} textoBotao="Salvar parâmetro">
+          <div className="lista-agrupada">
+            {DIAS_SEMANA.map((d) => <Marcador key={d.numero} nome={`dia_${d.numero}`} marcado={v.includes(d.numero)} rotulo={d.nome} />)}
+          </div>
+        </Formulario>
+      );
+    }
+    case "prazo_analise_rh":
+    case "prazo_reapresentacao": {
       const v = valor as { dias: number; uteis: boolean };
       return (
         <Formulario acao={acao} textoBotao="Salvar parâmetro">

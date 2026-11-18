@@ -55,13 +55,13 @@ export default async function PaginaPortal() {
       <div className="grid grid-cols-3 gap-4 max-sm:grid-cols-1">
         <div className="painel gap-1.5"><span className="text-[40px] leading-none font-bold tracking-tight tabular-nums">{aprovados}<span className="text-xl text-faint">/{itens.length}</span></span><span className="text-[13px] font-medium text-muted-foreground">Aprovados</span></div>
         <div className="painel gap-1.5"><span className={`text-[40px] leading-none font-bold tracking-tight tabular-nums ${faltam ? "text-bad" : ""}`}>{faltam}</span><span className="text-[13px] font-medium text-muted-foreground">Faltam ou precisam de correção</span></div>
-        <div className="painel gap-1.5"><span className="text-[40px] leading-none font-bold tracking-tight tabular-nums">{prazoRh?.dias ?? "—"}</span><span className="text-[13px] font-medium text-muted-foreground">{prazoRh?.uteis === false ? "Dias" : "Dias úteis"} para o RH analisar</span></div>
+        <div className="painel gap-1.5"><span className="text-[40px] leading-none font-bold tracking-tight tabular-nums">{prazoRh?.dias ?? "—"}</span><span className="text-[13px] font-medium text-muted-foreground">{prazoRh?.uteis === false ? "Dias" : "Dias úteis"} para a análise</span></div>
       </div>
 
       <section className="painel">
         <div>
           <h2 className="subtitulo">O que precisa ser enviado</h2>
-          <p className="mt-1 text-[13px] text-muted-foreground">PDF, JPG ou PNG de até 10 MB. Documentos com validade pedem a data.</p>
+          <p className="mt-1 text-[13px] text-muted-foreground">PDF legível, assinado pela empresa (e pelo funcionário, quando for dele), de até 10 MB. Documentos com validade pedem a data.</p>
         </div>
         <ListaDocumentosEmpresa itens={itens} editavel podeAbrir />
         {podeEnviar ? (

@@ -9,7 +9,9 @@ export async function lerParametros() {
   const { data } = await supabase.from("parametros").select("chave, valor");
   const p = new Map((data ?? []).map((x) => [x.chave, x.valor]));
   return {
-    prazoAnaliseRh: (p.get("prazo_analise_rh") ?? { dias: 2, uteis: true }) as Prazo,
+    prazoAnaliseRh: (p.get("prazo_analise_rh") ?? { dias: 3, uteis: true }) as Prazo,
+    prazoReapresentacao: (p.get("prazo_reapresentacao") ?? { dias: 2, uteis: true }) as Prazo,
+    diasIntegracao: (Array.isArray(p.get("dias_integracao")) ? p.get("dias_integracao") : [1, 3, 5]) as number[],
     horarioCorte: Number(p.get("horario_corte_integracao") ?? 18),
     antecedenciaVisita: Number(p.get("antecedencia_visita_dias") ?? 1),
     limiteEscolhaObra: Number(p.get("limite_escolha_obra_reais") ?? 4000),

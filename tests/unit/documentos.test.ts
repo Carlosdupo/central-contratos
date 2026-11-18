@@ -10,7 +10,7 @@ import {
   type EstadoItem,
   type ItemMatriz,
 } from "@/modules/terceiros/dominio/documentos";
-import { dataDaIntegracao } from "@/modules/terceiros/dominio/integracao";
+import { dataDaIntegracao, descreverDiasDeIntegracao } from "@/modules/terceiros/dominio/integracao";
 
 const matriz: ItemMatriz[] = [
   { tipo_documento: "cnd_federal", aplica_a: "empresa", condicao: "sempre" },
@@ -80,7 +80,7 @@ describe("envio para análise", () => {
 });
 
 
-describe("data da integração (corte às 18h)", () => {
+describe("data da integração (corte às 18h, só segunda, quarta e sexta)", () => {
   const feriados = new Set(["2026-11-20"]);
   it("aprovado às 17h59 de quinta entra na sexta; às 18h00, na segunda", () => {
     expect(dataDaIntegracao({ data: "2026-11-12", hora: 17 }, 18, new Set())).toBe("2026-11-13");
@@ -92,7 +92,22 @@ describe("data da integração (corte às 18h)", () => {
   it("véspera de feriado pula o feriado", () => {
     // quinta 19/11 antes das 18h: sexta 20 é feriado, vai para segunda 23
     expect(dataDaIntegracao({ data: "2026-11-19", hora: 9 }, 18, feriados)).toBe("2026-11-23");
-    expect(dataDaIntegracao({ data: "2026-11-19", hora: 19 }, 18, feriados)).toBe("2026-11-24");
+    // depois das 18h: terça 24 não tem integração, vai para quarta 25
+    expect(dataDaIntegracao({ data: "2026-11-19", hora: 19 }, 18, feriados)).toBe("2026-11-25");
+  });
+  it("aprovado na segunda vai para quarta; na quarta, para sexta", () => {
+    expect(dataDaIntegracao({ data: "2026-11-16", hora: 10 }, 18, new Set())).toBe("2026-11-18");
+    expect(dataDaIntegracao({ data: "2026-11-18", hora: 10 }, 18, new Set())).toBe("2026-11-20");
+  });
+  it("feriado na quarta empurra para sexta", () => {
+    expect(dataDaIntegracao({ data: "2026-11-16", hora: 10 }, 18, new Set(["2026-11-18"]))).toBe("2026-11-20");
+  });
+  it("outros dias configurados e lista vazia (qualquer dia útil)", () => {
+    expect(dataDaIntegracao({ data: "2026-11-16", hora: 10 }, 18, new Set(), [4])).toBe("2026-11-19");
+    expect(dataDaIntegracao({ data: "2026-11-16", hora: 10 }, 18, new Set(), [])).toBe("2026-11-17");
+  });
+  it("texto dos dias", () => {
+    expect(descreverDiasDeIntegracao([5, 1, 3])).toBe("segunda, quarta e sexta");
   });
 });
 

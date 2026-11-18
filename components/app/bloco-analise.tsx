@@ -47,7 +47,7 @@ export function BlocoAnalise({ bloco, aberto, aprovar, devolver }: { bloco: Bloc
                 {item.arquivoId && <BotaoAbrirArquivo arquivoId={item.arquivoId} />}
                 {item.decisao === "aprovado" && <span className="selo selo-ok">Aprovado</span>}
                 {item.decisao === "reprovado" && <span className="selo selo-erro">Reprovado</span>}
-                {!item.decisao && !bloco.meu && <span className="selo">Aguardando {bloco.area}</span>}
+                {!item.decisao && !bloco.meu && <span className="selo selo-neutro">Aguardando {bloco.area}</span>}
               </div>
             </div>
             {aberto && bloco.meu && !item.decisao && (

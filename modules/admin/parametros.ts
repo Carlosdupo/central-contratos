@@ -10,6 +10,8 @@ export const ESQUEMAS = {
   fuso_horario: z.literal("America/Sao_Paulo"),
   limite_escolha_obra_reais: z.number().min(0).max(10_000_000),
   prazo_analise_rh: prazo,
+  prazo_reapresentacao: prazo,
+  dias_integracao: z.array(z.number().int().min(1).max(5)).min(1).max(5),
   horario_corte_integracao: z.number().int().min(0).max(23),
   antecedencia_visita_dias: z.number().int().min(0).max(30),
   validade_documentos_meses: z.object({
@@ -21,6 +23,14 @@ export const ESQUEMAS = {
   prazos_etapas: z.partialRecord(z.enum(ETAPAS_COM_PRAZO as [string, ...string[]]), prazo),
 } as const;
 
+export const DIAS_SEMANA = [
+  { numero: 1, nome: "Segunda-feira" },
+  { numero: 2, nome: "Terça-feira" },
+  { numero: 3, nome: "Quarta-feira" },
+  { numero: 4, nome: "Quinta-feira" },
+  { numero: 5, nome: "Sexta-feira" },
+] as const;
+
 export type ChaveParametro = keyof typeof ESQUEMAS;
 export const ehChaveParametro = (c: string): c is ChaveParametro => c in ESQUEMAS;
 export const PARAMETROS_SOMENTE_LEITURA: readonly ChaveParametro[] = ["fuso_horario"];
@@ -28,7 +38,9 @@ export const PARAMETROS_SOMENTE_LEITURA: readonly ChaveParametro[] = ["fuso_hora
 export const ROTULO_PARAMETRO: Record<ChaveParametro, string> = {
   fuso_horario: "Fuso horário",
   limite_escolha_obra_reais: "Limite para a obra escolher fornecedor",
-  prazo_analise_rh: "Prazo do RH para analisar documentos",
+  prazo_analise_rh: "Prazo da primeira análise de documentos",
+  prazo_reapresentacao: "Prazo da análise de documentos reapresentados",
+  dias_integracao: "Dias da integração de segurança",
   horario_corte_integracao: "Horário de corte da integração",
   antecedencia_visita_dias: "Antecedência do pedido de visita",
   validade_documentos_meses: "Validade dos documentos",
@@ -53,10 +65,14 @@ export function lerParametroDoFormulario(chave: ChaveParametro, dados: FormData)
       bruto = inteiro(dados.get("valor"));
       break;
     case "prazo_analise_rh":
+    case "prazo_reapresentacao":
       bruto = { dias: inteiro(dados.get("dias")), uteis: marcado(dados.get("uteis")) };
       break;
     case "validade_documentos_meses":
       bruto = { aso: inteiro(dados.get("aso")), nr: inteiro(dados.get("nr")), rg_cnh: inteiro(dados.get("rg_cnh")) };
+      break;
+    case "dias_integracao":
+      bruto = DIAS_SEMANA.map((d) => d.numero).filter((n) => marcado(dados.get(`dia_${n}`)));
       break;
     case "prazos_etapas": {
       // Etapa sem número de dias = sem prazo definido.

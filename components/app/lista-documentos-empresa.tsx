@@ -8,13 +8,30 @@ import {CampoEmLinha,Formulario} from "./formulario";
 
 const diasAte = (data: string) => diasCorridosEntre(agoraNoFuso().data, data);
 
-// Lista de documentos da empresa. "editavel" no portal da empresa; só leitura para a equipe interna.
+// Documentos da empresa ("editavel" no portal; só leitura para a equipe interna), separados em Entrada (antes de começar) e Mensal (para liberar o pagamento), cada uma com a sua barra.
 export function ListaDocumentosEmpresa({ itens, editavel, podeAbrir }: { itens: ItemDocumentoEmpresa[]; editavel: boolean; podeAbrir: boolean }) {
+  const entrada = itens.filter((i) => i.tipo.etapa !== "mensal");
+  const mensal = itens.filter((i) => i.tipo.etapa === "mensal");
+  const competencia = mensal.find((i) => i.competencia)?.competencia;
   return (
-    <>
-      <div className="mb-3">
-        <ProgressoDocumentos progresso={progressoDocumentos(itens.map((i) => i.estado))} />
-      </div>
+    <div className="flex flex-col gap-6">
+      {entrada.length > 0 && <GrupoDocumentos titulo="Documentação de entrada" itens={entrada} editavel={editavel} podeAbrir={podeAbrir} />}
+      {mensal.length > 0 && (
+        <GrupoDocumentos
+          titulo={competencia ? `Documentação mensal: competência ${formatarCompetencia(competencia)}` : "Documentação mensal"}
+          itens={mensal}
+          editavel={editavel}
+          podeAbrir={podeAbrir}
+        />
+      )}
+    </div>
+  );
+}
+
+function GrupoDocumentos({ titulo, itens, editavel, podeAbrir }: { titulo: string; itens: ItemDocumentoEmpresa[]; editavel: boolean; podeAbrir: boolean }) {
+  return (
+    <div className="flex flex-col gap-3">
+      <ProgressoDocumentos progresso={progressoDocumentos(itens.map((i) => i.estado))} rotulo={titulo} />
       <div className="lista-agrupada">
         {itens.map((item) => {
           const aceitaNovo = editavel && ["falta", "anexado", "reprovado", "vencido"].includes(item.estado);
@@ -50,6 +67,6 @@ export function ListaDocumentosEmpresa({ itens, editavel, podeAbrir }: { itens: 
           );
         })}
       </div>
-    </>
+    </div>
   );
 }

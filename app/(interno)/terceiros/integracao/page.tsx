@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { descreverDiasDeIntegracao } from "@/modules/terceiros/dominio/integracao";
 import { exigirPapel } from "@/modules/acesso/sessao";
 import { registrarIntegracao } from "@/modules/terceiros/acoes-sst";
 import { linksDasFotos } from "@/modules/terceiros/fotos";
@@ -58,7 +59,7 @@ export default async function PaginaIntegracao() {
 
       <p className="flex items-center gap-2 rounded-[10px] border border-sep bg-card px-4 py-3 text-[13.5px]">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true" className="shrink-0 text-primary"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
-        <span><strong>Horário de corte: {parametros.horarioCorte}h.</strong> Quem o RH aprova até as {parametros.horarioCorte}h entra na integração do próximo dia útil.</span>
+        <span><strong>Integração: {descreverDiasDeIntegracao(parametros.diasIntegracao)}.</strong> Quem é aprovado até as {parametros.horarioCorte}h entra no primeiro desses dias a partir do próximo dia útil.</span>
       </p>
 
       {dias.length === 0 && <section className="painel"><p className="text-[14px] text-muted-foreground">Ninguém agendado. As pessoas aparecem aqui quando o RH aprova os documentos.</p></section>}

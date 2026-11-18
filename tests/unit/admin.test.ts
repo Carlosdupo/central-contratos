@@ -19,6 +19,13 @@ describe("parâmetros", () => {
     expect(lerParametroDoFormulario("horario_corte_integracao", form({ valor: "24" }))).toHaveProperty("erro");
     expect(lerParametroDoFormulario("horario_corte_integracao", form({ valor: "17.5" }))).toHaveProperty("erro");
   });
+  it("dias da integração: os marcados, pelo menos um", () => {
+    expect(lerParametroDoFormulario("dias_integracao", form({ dia_1: "on", dia_3: "on", dia_5: "on" }))).toEqual({ valor: [1, 3, 5] });
+    expect(lerParametroDoFormulario("dias_integracao", form({}))).toHaveProperty("erro");
+  });
+  it("prazo da reapresentação no mesmo formato do prazo do RH", () => {
+    expect(lerParametroDoFormulario("prazo_reapresentacao", form({ dias: "2", uteis: "on" }))).toEqual({ valor: { dias: 2, uteis: true } });
+  });
   it("prazo do RH com dias e marcação de dias úteis", () => {
     expect(lerParametroDoFormulario("prazo_analise_rh", form({ dias: "2", uteis: "on" }))).toEqual({ valor: { dias: 2, uteis: true } });
     expect(lerParametroDoFormulario("prazo_analise_rh", form({ dias: "2" }))).toEqual({ valor: { dias: 2, uteis: false } });

@@ -7,6 +7,7 @@ import { emailConfigurado } from "@/modules/notificacoes/enviar";
 import { lerParametros } from "@/lib/configuracao";
 import { formatarData } from "@/lib/datas";
 import { SeloPrazo } from "@/components/app/selo-prazo";
+import { descreverDiasDeIntegracao } from "@/modules/terceiros/dominio/integracao";
 import { BotaoAbrir } from "@/components/app/documentos";
 import {CampoEmLinha,Formulario} from "@/components/app/formulario";
 
@@ -27,7 +28,7 @@ export default async function PaginaFilaRh({ searchParams }: PageProps<"/terceir
       <div>
         <h1 className="titulo">Análise de documentos</h1>
         <p className="mt-1.5 max-w-[66ch] text-[15px] text-muted-foreground">
-          Envios das empresas esperando conferência. Cada documento é aprovado pelo RH ou pela Segurança do Trabalho, conforme o tipo. Prazo: {prazo.dias} {prazo.uteis ? "dias úteis" : "dias"} a partir do envio. Aprovado até as {parametros.horarioCorte}h entra na integração do próximo dia útil.
+          Envios das empresas esperando conferência. Cada documento é aprovado pelo RH ou pela Segurança do Trabalho, conforme o tipo. Prazo: {prazo.dias} {prazo.uteis ? "dias úteis" : "dias"} na primeira análise e {parametros.prazoReapresentacao.dias} {parametros.prazoReapresentacao.uteis ? "dias úteis" : "dias"} quando a empresa reapresenta pendências. Integração: {descreverDiasDeIntegracao(parametros.diasIntegracao)} (aprovado até as {parametros.horarioCorte}h vale a partir do próximo dia útil).
         </p>
       </div>
       {!emailConfigurado() &&
@@ -60,7 +61,10 @@ export default async function PaginaFilaRh({ searchParams }: PageProps<"/terceir
                       <Link href={`/terceiros/analise/${e.id}`} className="font-medium text-primary">{e.pessoa ?? e.empresa}</Link>
                       {e.pessoa && <div className="text-[12.5px] text-muted-foreground">{e.empresa}</div>}
                     </td>
-                    <td className="text-[13px]">{e.pessoa ? "Documentos da pessoa" : "Documentos da empresa"}</td>
+                    <td className="text-[13px]">
+                      {e.pessoa ? "Documentos da pessoa" : "Documentos da empresa"}
+                      {e.reapresentacao && <div><span className="selo selo-info">Reapresentação</span></div>}
+                    </td>
                     <td>
                       <div className="flex flex-wrap gap-1.5">
                         {e.faltam.rh > 0 && <span className="selo selo-alerta">Falta RH ({e.faltam.rh})</span>}
@@ -69,7 +73,7 @@ export default async function PaginaFilaRh({ searchParams }: PageProps<"/terceir
                       </div>
                     </td>
                     <td className="text-[13px]">{formatarData(e.enviadoEm)}</td>
-                    <td><SeloPrazo prazo={e.prazo} uteis={prazo.uteis} /></td>
+                    <td><SeloPrazo prazo={e.prazo} uteis={(e.reapresentacao ? parametros.prazoReapresentacao : prazo).uteis} /></td>
                   </tr>
                 ))}
               </tbody>

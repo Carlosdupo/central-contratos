@@ -13,6 +13,7 @@ export type EnvioNaFila = {
   enviadoEm: DataISO;
   prazo: SituacaoPrazo;
   faltam: Record<Responsavel, number>;
+  reapresentacao: boolean;
 };
 
 export type Responsavel = "rh" | "sst";
@@ -26,7 +27,7 @@ export async function filaDeAnalise(): Promise<EnvioNaFila[]> {
   const [{ data, error }, parametros, feriados, catalogo] = await Promise.all([
     supabase
       .from("envios_analise")
-      .select("id, enviado_em, empresa_id, empresas_terceiras(razao_social), vinculos(pessoas(nome)), envio_itens(decisao, documentos(tipo_documento))")
+      .select("id, enviado_em, empresa_id, reapresentacao, empresas_terceiras(razao_social), vinculos(pessoas(nome)), envio_itens(decisao, documentos(tipo_documento))")
       .eq("situacao", "aberto")
       .order("enviado_em"),
     lerParametros(),
@@ -45,12 +46,13 @@ export async function filaDeAnalise(): Promise<EnvioNaFila[]> {
       }
       return {
         faltam,
+        reapresentacao: e.reapresentacao,
         id: e.id,
         empresa: e.empresas_terceiras?.razao_social ?? "—",
         empresaId: e.empresa_id,
         pessoa: e.vinculos?.pessoas?.nome ?? null,
         enviadoEm,
-        prazo: situacaoPrazo({ inicio: enviadoEm, hoje, prazo: parametros.prazoAnaliseRh, feriados }),
+        prazo: situacaoPrazo({ inicio: enviadoEm, hoje, prazo: e.reapresentacao ? parametros.prazoReapresentacao : parametros.prazoAnaliseRh, feriados }),
       };
     })
     .sort((a, b) => ORDEM[a.prazo.tipo] - ORDEM[b.prazo.tipo]);

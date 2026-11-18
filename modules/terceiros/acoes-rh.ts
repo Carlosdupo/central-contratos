@@ -52,7 +52,7 @@ export async function concluirAnalise(envioId: string): Promise<EstadoFormulario
   if (detalhe.itens.some((i) => !i.decisao)) return { erro: "Decida todos os documentos antes de concluir." };
 
   const [parametros, feriados] = await Promise.all([lerParametros(), carregarFeriados()]);
-  const integracao = dataDaIntegracao(agoraNoFuso(), parametros.horarioCorte, feriados);
+  const integracao = dataDaIntegracao(agoraNoFuso(), parametros.horarioCorte, feriados, parametros.diasIntegracao);
   const reprovados = detalhe.itens.filter((i) => i.decisao === "reprovado");
   const pendencias = reprovados.map((i) => `- ${i.nome}: ${i.motivo}`).join("\n");
   const obras = detalhe.obras.join(", ") || "a obra";

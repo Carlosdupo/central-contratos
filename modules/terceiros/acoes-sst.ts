@@ -5,11 +5,12 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { exigirPapel } from "@/modules/acesso/sessao";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { carregarFeriados } from "@/lib/configuracao";
+import { carregarFeriados, lerParametros } from "@/lib/configuracao";
 import { agoraNoFuso, formatarData, proximoDiaUtil } from "@/lib/datas";
 import { envPublico } from "@/lib/env";
 import { mensagemDeErro, type EstadoFormulario } from "@/lib/formulario";
 import { despacharPendentes } from "@/modules/notificacoes/enviar";
+import { proximoDiaDeIntegracao } from "./dominio/integracao";
 
 // Integração de segurança: só SST (exigirPapel exige a verificação em duas etapas; o banco confere de novo).
 export async function registrarIntegracao(alocacaoId: string, presente: boolean): Promise<EstadoFormulario> {
@@ -26,9 +27,10 @@ export async function registrarIntegracao(alocacaoId: string, presente: boolean)
   const pessoa = a.vinculos?.pessoas?.nome ?? "A pessoa";
   const obra = a.obras?.nome ?? "a obra";
   const hoje = agoraNoFuso().data;
-  // Falta: remarca para o próximo dia útil depois de hoje (ou da data marcada, se ainda for futura).
+  // Falta: remarca para o próximo dia de integração depois de hoje (ou da data marcada, se ainda for futura).
   const base = a.integracao_data && a.integracao_data > hoje ? a.integracao_data : hoje;
-  const novaData = presente ? null : proximoDiaUtil(base, await carregarFeriados());
+  const [feriados, parametros] = await Promise.all([carregarFeriados(), lerParametros()]);
+  const novaData = presente ? null : proximoDiaDeIntegracao(proximoDiaUtil(base, feriados), feriados, parametros.diasIntegracao);
   const assunto = presente ? `${pessoa} liberado(a) para a obra` : `${pessoa} não compareceu à integração`;
   const texto = presente
     ? `${pessoa} fez a integração de segurança e está liberado(a) para entrar na obra ${obra}.`

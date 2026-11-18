@@ -1172,6 +1172,7 @@ export type Database = {
           enviado_em: string
           enviado_por: string
           id: string
+          reapresentacao: boolean
           situacao: Database["public"]["Enums"]["situacao_envio"]
           vinculo_id: string | null
         }
@@ -1182,6 +1183,7 @@ export type Database = {
           enviado_em?: string
           enviado_por?: string
           id?: string
+          reapresentacao?: boolean
           situacao?: Database["public"]["Enums"]["situacao_envio"]
           vinculo_id?: string | null
         }
@@ -1192,6 +1194,7 @@ export type Database = {
           enviado_em?: string
           enviado_por?: string
           id?: string
+          reapresentacao?: boolean
           situacao?: Database["public"]["Enums"]["situacao_envio"]
           vinculo_id?: string | null
         }
