@@ -1,4 +1,4 @@
--- migration: 20261117160000_entrada_prazos_integracao.sql
+-- migration: 20261117183000_entrada_prazos_integracao.sql
 -- RH-3: prazos de 3 e 2 dias úteis, integração segunda/quarta/sexta, envio marcado como reapresentação.
 begin;
 create extension if not exists pgtap with schema extensions;
