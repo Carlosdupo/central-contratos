@@ -14,6 +14,7 @@ import { mensagemDeErro, type EstadoFormulario } from "@/lib/formulario";
 import { despacharPendentes } from "@/modules/notificacoes/enviar";
 import { detalheDoEnvio } from "./analise";
 import { dataDaIntegracao } from "./dominio/integracao";
+import { nomeArquivoFoto } from "./dominio/documentos";
 
 // Análise de documentos: RH e Segurança, cada um os itens do seu tipo (o banco confere quem decide o quê). Visitas: só RH.
 
@@ -115,6 +116,21 @@ export async function decidirVisita(visitaId: string, aprovar: boolean, _: Estad
   after(() => despacharPendentes(5).catch(() => undefined)); // depois da resposta: não faz o usuário esperar o e-mail
   revalidatePath("/terceiros/analise", "layout");
   return { ok: aprovar ? "Visita aprovada. A empresa foi avisada." : "Visita recusada. A empresa foi avisada." };
+}
+
+// Foto do funcionário para cadastrar na catraca (RH ou Segurança). O banco confere o perfil e registra o download.
+export async function baixarFotoPessoa(vinculoId: string): Promise<{ url?: string; erro?: string }> {
+  await exigirPapel("rh", "sst");
+  if (!uuid.safeParse(vinculoId).success) return { erro: "Pessoa inválida." };
+  const supabase = await criarClienteServidor();
+  const { data: v } = await supabase.from("vinculos").select("pessoas(nome)").eq("id", vinculoId).maybeSingle();
+  if (!v) return { erro: "Pessoa não encontrada." };
+  const { data: caminho, error } = await supabase.rpc("registrar_download_foto", { p_vinculo: vinculoId });
+  if (error || !caminho) return { erro: mensagemDeErro(error, "Não foi possível baixar a foto.") };
+  const { data: link } = await criarClienteAdmin()
+    .storage.from("documentos")
+    .createSignedUrl(caminho, 60, { download: nomeArquivoFoto(v.pessoas?.nome ?? "foto", caminho) });
+  return link ? { url: link.signedUrl } : { erro: "Não foi possível baixar a foto." };
 }
 
 /** Documento com foto anexado ao pedido de visita (só RH). */

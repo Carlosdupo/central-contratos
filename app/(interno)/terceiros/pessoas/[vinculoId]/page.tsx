@@ -10,6 +10,8 @@ import { SITUACAO_ALOCACAO, TIPO_VINCULO } from "@/modules/terceiros/rotulos";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarData } from "@/lib/datas";
 import { Avatar } from "@/components/app/avatar";
+import { BotaoAbrir } from "@/components/app/documentos";
+import { baixarFotoPessoa } from "@/modules/terceiros/acoes-rh";
 import { ListaDocumentosPessoa } from "@/components/app/lista-documentos-pessoa";
 
 export const metadata: Metadata = { title: "Pessoa" };
@@ -40,6 +42,7 @@ export default async function PaginaPessoaInterna({ params }: PageProps<"/tercei
           <div className="min-w-0">
             <h1 className="titulo text-[28px]">{v.pessoas.nome}</h1>
             <p className="text-[14px] text-muted-foreground">{v.funcao} · {TIPO_VINCULO[v.tipo]}{v.eletricidade ? " · eletricidade" : ""} · CPF {cpf ?? "—"}</p>
+            {saude && v.pessoas.foto_path && <BotaoAbrir acao={baixarFotoPessoa.bind(null, vinculoId)} texto="Baixar foto (catraca)" />}
           </div>
         </div>
       </div>

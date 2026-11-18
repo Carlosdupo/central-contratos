@@ -98,6 +98,13 @@ export function podeEnviarAlgumaEtapa(itens: { estado: EstadoItem; tipo: { etapa
   return podeEnviarParaAnalise(porEtapa("entrada")) || podeEnviarParaAnalise(porEtapa("mensal"));
 }
 
+// Nome do arquivo da foto para a catraca: o nome da pessoa, sem caracteres que o Windows recusa.
+export function nomeArquivoFoto(nome: string, caminho: string): string {
+  const ext = caminho.toLowerCase().endsWith(".png") ? "png" : "jpg";
+  const limpo = nome.replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 120) || "foto";
+  return `${limpo}.${ext}`;
+}
+
 /** Validade mínima: arquivo de documento que vence precisa estar válido hoje. */
 export function dentroDaValidade(validade: DataISO | null, hoje: DataISO): boolean {
   return validade === null || validade >= hoje;

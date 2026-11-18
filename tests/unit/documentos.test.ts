@@ -6,6 +6,7 @@ import {
   estadoDoItem,
   podeEnviarParaAnalise,
   progressoDocumentos,
+  nomeArquivoFoto,
   exigeNoMes,
   podeEnviarAlgumaEtapa,
   validadeDoDocumento,
@@ -149,5 +150,16 @@ describe("documentação mensal", () => {
     expect(podeEnviarAlgumaEtapa([i("entrada", "aprovado"), i("mensal", "anexado"), i("mensal", "anexado")])).toBe(true);
     expect(podeEnviarAlgumaEtapa([i("entrada", "falta"), i("mensal", "anexado")])).toBe(true);
     expect(podeEnviarAlgumaEtapa([i("entrada", "aprovado"), i("mensal", "anexado"), i("mensal", "falta")])).toBe(false);
+  });
+});
+
+describe("nome do arquivo da foto (catraca)", () => {
+  it("usa o nome da pessoa e a extensão da foto", () => {
+    expect(nomeArquivoFoto("João da Silva", "empresas/x/foto/a.jpg")).toBe("João da Silva.jpg");
+    expect(nomeArquivoFoto("Ana", "empresas/x/foto/a.PNG")).toBe("Ana.png");
+  });
+  it("tira caracteres que o Windows não aceita", () => {
+    expect(nomeArquivoFoto('Zé / "Bigode" \ Lima?', "a.jpg")).toBe("Zé Bigode Lima.jpg");
+    expect(nomeArquivoFoto("  ", "a.jpg")).toBe("foto.jpg");
   });
 });

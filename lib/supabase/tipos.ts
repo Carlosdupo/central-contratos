@@ -2218,6 +2218,10 @@ export type Database = {
         Args: { p_empresa: string; p_optante: boolean }
         Returns: undefined
       }
+      registrar_download_foto: {
+        Args: { p_vinculo: string }
+        Returns: string
+      }
       resumo_financeiro: {
         Args: { p_hoje?: string }
         Returns: number
