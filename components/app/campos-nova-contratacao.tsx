@@ -66,7 +66,7 @@ export function CamposNovaContratacao({ obras, limite, matriz, itens = [], ciclo
             desabilitada: obraNaoPodeNegociar,
             dica: obraNaoPodeNegociar ? `Orçamento a partir de ${reais(limite)}: a negociação é de Suprimentos.` : "A obra negocia, escolhe o fornecedor e informa o valor final. Suprimentos valida.",
           },
-          { value: "suprimentos", label: "Negociação pelo Suprimentos", dica: "A obra faz as 3 cotações; Suprimentos negocia e escolhe o fornecedor." },
+          { value: "suprimentos", label: "Negociação pelo Suprimentos", dica: "A obra registra as cotações (pelo menos uma); Suprimentos negocia e escolhe o fornecedor." },
         ]}
       />
 

@@ -11,7 +11,7 @@ Uma página por perfil: o que a pessoa faz, onde e o que recebe de aviso. Vale p
 ## Coordenador da obra
 1. **Nova contratação:** escolha a obra e a **atividade da matriz** (a forma legal aparece ao lado). Informe o escopo e o Valor Orçamento (o campo põe pontos e vírgula sozinho). Se o serviço está na planilha de suprimentos, escolha o **item da planilha**; senão a tela mostra "será negociado a partir de dd/mm" pelo calendário.
 2. Marque **aditivo** quando o fornecedor já tem contrato (peça o nº do contrato original no Sienge: prefixo da obra + 4 números, ex.: CT/BL0083). Marque **urgente** com motivo e data de necessidade quando a obra precisa antes do prazo; o prazo do Suprimentos não muda e o gerente é avisado.
-3. A abertura já conclui a etapa 1. Você faz as **3 cotações**, a negociação (se o orçamento é menor que R$ 4.000 a obra pode negociar), a **solicitação no Sienge** e a **alçada**.
+3. A abertura já conclui a etapa 1. Você registra as **cotações** (pelo menos uma, até 3), a negociação (se o orçamento é menor que R$ 4.000 a obra pode negociar), a **solicitação no Sienge** e a **alçada**.
 4. Aditivo: não há cotações; informe o fornecedor e o valor negociado.
 5. **Mais ações → Cancelar contratação** (administrador e coordenador): pede o motivo.
 

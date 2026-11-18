@@ -220,7 +220,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
 
             {c.fluxo_versao !== 3 && ["cotacao", "negociacao_obra", "negociacao", "autorizacao"].includes(sel.chave) && sel.situacao !== "pendente" && (
               <div className="flex flex-col gap-2">
-                <h3 className="text-[14px] font-semibold">Cotações ({cotacoes.length}/3)</h3>
+                <h3 className="text-[14px] font-semibold">Cotações ({cotacoes.length} de até 3)</h3>
                 <div className="lista-agrupada">
                   {cotacoes.length === 0 && <p className="px-3.5 py-2.5 text-[13px] text-muted-foreground">Nenhuma cotação registrada.</p>}
                   {cotacoes.map((q) => (
@@ -290,7 +290,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
                 ) : (
                   <p className="text-[13px]">{c.fornecedor_nome ?? "—"} · {formatarReais(c.valor_negociado ? Number(c.valor_negociado) : null)}</p>
                 )}
-                <p className="text-[12.5px] text-muted-foreground">Aditivo não tem as 3 cotações: informe o fornecedor do contrato e o valor negociado e conclua a etapa.</p>
+                <p className="text-[12.5px] text-muted-foreground">Aditivo não tem cotação: informe o fornecedor do contrato e o valor negociado e conclua a etapa.</p>
               </div>
             )}
 

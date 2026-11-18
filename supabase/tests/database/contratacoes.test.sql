@@ -68,7 +68,7 @@ select lives_ok(format($$ select public.concluir_etapa(%L, 1::smallint) $$, (sel
 -- Cotações
 select lives_ok(format($$ select public.registrar_cotacao(%L, 'Fornecedor A', '11222333000181', 97000, 45) $$, (select id from ids where nome = 'grande')), 'Registra cotação 1');
 select lives_ok(format($$ select public.registrar_cotacao(%L, 'Fornecedor B', '11444777000161', 104000, 40) $$, (select id from ids where nome = 'grande')), 'Registra cotação 2');
-select throws_ok(format($$ select public.concluir_etapa(%L, 2::smallint) $$, (select id from ids where nome = 'grande')), 'P0001', null, 'Etapa 2 exige 3 cotações');
+select throws_ok(format($$ select public.concluir_etapa(%L, 2::smallint) $$, (select id from ids where nome = 'grande')), 'P0001', null, 'Etapa 2 não conclui com itens desmarcados');
 select lives_ok(format($$ select public.registrar_cotacao(%L, 'Fornecedor C', '11222333000262', 109000, 50) $$, (select id from ids where nome = 'grande')), 'Registra cotação 3');
 select lives_ok(format($$ select public.marcar_item(%L, 2::smallint, i::smallint, true) from generate_series(1, 2) i $$, (select id from ids where nome = 'grande')), 'Marca os itens da etapa 2 (grande)');
 select lives_ok(format($$ select public.concluir_etapa(%L, 2::smallint) $$, (select id from ids where nome = 'grande')), 'Conclui a etapa 2');
