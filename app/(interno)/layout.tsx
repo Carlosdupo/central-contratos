@@ -6,7 +6,7 @@ import { contarPendencias } from "@/modules/painel/pendencias";
 import { carregarAvisos, marcarAvisosLidos, salvarPreferenciasAviso } from "@/modules/notificacoes/avisos-acoes";
 import { CentralDeAvisos } from "@/components/app/central-de-avisos";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { rotuloDoUsuario } from "@/lib/rotulo-usuario";
+import { rotuloDoUsuario, rotuloDosPerfis } from "@/lib/rotulo-usuario";
 import { BarraLateral, type GrupoMenu } from "@/components/app/barra-lateral";
 import { FocoNoTitulo } from "@/components/app/foco-no-titulo";
 import { IconeAdmin, IconeAnalise, IconeBusca, IconeContratos, IconeEmpresas, IconeIntegracao, IconePainel, IconePanorama } from "@/components/app/icones";
@@ -57,7 +57,7 @@ export default async function LayoutInterno({ children }: LayoutProps<"/">) {
     ? await (await criarClienteServidor()).from("usuario_obras").select("nivel, obras(nome)").eq("usuario_id", usuario.id)
     : { data: [] };
   const nomeNoMenu = rotuloDoUsuario(usuario.nome, (vinculos ?? []).map((v) => ({ nivel: v.nivel, obra: v.obras?.nome ?? "" })));
-  const perfis = usuario.papeis.map((p) => ROTULO_PAPEL[p]).join(", ") || "Sem perfil atribuído";
+  const perfis = rotuloDosPerfis(usuario.papeis, (vinculos ?? []).map((v) => v.nivel), ROTULO_PAPEL) || "Sem perfil atribuído";
   const rodape = (
     <div className="flex flex-col gap-2 rounded-xl border border-sep p-2.5">
       <div className="flex min-w-0 items-center gap-2.5">

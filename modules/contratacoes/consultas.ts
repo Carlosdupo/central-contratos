@@ -2,6 +2,8 @@ import "server-only";
 import { codigoExibicao } from "@/lib/sienge";
 import { cache } from "react";
 import { criarClienteServidor } from "@/lib/supabase/server";
+import { criarClienteAdmin } from "@/lib/supabase/admin";
+import { nomeComPapelNaObra } from "@/lib/rotulo-usuario";
 import { carregarFeriados } from "@/lib/configuracao";
 import { agoraNoFuso, situacaoPrazo, type Prazo, type SituacaoPrazo } from "@/lib/datas";
 import type { Papel } from "@/modules/acesso/papeis";
@@ -91,17 +93,28 @@ export async function detalheDaContratacao(id: string) {
   const supabase = await criarClienteServidor();
   const [{ data: c }, { data: etapas }, { data: checklist }, { data: cotacoes }, { data: assinaturas }, { data: assinantes }, { data: devolucoes }, { data: escopoRows }, fluxos, feriados] = await Promise.all([
     supabase.from("contratacoes").select("*, obras(nome, prefixo_sienge), empresas_terceiras(id, razao_social, situacao)").eq("id", id).maybeSingle(),
-    supabase.from("contratacao_etapas").select("etapa, situacao, iniciada_em, concluida_em, usuarios:concluida_por(nome)").eq("contratacao_id", id),
+    supabase.from("contratacao_etapas").select("etapa, situacao, iniciada_em, concluida_em, concluida_por, usuarios:concluida_por(nome)").eq("contratacao_id", id),
     supabase.from("etapa_checklist").select("etapa, item, marcado").eq("contratacao_id", id),
     supabase.from("cotacoes").select("id, fornecedor, cnpj, valor, prazo_dias, escolhida, cotacao_propostas(rodada, valor)").eq("contratacao_id", id).order("valor"),
     supabase.from("assinaturas").select("ordem, assinado_em, usuarios:assinado_por(nome)").eq("contratacao_id", id),
     supabase.from("assinantes_fluxo").select("ordem, rotulo, papel").order("ordem"),
-    supabase.from("contratacao_devolucoes").select("id, tipo, de_etapa, para_etapa, motivo, em, usuarios:por(nome)").eq("contratacao_id", id).order("em"),
+    supabase.from("contratacao_devolucoes").select("id, tipo, de_etapa, para_etapa, motivo, em, por, usuarios:por(nome)").eq("contratacao_id", id).order("em"),
     supabase.from("contratacao_atividades").select("matriz_contratacao(id, atividade, forma_legal, ordem)").eq("contratacao_id", id),
     carregarFluxos(),
     carregarFeriados(),
   ]);
   if (!c) return null;
+  // Papel de quem agiu nesta obra (auxiliar ou coordenador). A RLS só deixa cada um ler o próprio vínculo; a leitura é feita no
+  // servidor, depois de a pessoa já ter acesso à contratação, e só para quem agiu nela.
+  const agentes = [...new Set([...(etapas ?? []).map((e) => e.concluida_por), ...(devolucoes ?? []).map((d) => d.por)].filter((x): x is string => !!x))];
+  const { data: vinculos } = agentes.length
+    ? await criarClienteAdmin().from("usuario_obras").select("usuario_id, nivel").eq("obra_id", c.obra_id).in("usuario_id", agentes)
+    : { data: [] };
+  const nivelDe = new Map((vinculos ?? []).map((v) => [v.usuario_id, v.nivel]));
+  const quem = (id: string | null | undefined, u: unknown) => {
+    const nome = (u as { nome: string } | null)?.nome;
+    return nome ? nomeComPapelNaObra(nome, id ? nivelDe.get(id) : null) : null;
+  };
   const fluxo = fluxos.get(c.fluxo_versao) ?? fluxos.get(1) ?? [];
   const hoje = agoraNoFuso().data;
   const etapasDetalhe = fluxo.map((f) => {
@@ -113,7 +126,7 @@ export async function detalheDaContratacao(id: string) {
       situacao: (e?.situacao ?? "pendente") as "pendente" | "em_andamento" | "concluida" | "pulada",
       desde,
       concluidaEm: e?.concluida_em ? dataNoFuso(e.concluida_em) : null,
-      concluidaPor: (e?.usuarios as { nome: string } | null)?.nome ?? null,
+      concluidaPor: quem(e?.concluida_por, e?.usuarios),
       concluidaEmIso: e?.concluida_em ?? null,
       prazoConfig: prazo,
       prazo: e?.situacao === "em_andamento" && desde ? situacaoPrazo({ inicio: desde, hoje, prazo, feriados }) : null,
@@ -124,8 +137,10 @@ export async function detalheDaContratacao(id: string) {
     const f = fluxo.find((x) => x.etapa === n);
     return f ? `etapa ${f.etapa} (${f.nome})` : "etapa";
   };
+  // Quem abriu: quem concluiu a solicitação (a 1ª etapa), que é gravada na abertura.
+  const solicitante = (etapasDetalhe.find((e) => e.chave === "solicitacao") ?? etapasDetalhe[0])?.concluidaPor ?? null;
   const eventos = [
-    { id: "abertura", quando: c.created_at, texto: `Contratação ${c.codigo} aberta.` },
+    { id: "abertura", quando: c.created_at, texto: `Contratação ${c.codigo} aberta${solicitante ? ` por ${solicitante}` : ""}.` },
     ...etapasDetalhe
       .filter((e) => e.concluidaEmIso)
       .map((e) => ({ id: `etapa-${e.etapa}`, quando: e.concluidaEmIso as string, texto: `Etapa ${e.etapa} (${e.nome}) ${e.situacao === "pulada" ? "pulada" : "concluída"}${e.concluidaPor ? ` por ${e.concluidaPor}` : ""}.` })),
@@ -135,12 +150,13 @@ export async function detalheDaContratacao(id: string) {
       destaque: true,
       texto:
         d.tipo === "reabertura"
-          ? `${nomeDaEtapa(d.para_etapa)} reaberta por ${(d.usuarios as { nome: string } | null)?.nome ?? "—"}: ${d.motivo}`
-          : `${nomeDaEtapa(d.de_etapa)} devolvida para a ${nomeDaEtapa(d.para_etapa)} por ${(d.usuarios as { nome: string } | null)?.nome ?? "—"}: ${d.motivo}`,
+          ? `${nomeDaEtapa(d.para_etapa)} reaberta por ${quem(d.por, d.usuarios) ?? "—"}: ${d.motivo}`
+          : `${nomeDaEtapa(d.de_etapa)} devolvida para a ${nomeDaEtapa(d.para_etapa)} por ${quem(d.por, d.usuarios) ?? "—"}: ${d.motivo}`,
     })),
   ].sort((a, b) => a.quando.localeCompare(b.quando));
   return {
     c,
+    solicitante,
     eventos,
     etapas: etapasDetalhe,
     cotacoes: cotacoes ?? [],
@@ -155,7 +171,7 @@ export async function detalheDaContratacao(id: string) {
       para: d.para_etapa,
       motivo: d.motivo,
       em: d.em,
-      por: (d.usuarios as { nome: string } | null)?.nome ?? "—",
+      por: quem(d.por, d.usuarios) ?? "—",
     })),
     assinantes: (assinantes ?? []).map((a) => {
       const s = (assinaturas ?? []).find((x) => x.ordem === a.ordem);

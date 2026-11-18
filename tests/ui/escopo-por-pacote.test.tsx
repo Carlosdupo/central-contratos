@@ -149,3 +149,26 @@ describe("Escopo na tela da contratação e no panorama", () => {
     expect(container.textContent).toBe("");
   });
 });
+
+describe("Atividade que não consta na matriz", () => {
+  test("marcar troca a busca pela descrição e envia o texto", async () => {
+    const { acao, enviado } = abertura();
+    await userEvent.click(screen.getByRole("checkbox", { name: "Não consta na matriz" }));
+    expect(screen.queryByRole("combobox", { name: NOME })).toBeNull();
+    await userEvent.type(screen.getByRole("textbox", { name: "Atividade que não consta na matriz" }), "Limpeza de fachada");
+    await userEvent.click(screen.getByRole("button", { name: "Abrir contratação" }));
+    await esperar();
+    expect(acao).toHaveBeenCalled();
+    expect(enviado().get("nao_consta_matriz")).toBe("on");
+    expect(enviado().get("fora_matriz")).toBe("Limpeza de fachada");
+    expect(enviado().getAll("atividades")).toEqual([]);
+  });
+  test("desmarcar volta a busca na matriz", async () => {
+    abertura();
+    const marcador = screen.getByRole("checkbox", { name: "Não consta na matriz" });
+    await userEvent.click(marcador);
+    await userEvent.click(marcador);
+    expect(screen.getByRole("combobox", { name: NOME })).toBeTruthy();
+    expect(screen.queryByRole("textbox", { name: "Atividade que não consta na matriz" })).toBeNull();
+  });
+});

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { exigirPapel } from "@/modules/acesso/sessao";
 import { ROTULO_PAPEL, ehPapel } from "@/modules/acesso/papeis";
+import { rotuloDosPerfis } from "@/lib/rotulo-usuario";
 import { convidarUsuario } from "@/modules/admin/acoes";
 import { criarUsuarioComSenhaProvisoria } from "@/modules/admin/senha-provisoria";
 import { NovoUsuario } from "@/components/app/novo-usuario";
@@ -14,11 +15,13 @@ export const metadata: Metadata = { title: "Usuários" };
 export default async function PaginaUsuarios() {
   await exigirPapel("admin");
   const supabase = await criarClienteServidor();
-  const [{ data: usuarios }, { data: papeis }, { data: auth }] = await Promise.all([
+  const [{ data: usuarios }, { data: papeis }, { data: auth }, { data: niveis }, { data: obras }] = await Promise.all([
     supabase.from("usuarios").select("id, nome, email, ativo").eq("tipo", "interno").order("nome"),
     supabase.from("usuario_papeis").select("usuario_id, papel"),
     // Situação do convite vem do Auth (só leitura, depois de conferir o papel admin).
     criarClienteAdmin().auth.admin.listUsers({ perPage: 1000 }),
+    supabase.from("usuario_obras").select("usuario_id, nivel"),
+    supabase.from("obras").select("id, nome").eq("ativa", true).order("nome"),
   ]);
   const aceitou = new Map((auth?.users ?? []).map((u) => [u.id, !!u.last_sign_in_at]));
 
@@ -32,7 +35,7 @@ export default async function PaginaUsuarios() {
             titulo="Novo usuário"
             descricao="Por e-mail, a pessoa recebe um convite para criar a senha. Se o e-mail não chega, gere uma senha provisória. RH, segurança do trabalho e administradores também cadastram a verificação em duas etapas."
           >
-            <NovoUsuario convidar={convidarUsuario} gerarSenha={criarUsuarioComSenhaProvisoria} />
+            <NovoUsuario convidar={convidarUsuario} gerarSenha={criarUsuarioComSenhaProvisoria} obras={obras ?? []} />
           </JanelaLateral>
         </div>
         <div className="-mx-1.5 overflow-x-auto">
@@ -50,7 +53,7 @@ export default async function PaginaUsuarios() {
                       <Link href={`/admin/usuarios/${u.id}`} className="font-medium text-primary">{u.nome}</Link>
                       <div className="text-[12.5px] text-muted-foreground">{u.email}</div>
                     </td>
-                    <td className="text-[13px]">{perfis.map((p) => ROTULO_PAPEL[p]).join(", ") || <span className="text-faint">Sem perfil</span>}</td>
+                    <td className="text-[13px]">{rotuloDosPerfis(perfis, (niveis ?? []).filter((n) => n.usuario_id === u.id).map((n) => n.nivel), ROTULO_PAPEL) || <span className="text-faint">Sem perfil</span>}</td>
                     <td><span className={`selo ${situacao[0]}`}>{situacao[1]}</span></td>
                   </tr>
                 );

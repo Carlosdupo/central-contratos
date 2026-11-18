@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@ui-sdk/react/button";
 import { Combobox, ComboboxContent, ComboboxEmpty, ComboboxGroup, ComboboxGroupLabel, ComboboxInput, ComboboxItem, ComboboxLabel, ComboboxList } from "@ui-sdk/react/combobox";
 import { DetalheAtividade } from "@/components/app/detalhe-atividade";
-import { Marcador } from "@/components/app/formulario";
+import { CampoTexto, Marcador } from "@/components/app/formulario";
 import { formaLegalMaisRigorosa, formasDiferentes, rotuloDoEscopo } from "@/lib/escopo";
 import type { AtividadeMatriz } from "@/modules/matriz/consultas";
 
@@ -17,6 +17,7 @@ export function CampoAtividadeMatriz({ atividades }: { atividades: AtividadeMatr
   const [chave, setChave] = useState<string | null>(null);
   const [marcadas, setMarcadas] = useState<Set<string>>(new Set());
   const [aviso, setAviso] = useState("");
+  const [naoConsta, setNaoConsta] = useState(false);
 
   const { grupos, subgrupos } = useMemo(() => {
     const g = new Map<string, AtividadeMatriz[]>();
@@ -49,9 +50,14 @@ export function CampoAtividadeMatriz({ atividades }: { atividades: AtividadeMatr
     });
   };
 
+  const marcarNaoConsta = (marcar: boolean) => {
+    setNaoConsta(marcar);
+    if (marcar) escolher(null);
+  };
+
   return (
     <div className="flex flex-col gap-3">
-      <Combobox name="matriz" value={chave} onValueChange={(v: string | null) => escolher(v)}>
+      {!naoConsta && <Combobox name="matriz" value={chave} onValueChange={(v: string | null) => escolher(v)}>
         <div className="flex min-w-0 flex-col gap-1.5">
           <ComboboxLabel className="text-[13px] font-semibold">Escopo da matriz (atividade, subgrupo ou grupo)</ComboboxLabel>
           <ComboboxInput className="campo" placeholder="Digite para buscar: grupo inteiro, subgrupo ou atividade" autoComplete="off" />
@@ -89,7 +95,12 @@ export function CampoAtividadeMatriz({ atividades }: { atividades: AtividadeMatr
             </ComboboxGroup>
           </ComboboxList>
         </ComboboxContent>
-      </Combobox>
+      </Combobox>}
+
+      <Marcador nome="nao_consta_matriz" rotulo="Não consta na matriz" marcadoAgora={naoConsta} aoMudar={marcarNaoConsta} className="flex cursor-pointer items-center gap-2 text-[13px]" />
+      {naoConsta && (
+        <CampoTexto nome="fora_matriz" rotulo="Atividade que não consta na matriz" dica="Descreva a atividade. Sem forma legal da matriz: Suprimentos define e avalia incluir na matriz." />
+      )}
 
       {unica && <DetalheAtividade atividade={unica} />}
 

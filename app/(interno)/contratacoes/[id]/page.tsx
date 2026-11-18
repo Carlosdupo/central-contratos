@@ -107,6 +107,7 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
             <h1 className="titulo">{c.servico}</h1>
           </div>
           {c.urgente && <SeloUrgente data={c.urgente_data} />}
+          {c.fora_da_matriz && <span className="selo selo-alerta" title="A atividade não consta na matriz de contratação">Não consta na matriz</span>}
           {c.fora_do_prazo && <span className="selo selo-alerta" title="A obra solicitou depois da data que a planilha previa">Pedido fora do prazo</span>}
           {c.situacao === "liberada" && <span className="selo selo-ok">Liberada para a obra</span>}
           {c.situacao === "cancelada" && <span className="selo selo-neutro">Cancelada: {c.cancelamento_motivo}</span>}
@@ -117,10 +118,12 @@ export default async function PaginaContratacao({ params, searchParams }: PagePr
       <div className="painel flex-row flex-wrap gap-x-8 gap-y-3 py-4 text-[14px]">
         {[
           ["Obra", c.obras?.nome],
+          ...(d.solicitante ? [["Solicitado por", d.solicitante]] : []),
           ["Tipo", TIPO_CONTRATACAO[c.tipo]],
           ["Fornecedor", c.fornecedor_nome ? `${c.fornecedor_nome} · ${formatarCnpj(c.fornecedor_cnpj ?? "")}` : "a definir"],
-          [c.matriz_id ? "Atividade da matriz" : "Serviço da EAP", c.pacote ?? "—"],
-          ...(c.forma_legal ? [["Forma legal", c.forma_legal]] : []),
+          ...(c.fora_da_matriz
+            ? [["Atividade (não consta na matriz)", c.fora_da_matriz], ["Forma legal", "a definir por Suprimentos"]]
+            : [[c.matriz_id ? "Atividade da matriz" : "Serviço da EAP", c.pacote ?? "—"], ...(c.forma_legal ? [["Forma legal", c.forma_legal]] : [])]),
           ["Negociação", negociaObra ? "Pela obra" : "Pelo Suprimentos"],
           ["Orçamento", c.valor_orcado == null ? "não informado" : formatarReais(Number(c.valor_orcado))],
           ["Contratado", formatarReais(c.valor_negociado ? Number(c.valor_negociado) : null)],

@@ -116,3 +116,24 @@ describe("Gerar nova senha provisória (usuário existente)", () => {
     expect(acao).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("Novo usuário: Auxiliar Obra", () => {
+  test("marcar Auxiliar Obra pede as obras e envia junto", async () => {
+    let enviado: FormData | null = null;
+    const convite = vi.fn(async (_: object, d: FormData) => {
+      enviado = d;
+      return { ok: "Convite enviado." };
+    });
+    render(<NovoUsuario convidar={convite} gerarSenha={convidar} obras={[{ id: "o1", nome: "Block" }, { id: "o2", nome: "Vértice" }]} />);
+    expect(screen.queryByRole("checkbox", { name: "Auxiliar em Block" })).toBeNull();
+    await userEvent.type(screen.getByRole("textbox", { name: "Nome completo" }), "Ana Carolina");
+    await userEvent.type(screen.getByRole("textbox", { name: "E-mail" }), "ana@teste.com.br");
+    await userEvent.click(screen.getByRole("checkbox", { name: "Auxiliar Obra" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Auxiliar em Block" }));
+    await userEvent.click(screen.getByRole("button", { name: "Enviar convite à pessoa" }));
+    await esperar();
+    const d = enviado as unknown as FormData;
+    expect(d.getAll("papeis")).toEqual(["auxiliar_obra"]);
+    expect(d.getAll("obras_auxiliar")).toEqual(["o1"]);
+  });
+});

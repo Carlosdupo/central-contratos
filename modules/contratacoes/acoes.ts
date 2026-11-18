@@ -36,7 +36,9 @@ const atividadesDoFormulario = (dados: FormData): string[] => {
 
 const esquemaAbertura = z.object({
   obra: z.uuid("Escolha a obra."),
-  atividades: z.array(z.uuid("Atividade da matriz inválida."), { message: "Escolha pelo menos uma atividade da matriz." }).min(1, "Escolha pelo menos uma atividade da matriz.").max(100, "Escopo grande demais (até 100 atividades)."),
+  atividades: z.array(z.uuid("Atividade da matriz inválida."), { message: "Escolha pelo menos uma atividade da matriz." }).max(100, "Escopo grande demais (até 100 atividades)."),
+  // Atividade que não consta na matriz: descrição no lugar das atividades (o banco confere de novo).
+  fora_matriz: z.string().trim().min(3, "Descreva a atividade que não consta na matriz.").max(200, "Descrição da atividade grande demais.").optional(),
   servico: z.string().trim().min(3, "Descreva o escopo.").max(200),
   valor: z.number().positive("Informe o Valor Orçamento ou marque \"Não informar\".").max(1e11).nullable(),
   aditivo: z.boolean(),
@@ -53,6 +55,9 @@ const esquemaAbertura = z.object({
   (data) => !data.urgente || !!data.urgente_data,
   { message: "Informe a data de necessidade.", path: ["urgente_data"] },
 ).refine(
+  (data) => data.fora_matriz !== undefined || data.atividades.length > 0,
+  { message: "Escolha pelo menos uma atividade da matriz ou marque \"Não consta na matriz\".", path: ["atividades"] },
+).refine(
   (data) => !data.aditivo || !!data.contrato_original,
   { message: "Informe o nº do contrato original no Sienge.", path: ["contrato_original"] },
 );
@@ -60,11 +65,13 @@ const esquemaAbertura = z.object({
 export async function abrirContratacao(_: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
   await exigirPapel("coordenador_obra");
   const semValor = dados.get("sem_valor") === "on";
+  const naoConsta = dados.get("nao_consta_matriz") === "on";
   const valor = semValor ? null : lerValor(dados.get("valor"));
   if (!semValor && Number.isNaN(valor)) return { erro: "Informe o Valor Orçamento ou marque \"Não informar\"." };
   const lido = esquemaAbertura.safeParse({
     obra: dados.get("obra"),
-    atividades: atividadesDoFormulario(dados),
+    atividades: naoConsta ? [] : atividadesDoFormulario(dados),
+    fora_matriz: naoConsta ? String(dados.get("fora_matriz") ?? "") : undefined,
     servico: dados.get("servico"),
     valor,
     aditivo: dados.get("aditivo") === "on",
@@ -93,6 +100,7 @@ export async function abrirContratacao(_: EstadoFormulario, dados: FormData): Pr
     p_negociacao: lido.data.negociacao,
     p_contrato_original: lido.data.aditivo ? lido.data.contrato_original : undefined,
     p_planejamento_item: lido.data.planejamento_item,
+    p_fora_matriz: lido.data.fora_matriz,
   });
   if (error || !data) return { erro: mensagemDeErro(error, error?.message ?? "Não foi possível abrir a contratação.") };
   if (lido.data.urgente) {

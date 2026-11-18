@@ -7,6 +7,7 @@ import { PAPEIS, type Papel } from "@/modules/acesso/papeis";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
 import { envPublico } from "@/lib/env";
+import { lerPerfisDoFormulario } from "@/modules/admin/perfis-formulario";
 import { mensagemDeErro, type EstadoFormulario } from "@/lib/formulario";
 import { reenviarAcesso } from "@/modules/acesso/reenvio";
 import { lerEap } from "@/lib/eap";
@@ -30,8 +31,9 @@ export async function convidarUsuario(_: EstadoFormulario, dados: FormData): Pro
   await exigirPapel("admin");
   const lido = esquemaConvite.safeParse({ nome: dados.get("nome"), email: dados.get("email") });
   if (!lido.success) return { erro: lido.error.issues[0].message };
-  const papeis = papeisDoFormulario(dados);
-  if (papeis.length === 0) return { erro: "Escolha pelo menos um perfil." };
+  const perfis = lerPerfisDoFormulario(dados);
+  if ("erro" in perfis) return perfis;
+  const { papeis, obrasAuxiliar } = perfis;
 
   // Convite pelo Auth precisa da chave de servidor; o papel admin já foi conferido acima.
   const { data, error } = await criarClienteAdmin().auth.admin.inviteUserByEmail(lido.data.email, {
@@ -46,6 +48,9 @@ export async function convidarUsuario(_: EstadoFormulario, dados: FormData): Pro
   const { error: erroPapeis } = await supabase
     .from("usuario_papeis")
     .insert(papeis.map((papel) => ({ usuario_id: data.user.id, papel })));
+  const { error: erroObras } = erroPapeis || obrasAuxiliar.length === 0
+    ? { error: null }
+    : await supabase.from("usuario_obras").insert(obrasAuxiliar.map((obra_id) => ({ usuario_id: data.user.id, obra_id, nivel: "auxiliar" })));
   revalidatePath("/admin/usuarios");
   if (erroPapeis) {
     // Sem perfis o usuário não serve para nada: desfaz o convite (o cadastro em usuarios sai junto, por cascata)
@@ -54,6 +59,7 @@ export async function convidarUsuario(_: EstadoFormulario, dados: FormData): Pro
     if (!erroRemocao) return { erro: `Os perfis não foram salvos e o convite foi desfeito: ${mensagemDeErro(erroPapeis, "tente de novo")}.` };
     return { erro: `Convite enviado, mas os perfis não foram salvos: ${mensagemDeErro(erroPapeis, "tente pela tela do usuário")}.` };
   }
+  if (erroObras) return { erro: `Convite enviado, mas as obras do Auxiliar Obra não foram salvas: ${mensagemDeErro(erroObras, "marque pela tela do usuário")}.` };
   return { ok: `Convite enviado para ${lido.data.email}.` };
 }
 

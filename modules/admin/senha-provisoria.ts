@@ -4,10 +4,10 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { exigirPapel } from "@/modules/acesso/sessao";
 import { dentroDoLimite } from "@/modules/acesso/limites";
-import { PAPEIS, type Papel } from "@/modules/acesso/papeis";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
 import { gerarSenhaProvisoria } from "@/lib/senha-provisoria";
+import { lerPerfisDoFormulario } from "@/modules/admin/perfis-formulario";
 import { mensagemDeErro, type EstadoFormulario } from "@/lib/formulario";
 
 // Acesso por senha provisória, sem e-mail. Só administrador com verificação em duas etapas (exigirPapel confere).
@@ -25,16 +25,14 @@ const esquemaNovo = z.object({
   email: z.email("Informe um e-mail válido.").transform((e) => e.toLowerCase()),
 });
 
-const papeisDoFormulario = (dados: FormData): Papel[] =>
-  dados.getAll("papeis").filter((p): p is Papel => typeof p === "string" && (PAPEIS as readonly string[]).includes(p));
-
 export async function criarUsuarioComSenhaProvisoria(_: EstadoSenha, dados: FormData): Promise<EstadoSenha> {
   const admin = await exigirPapel("admin");
   if (!(await dentroDoLimite("senha-provisoria", admin.id, LIMITE_POR_15_MIN, 900))) return { erro: MENSAGEM_LIMITE };
   const lido = esquemaNovo.safeParse({ nome: dados.get("nome"), email: dados.get("email") });
   if (!lido.success) return { erro: lido.error.issues[0].message };
-  const papeis = papeisDoFormulario(dados);
-  if (papeis.length === 0) return { erro: "Escolha pelo menos um perfil." };
+  const perfis = lerPerfisDoFormulario(dados);
+  if ("erro" in perfis) return perfis;
+  const { papeis, obrasAuxiliar } = perfis;
 
   const senha = gerarSenhaProvisoria();
   const adminAuth = criarClienteAdmin().auth.admin;
@@ -58,6 +56,10 @@ export async function criarUsuarioComSenhaProvisoria(_: EstadoSenha, dados: Form
   const supabase = await criarClienteServidor();
   const { error: erroPapeis } = await supabase.from("usuario_papeis").insert(papeis.map((papel) => ({ usuario_id: id, papel })));
   if (erroPapeis) return desfazer(`Os perfis não foram salvos: ${mensagemDeErro(erroPapeis, "tente de novo")}.`);
+  if (obrasAuxiliar.length) {
+    const { error: erroObras } = await supabase.from("usuario_obras").insert(obrasAuxiliar.map((obra_id) => ({ usuario_id: id, obra_id, nivel: "auxiliar" })));
+    if (erroObras) return desfazer(`As obras do Auxiliar Obra não foram salvas: ${mensagemDeErro(erroObras, "tente de novo")}.`);
+  }
   const { error: erroAuditoria } = await supabase.rpc("registrar_senha_provisoria", { p_usuario: id, p_conta_nova: true });
   if (erroAuditoria) return desfazer("Não foi possível registrar na auditoria.");
 
