@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { exigirInterno } from "@/modules/acesso/sessao";
 import { temAlgumPapel } from "@/modules/acesso/papeis";
 import { etapasEmAberto, type EtapaAberta } from "@/modules/contratacoes/consultas";
@@ -58,6 +59,7 @@ function Kpi({ n, rotulo, tom }: { n: number; rotulo: string; tom?: "hot" | "bad
 
 export default async function PaginaPainel({ searchParams }: PageProps<"/painel">) {
   const usuario = await exigirInterno();
+  if (usuario.papeis.length > 0 && usuario.papeis.every((p) => p === "financeiro")) redirect("/apoio/financeiro");
   const { minhas: soMinhasParam } = await searchParams;
   const soMinhas = soMinhasParam === "1";
   const supabase = await criarClienteServidor();

@@ -1,4 +1,3 @@
--- migration: 20261117120000_catalogo_entrada_mensal.sql
 -- Catálogo do procedimento rev. 02: etapa (entrada/mensal), responsável (RH/SST) e documentos novos.
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -30,8 +29,8 @@ select is(
 select is(
   (select count(*)::int from public.matriz_documental m join public.tipos_documento t on t.codigo = m.tipo_documento
     where m.ativo and t.etapa = 'mensal' and t.codigo not in ('fgts_guia', 'fgts_comprovante', 'inss_guia', 'inss_comprovante')),
-  0,
-  'mensais novos só entram na matriz quando a etapa mensal existir'
+  10,
+  'os 10 mensais novos estão na matriz (ligados na fase RH-4)'
 );
 select throws_ok(
   $$update public.tipos_documento set responsavel = 'financeiro' where codigo = 'aso'$$,

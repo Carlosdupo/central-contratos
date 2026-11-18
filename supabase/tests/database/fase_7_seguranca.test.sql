@@ -25,7 +25,7 @@ select is((
   select string_agg(p.proname, ', ' order by p.proname) from pg_proc p
   where p.pronamespace = 'app'::regnamespace and has_function_privilege('authenticated', p.oid, 'execute')
     and p.proname <> all (array['aal2', 'admin_verificado', 'caminho_arquivo_valido', 'exigir_caminho_valido', 'pode_abrir_documento', 'pode_gerir_terceiros',
-      'pode_ver_obra', 'rh_verificado', 'sem_acento', 'sst_verificado', 'tem_papel', 'tocar_updated_at', 'usuario_externo_da_empresa', 'usuario_interno_ativo'])
+      'pode_ver_financeiro', 'pode_ver_obra', 'rh_verificado', 'sem_acento', 'sst_verificado', 'tem_papel', 'tem_papel_financeiro', 'tocar_updated_at', 'usuario_externo_da_empresa', 'usuario_interno_ativo'])
 ), null, 'Só as funções de política ficam executáveis pelo usuário logado no schema app');
 
 -- Funções internas fechadas de propósito

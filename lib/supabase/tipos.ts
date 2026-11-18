@@ -2218,6 +2218,24 @@ export type Database = {
         Args: { p_empresa: string; p_optante: boolean }
         Returns: undefined
       }
+      resumo_financeiro: {
+        Args: { p_hoje?: string }
+        Returns: number
+      }
+      painel_financeiro: {
+        Args: { p_competencia: string }
+        Returns: {
+          empresa_id: string
+          razao_social: string
+          cnpj: string
+          obras: string | null
+          exigidos: number
+          aprovados: number
+          em_analise: number
+          reprovados: number
+          liberada_em: string | null
+        }[]
+      }
       lembretes_documentacao_mensal: {
         Args: { p_hoje?: string }
         Returns: number
@@ -2390,6 +2408,7 @@ export type Database = {
         | "direcao"
         | "rh"
         | "sst"
+        | "financeiro"
       regra_validade:
         | "meses_apos_emissao"
         | "data_informada"
@@ -2568,6 +2587,7 @@ export const Constants = {
         "direcao",
         "rh",
         "sst",
+        "financeiro",
       ],
       regra_validade: [
         "meses_apos_emissao",

@@ -1,7 +1,8 @@
 import { exigirInterno } from "@/modules/acesso/sessao";
 import { Button } from "@ui-sdk/react/button";
 import { sair } from "@/modules/acesso/acoes";
-import { ROTULO_PAPEL } from "@/modules/acesso/papeis";
+import { ROTULO_PAPEL, temAlgumPapel } from "@/modules/acesso/papeis";
+import { PAPEIS_FINANCEIRO } from "@/modules/financeiro/consultas";
 import { contarPendencias } from "@/modules/painel/pendencias";
 import { carregarAvisos, marcarAvisosLidos, salvarPreferenciasAviso } from "@/modules/notificacoes/avisos-acoes";
 import { CentralDeAvisos } from "@/components/app/central-de-avisos";
@@ -52,6 +53,7 @@ export default async function LayoutInterno({ children }: LayoutProps<"/">) {
       ],
     },
   ];
+  if (temAlgumPapel(usuario.papeis, PAPEIS_FINANCEIRO)) grupos[2].itens.unshift({ href: "/apoio/financeiro", rotulo: "Liberação financeira", icone: <IconeContratos /> });
   if (usuario.papeis.includes("admin")) grupos.push({ titulo: "Sistema", itens: [{ href: "/admin", rotulo: "Administração", icone: <IconeAdmin /> }] });
 
   const { data: vinculos } = usuario.papeis.includes("coordenador_obra")

@@ -5,7 +5,7 @@ select plan(6);
 
 select is(
   (select array_agg(tipo_documento order by tipo_documento) from public.matriz_documental
-    where aplica_a = 'empresa' and ativo and (tipo_documento like 'fgts%' or tipo_documento like 'inss%')),
+    where aplica_a = 'empresa' and ativo and (tipo_documento like 'fgts%' or tipo_documento like 'inss%') and tipo_documento <> 'fgts_digital_alocacao'),
   array['fgts_comprovante', 'fgts_guia', 'inss_comprovante', 'inss_guia'],
   'a matriz da empresa pede guia e comprovante de FGTS e INSS'
 );

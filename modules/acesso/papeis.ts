@@ -9,6 +9,7 @@ export const PAPEIS = [
   "direcao",
   "rh",
   "sst",
+  "financeiro",
 ] as const;
 
 export type Papel = (typeof PAPEIS)[number];
@@ -22,6 +23,7 @@ export const ROTULO_PAPEL: Record<Papel, string> = {
   direcao: "Direção",
   rh: "RH",
   sst: "Segurança do trabalho",
+  financeiro: "Financeiro",
 };
 
 // Decisão P22 (proposta aprovada no plano): verificação em duas etapas obrigatória para estes papéis.
