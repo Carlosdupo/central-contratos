@@ -1,4 +1,3 @@
--- migration: 20261117231000_liberacao_financeira.sql
 -- RH-5: liberação automática para o financeiro quando a documentação mensal fica toda aprovada.
 begin;
 create extension if not exists pgtap with schema extensions;

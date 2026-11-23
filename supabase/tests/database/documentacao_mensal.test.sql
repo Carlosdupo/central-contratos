@@ -1,4 +1,3 @@
--- migration: 20261117210000_documentacao_mensal.sql
 -- RH-4: documentação mensal da empresa e dos funcionários liberados, lembretes e conclusão que não mexe no acesso.
 begin;
 create extension if not exists pgtap with schema extensions;

@@ -1,4 +1,3 @@
--- migration: 20261117140000_analise_rh_sst.sql
 -- RH-2: RH e Segurança analisam o mesmo envio, cada um os seus documentos; avisos no sino.
 begin;
 create extension if not exists pgtap with schema extensions;

@@ -52,7 +52,7 @@ function GrupoDocumentos({ titulo, itens, editavel, podeAbrir }: { titulo: strin
                 <div className="flex items-center gap-3">
                   {podeAbrir && item.arquivoId && <BotaoAbrirArquivo arquivoId={item.arquivoId} />}
                   {item.estado === "aprovado" && item.validade && diasAte(item.validade) <= 30 && <span className="selo selo-alerta">Vence em {diasAte(item.validade)} d</span>}
-                  <SeloEstado estado={item.estado} />
+                  <SeloEstado estado={item.estado} responsavel={item.tipo.responsavel} />
                 </div>
               </div>
               {aceitaNovo &&
