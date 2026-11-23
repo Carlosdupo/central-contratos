@@ -18,7 +18,7 @@ export default async function PaginaNovaPessoa() {
       <div>
         <Link href="/portal" className="text-[14px] text-primary">← Portal</Link>
         <h1 className="titulo mt-2">Adicionar pessoa</h1>
-        <p className="mt-1.5 max-w-[66ch] text-[15px] text-muted-foreground">Só o básico agora. Depois de salvar, abre a lista de documentos de acordo com o tipo e a função.</p>
+        <p className="mt-1.5 max-w-[66ch] text-[15px] text-muted-foreground">Só o básico agora. Depois de salvar, abre a lista de documentos de acordo com o tipo e a função. Se a pessoa já é da sua empresa, use o mesmo CPF e escolha a obra nova: ela entra com os documentos que já tem.</p>
       </div>
       <section className="painel max-w-[640px]">
         <Formulario acao={cadastrarPessoa} textoBotao="Salvar e continuar">

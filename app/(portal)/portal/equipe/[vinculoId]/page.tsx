@@ -6,7 +6,7 @@ import { exigirExterno } from "@/modules/acesso/sessao";
 import { documentosDoVinculo } from "@/modules/terceiros/consultas";
 import { enviarDocumentosPessoa } from "@/modules/terceiros/acoes";
 import { linksDasFotos } from "@/modules/terceiros/fotos";
-import { podeEnviarAlgumaEtapa } from "@/modules/terceiros/dominio/documentos";
+import { podeEnviarAlgumaEtapa, vaiParaObraNova } from "@/modules/terceiros/dominio/documentos";
 import { SITUACAO_ALOCACAO, TIPO_VINCULO } from "@/modules/terceiros/rotulos";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { agoraNoFuso, formatarData, somarDias } from "@/lib/datas";
@@ -38,10 +38,14 @@ export default async function PaginaPessoaPortal({ params }: PageProps<"/portal/
   ]);
   if (!v || v.empresa_id !== empresaId || !dados || !v.pessoas) notFound();
 
-  const { data: cpf } = await supabase.rpc("cpf_mascarado", { p_pessoa: v.pessoas.id });
+  const [{ data: cpf }, { data: temAprovados }] = await Promise.all([
+    supabase.rpc("cpf_mascarado", { p_pessoa: v.pessoas.id }),
+    supabase.rpc("tem_documentos_em_outra_empresa", { p_vinculo: vinculoId }),
+  ]);
   const fotos = await linksDasFotos([v.pessoas.foto_path]);
   const esporadico = v.tipo === "socio_esporadico";
-  const podeEnviar = podeEnviarAlgumaEtapa(dados.itens);
+  const obraNova = vaiParaObraNova(v.alocacoes ?? [], dados.itens);
+  const podeEnviar = podeEnviarAlgumaEtapa(dados.itens) || obraNova;
   const faltam = dados.itens.filter((i) => ["falta", "reprovado", "vencido"].includes(i.estado)).length;
 
   return (
@@ -90,9 +94,22 @@ export default async function PaginaPessoaPortal({ params }: PageProps<"/portal/
               <h2 className="subtitulo">Documentos</h2>
               <p className="mt-1 text-[13px] text-muted-foreground">{dados.itens.length} exigidos para {v.tipo === "funcionario" ? "funcionário" : "sócio com acesso diário"}. PDF, JPG ou PNG de até 10 MB.</p>
             </div>
+            {temAprovados && (
+              <p className="rounded-xl bg-fill px-3.5 py-2.5 text-[13px]">
+                Esta pessoa já tem documentos aprovados no Nexus por outra empresa. O RH e a Segurança do Trabalho vão ver se aproveitam o RG/CNH e os certificados de NR. ASO, contrato, eSocial, fichas e ordem de serviço precisam ser da sua empresa.
+              </p>
+            )}
+            {obraNova && (
+              <p className="rounded-xl bg-fill px-3.5 py-2.5 text-[13px]">
+                Os documentos já estão aprovados. Para a obra nova, é só enviar: o RH marca a integração.
+              </p>
+            )}
             <ListaDocumentosPessoa vinculoId={vinculoId} itens={dados.itens} editavel podeAbrir={() => true} />
             {podeEnviar ? (
-              <Formulario acao={enviarDocumentosPessoa.bind(null, vinculoId)} textoBotao="Enviar para análise" />
+              <Formulario
+                acao={enviarDocumentosPessoa.bind(null, vinculoId)}
+                textoBotao={obraNova && !podeEnviarAlgumaEtapa(dados.itens) ? "Enviar para marcar a integração" : "Enviar para análise"}
+              />
             ) : (
               faltam > 0 && <p className="text-right text-[13px] text-muted-foreground">Faltam {faltam} documento(s). O envio libera quando tudo estiver anexado.</p>
             )}

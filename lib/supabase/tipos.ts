@@ -881,6 +881,7 @@ export type Database = {
           analisado_em: string | null
           analisado_por: string | null
           arquivo_atual_id: string | null
+          aproveitado_de: string | null
           competencia: string | null
           created_at: string
           data_emissao: string | null
@@ -898,6 +899,7 @@ export type Database = {
           analisado_em?: string | null
           analisado_por?: string | null
           arquivo_atual_id?: string | null
+          aproveitado_de?: string | null
           competencia?: string | null
           created_at?: string
           data_emissao?: string | null
@@ -915,6 +917,7 @@ export type Database = {
           analisado_em?: string | null
           analisado_por?: string | null
           arquivo_atual_id?: string | null
+          aproveitado_de?: string | null
           competencia?: string | null
           created_at?: string
           data_emissao?: string | null
@@ -1770,6 +1773,7 @@ export type Database = {
         Row: {
           aceita_texto: boolean
           ativo: boolean
+          aproveitavel: boolean
           chave_validade: string | null
           codigo: string
           escopo: Database["public"]["Enums"]["escopo_documento"]
@@ -1785,6 +1789,7 @@ export type Database = {
         Insert: {
           aceita_texto?: boolean
           ativo?: boolean
+          aproveitavel?: boolean
           chave_validade?: string | null
           codigo: string
           escopo: Database["public"]["Enums"]["escopo_documento"]
@@ -1800,6 +1805,7 @@ export type Database = {
         Update: {
           aceita_texto?: boolean
           ativo?: boolean
+          aproveitavel?: boolean
           chave_validade?: string | null
           codigo?: string
           escopo?: Database["public"]["Enums"]["escopo_documento"]
@@ -2142,6 +2148,14 @@ export type Database = {
           tipo: Database["public"]["Enums"]["tipo_vinculo"]
           vinculo_id: string
         }[]
+      }
+      aproveitar_documento: {
+        Args: { p_origem: string; p_vinculo: string }
+        Returns: string
+      }
+      tem_documentos_em_outra_empresa: {
+        Args: { p_vinculo: string }
+        Returns: boolean
       }
       cadastrar_pessoa: {
         Args: {

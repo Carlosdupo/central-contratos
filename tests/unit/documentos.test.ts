@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { cnpjValido, cpfValido, formatarCnpj, mascararCpf } from "@/lib/documentos-br";
 import {
+  vaiParaObraNova,
   competenciaAtual,
   documentosExigidos,
   estadoDoItem,
@@ -161,5 +162,19 @@ describe("nome do arquivo da foto (catraca)", () => {
   it("tira caracteres que o Windows não aceita", () => {
     expect(nomeArquivoFoto('Zé / "Bigode" \ Lima?', "a.jpg")).toBe("Zé Bigode Lima.jpg");
     expect(nomeArquivoFoto("  ", "a.jpg")).toBe("foto.jpg");
+  });
+});
+
+describe("vaiParaObraNova", () => {
+  const entrada = (estado: "aprovado" | "falta") => ({ estado, tipo: { etapa: "entrada" as const } });
+  const mensal = { estado: "falta" as const, tipo: { etapa: "mensal" as const } };
+  it("liberado numa obra, rascunho na nova e tudo aprovado: envia só para marcar a integração", () => {
+    expect(vaiParaObraNova([{ situacao: "liberado" }, { situacao: "rascunho" }], [entrada("aprovado"), mensal])).toBe(true);
+  });
+  it("falta documento de entrada: não", () => {
+    expect(vaiParaObraNova([{ situacao: "liberado" }, { situacao: "rascunho" }], [entrada("aprovado"), entrada("falta")])).toBe(false);
+  });
+  it("nunca foi liberado: não", () => {
+    expect(vaiParaObraNova([{ situacao: "rascunho" }], [entrada("aprovado")])).toBe(false);
   });
 });

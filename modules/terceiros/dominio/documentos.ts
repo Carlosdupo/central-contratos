@@ -150,3 +150,24 @@ export function progressoDocumentos(estados: EstadoItem[]): Progresso {
     exigidos > 0 && aprovados === exigidos ? "completo" : estados.some((e) => e === "reprovado" || e === "vencido") ? "pendencia" : "andamento";
   return { aprovados, exigidos, percentual, faixa };
 }
+
+/** Pessoa já liberada numa obra, com tudo aprovado, indo para outra obra: envia só para o RH marcar a integração. */
+export function vaiParaObraNova(
+  alocacoes: { situacao: string }[],
+  itens: { estado: EstadoItem; tipo: { etapa: "entrada" | "mensal" } }[],
+): boolean {
+  return (
+    alocacoes.some((a) => a.situacao === "rascunho") &&
+    alocacoes.some((a) => a.situacao === "liberado" || a.situacao === "integracao_agendada") &&
+    itens.filter((i) => i.tipo.etapa === "entrada").every((i) => i.estado === "aprovado")
+  );
+}
+
+export type EmpresaExistente = {
+  id: string;
+  razao: string;
+  situacao: string;
+  obras: string[];
+  aprovados: { codigo: string; nome: string; validade: DataISO | null }[];
+  pendentes: { codigo: string; nome: string }[];
+};

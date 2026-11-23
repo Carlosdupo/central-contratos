@@ -2,12 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { exigirInterno } from "@/modules/acesso/sessao";
 import { temAlgumPapel } from "@/modules/acesso/papeis";
-import { convidarEmpresa } from "@/modules/terceiros/acoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarCnpj } from "@/lib/documentos-br";
-import { CampoSelecao, CampoTexto, Formulario } from "@/components/app/formulario";
+import { ConviteEmpresa } from "@/components/app/convite-empresa";
+import { convidarEmpresa } from "@/modules/terceiros/acoes";
 import { JanelaLateral } from "@/components/app/janela-lateral";
-import { CampoCnpj, CampoTelefone } from "@/components/app/campos-mascara";
 import { SITUACAO_EMPRESA } from "@/modules/terceiros/rotulos";
 
 export const metadata: Metadata = { title: "Empresas terceirizadas" };
@@ -33,17 +32,11 @@ export default async function PaginaEmpresas() {
           <p className="mt-1 max-w-[66ch] text-muted-foreground">A empresa recebe um convite por e-mail, cria a senha e envia os documentos pelo portal.</p>
         </div>
         {podeConvidar && (
-          <JanelaLateral textoBotao="Convidar empresa" titulo="Convidar empresa" descricao="O e-mail informado vira o acesso do responsável da empresa ao portal.">
+          <JanelaLateral textoBotao="Convidar empresa" titulo="Convidar empresa" descricao="O e-mail informado vira o acesso do responsável ao portal. Se o CNPJ já estiver cadastrado, aparecem os documentos que a empresa já tem aprovados.">
             {(obras ?? []).length === 0 ? (
               <p className="text-[14px] text-muted-foreground">Cadastre uma obra em Administração antes de convidar empresas.</p>
             ) : (
-              <Formulario acao={convidarEmpresa} textoBotao="Enviar convite à empresa">
-                <CampoTexto nome="razao" rotulo="Razão social" />
-                <CampoCnpj />
-                <CampoTexto nome="email" rotulo="E-mail do responsável" tipo="email" />
-                <CampoTelefone />
-                <CampoSelecao nome="obra" rotulo="Obra" placeholder="Escolha a obra" opcoes={(obras ?? []).map((o) => ({ value: o.id, label: o.nome }))} />
-              </Formulario>
+              <ConviteEmpresa convidar={convidarEmpresa} obras={(obras ?? []).map((o) => ({ value: o.id, label: o.nome }))} />
             )}
           </JanelaLateral>
         )}

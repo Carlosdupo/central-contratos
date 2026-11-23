@@ -11,7 +11,9 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarData } from "@/lib/datas";
 import { Avatar } from "@/components/app/avatar";
 import { BotaoAbrir } from "@/components/app/documentos";
-import { baixarFotoPessoa } from "@/modules/terceiros/acoes-rh";
+import { aproveitarDocumento, baixarFotoPessoa } from "@/modules/terceiros/acoes-rh";
+import { Formulario } from "@/components/app/formulario";
+import { agoraNoFuso } from "@/lib/datas";
 import { ListaDocumentosPessoa } from "@/components/app/lista-documentos-pessoa";
 
 export const metadata: Metadata = { title: "Pessoa" };
@@ -27,7 +29,20 @@ export default async function PaginaPessoaInterna({ params }: PageProps<"/tercei
     documentosDoVinculo(vinculoId),
   ]);
   if (!v || !v.pessoas || !dados) notFound();
-  const [{ data: cpf }, fotos] = await Promise.all([supabase.rpc("cpf_mascarado", { p_pessoa: v.pessoas.id }), linksDasFotos([v.pessoas.foto_path])]);
+  const [{ data: cpf }, fotos, { data: deOutras }] = await Promise.all([
+    supabase.rpc("cpf_mascarado", { p_pessoa: v.pessoas.id }),
+    linksDasFotos([v.pessoas.foto_path]),
+    supabase
+      .from("documentos")
+      .select("id, tipo_documento, data_validade, tipos_documento!inner(nome, responsavel, aproveitavel), vinculos!inner(pessoa_id, empresas_terceiras(razao_social))")
+      .eq("vinculos.pessoa_id", v.pessoas.id)
+      .eq("tipos_documento.aproveitavel", true)
+      .eq("situacao", "aprovado")
+      .neq("vinculo_id", vinculoId),
+  ]);
+  const hoje = agoraNoFuso().data;
+  const estadoAqui = new Map(dados.itens.map((i) => [i.tipo.codigo, i.estado]));
+  const aproveitaveis = (deOutras ?? []).filter((d) => !d.data_validade || d.data_validade >= hoje);
 
   // Mesmas regras da RLS: dado de saúde só RH/SST; demais arquivos para quem trata documentos.
   const saude = temAlgumPapel(usuario.papeis, ["rh", "sst"]);
@@ -56,6 +71,43 @@ export default async function PaginaPessoaInterna({ params }: PageProps<"/tercei
             <ListaDocumentosPessoa vinculoId={vinculoId} itens={dados.itens} editavel={false} podeAbrir={(sensivel) => (sensivel ? saude : comum)} />
           )}
         </section>
+        <div className="flex flex-col gap-5">
+        {aproveitaveis.length > 0 && (
+          <section className="painel">
+            <div>
+              <h2 className="subtitulo">Aprovados em outra empresa</h2>
+              <p className="mt-1 text-[13px] text-muted-foreground">RG/CNH e certificados de NR da pessoa. Quem analisa o tipo decide se aproveita; a validade continua a mesma.</p>
+            </div>
+            <div className="lista-agrupada">
+              {aproveitaveis.map((d) => {
+                const nome = d.tipos_documento.nome;
+                const empresa = d.vinculos.empresas_terceiras?.razao_social ?? "outra empresa";
+                const jaTem = ["aprovado", "enviado"].includes(estadoAqui.get(d.tipo_documento) ?? "");
+                const podeDecidir = usuario.papeis.includes(d.tipos_documento.responsavel as "rh" | "sst");
+                return (
+                  <div key={d.id} className="flex flex-col gap-2 px-3.5 py-2.5">
+                    <span>
+                      {nome}
+                      <span className="block text-xs text-muted-foreground">{empresa}{d.data_validade ? ` · vale até ${formatarData(d.data_validade)}` : ""}</span>
+                    </span>
+                    {jaTem ? (
+                      <span className="text-[13px] text-muted-foreground">Já aprovado ou em análise nesta empresa.</span>
+                    ) : podeDecidir ? (
+                      <Formulario
+                        acao={aproveitarDocumento.bind(null, d.id, vinculoId)}
+                        textoBotao={`Aproveitar ${nome}`}
+                        variante="neutro"
+                        confirmar={`O documento aprovado em ${empresa} passa a valer para esta empresa, com a mesma validade.`}
+                      />
+                    ) : (
+                      <span className="text-[13px] text-muted-foreground">{d.tipos_documento.responsavel === "sst" ? "Decisão da Segurança do Trabalho." : "Decisão do RH."}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
         <section className="painel">
           <h2 className="subtitulo">Situação por obra</h2>
           <div className="lista-agrupada">
@@ -74,6 +126,7 @@ export default async function PaginaPessoaInterna({ params }: PageProps<"/tercei
             })}
           </div>
         </section>
+        </div>
       </div>
     </>
   );

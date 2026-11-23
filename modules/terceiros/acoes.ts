@@ -13,7 +13,7 @@ import { mensagemDeErro, type EstadoFormulario } from "@/lib/formulario";
 import { reenviarAcesso } from "@/modules/acesso/reenvio";
 import { convidarResponsavel } from "./acesso-portal";
 import { documentosDaEmpresa, documentosDoVinculo } from "./consultas";
-import { podeEnviarAlgumaEtapa } from "./dominio/documentos";
+import { podeEnviarAlgumaEtapa, vaiParaObraNova, type EmpresaExistente } from "./dominio/documentos";
 
 const BUCKET = "documentos";
 const TAMANHO_MAXIMO = 10 * 1024 * 1024;
@@ -29,8 +29,35 @@ const esquemaEmpresa = z.object({
   obra: z.uuid("Escolha a obra."),
 });
 
-export async function convidarEmpresa(_: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
+async function empresaJaCadastrada(cnpj: string): Promise<EmpresaExistente | null> {
+  const supabase = await criarClienteServidor();
+  const { data: e } = await supabase
+    .from("empresas_terceiras")
+    .select("id, razao_social, situacao, empresa_obras(ativo, obras(nome))")
+    .eq("cnpj", cnpj)
+    .maybeSingle();
+  if (!e) return null;
+  const { itens } = await documentosDaEmpresa(e.id);
+  return {
+    id: e.id,
+    razao: e.razao_social,
+    situacao: e.situacao,
+    obras: (e.empresa_obras ?? []).filter((l) => l.ativo).map((l) => l.obras?.nome ?? "").filter(Boolean),
+    aprovados: itens.filter((i) => i.estado === "aprovado").map((i) => ({ codigo: i.tipo.codigo, nome: i.tipo.nome, validade: i.validade })),
+    pendentes: itens.filter((i) => i.estado !== "aprovado").map((i) => ({ codigo: i.tipo.codigo, nome: i.tipo.nome })),
+  };
+}
+
+export async function convidarEmpresa(
+  _: EstadoFormulario,
+  dados: FormData,
+): Promise<EstadoFormulario & { empresaExistente?: EmpresaExistente }> {
   await exigirPapel("admin", "suprimentos", "gerente_suprimentos", "contratos");
+  const cnpjLido = esquemaEmpresa.shape.cnpj.safeParse(dados.get("cnpj") ?? "");
+  if (cnpjLido.success) {
+    const existente = await empresaJaCadastrada(cnpjLido.data);
+    if (existente) return { erro: "Esta empresa já está cadastrada. Veja abaixo o que ela já tem aprovado.", empresaExistente: existente };
+  }
   const lido = esquemaEmpresa.safeParse({
     razao: dados.get("razao"),
     cnpj: dados.get("cnpj") ?? "",
@@ -244,7 +271,9 @@ export async function enviarDocumentosPessoa(vinculo: string): Promise<EstadoFor
   const { empresaId } = await exigirExterno();
   if (!z.uuid().safeParse(vinculo).success || !(await vinculoDaEmpresa(vinculo, empresaId))) return { erro: "Pessoa não encontrada." };
   const dados = await documentosDoVinculo(vinculo);
-  if (!dados || !podeEnviarAlgumaEtapa(dados.itens)) return { erro: "Anexe todos os documentos pendentes antes de enviar." };
+  if (!dados || !(podeEnviarAlgumaEtapa(dados.itens) || vaiParaObraNova(dados.vinculo.alocacoes ?? [], dados.itens))) {
+    return { erro: "Anexe todos os documentos pendentes antes de enviar." };
+  }
   const supabase = await criarClienteServidor();
   const { error } = await supabase.rpc("enviar_documentos_pessoa", { p_vinculo: vinculo });
   if (error) return { erro: mensagemDeErro(error, "Não foi possível enviar.") };

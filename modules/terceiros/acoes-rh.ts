@@ -33,6 +33,16 @@ export async function aprovarDocumento(itemId: string): Promise<EstadoFormulario
   return {};
 }
 
+export async function aproveitarDocumento(origemId: string, vinculoId: string): Promise<EstadoFormulario> {
+  await exigirPapel("rh", "sst");
+  if (!uuid.safeParse(origemId).success || !uuid.safeParse(vinculoId).success) return { erro: "Documento inválido." };
+  const supabase = await criarClienteServidor();
+  const { error } = await supabase.rpc("aproveitar_documento", { p_origem: origemId, p_vinculo: vinculoId });
+  if (error) return { erro: mensagemDeErro(error, "Não foi possível aproveitar o documento.") };
+  revalidatePath(`/terceiros/pessoas/${vinculoId}`);
+  return { ok: "Documento aproveitado." };
+}
+
 export async function reprovarDocumento(itemId: string, _: EstadoFormulario, dados: FormData): Promise<EstadoFormulario> {
   await exigirPapel("rh", "sst");
   if (!uuid.safeParse(itemId).success) return { erro: "Item inválido." };

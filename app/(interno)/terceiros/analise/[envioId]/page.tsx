@@ -68,7 +68,9 @@ export default async function PaginaAnaliseEnvio({ params }: PageProps<"/terceir
         <section className="painel">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="max-w-[60ch] text-[13px] text-muted-foreground">
-              {faltam
+              {d.itens.length === 0
+                ? "Sem documento novo: a pessoa já tem tudo aprovado e vai para mais uma obra. Conclua para marcar a integração."
+                : faltam
                 ? `Faltam ${faltam} documentos. A análise pode ser concluída quando RH e Segurança decidirem todos.`
                 : "Tudo decidido. Ao concluir, a empresa recebe o resultado e, se aprovado, a data da integração."}
             </p>

@@ -17,6 +17,7 @@ import { Input } from "@ui-sdk/react/input";
 import { Radio, RadioGroup, RadioIndicator } from "@ui-sdk/react/radio";
 import { Select, SelectContent, SelectGroup, SelectGroupLabel, SelectItem, SelectTrigger, SelectValue } from "@ui-sdk/react/select";
 import type { EstadoFormulario } from "@/lib/formulario";
+import type { EmpresaExistente } from "@/modules/terceiros/dominio/documentos";
 
 // Peças de formulário do Nexus sobre o UI SDK: o comportamento (teclado, foco, ARIA, agentes) vem do UI SDK,
 // o visual vem dos tokens do Nexus (app/globals.css, pelos data-slot).
@@ -31,7 +32,7 @@ const CLASSE_BOTAO: Record<Variante, string> = {
 };
 
 // Estado de uma ação: erro/ok e, nas ações que devolvem um dado para mostrar uma vez (a senha provisória), esse dado.
-type EstadoDaAcao = EstadoFormulario & { senha?: string; email?: string };
+type EstadoDaAcao = EstadoFormulario & { senha?: string; email?: string; empresaExistente?: EmpresaExistente };
 
 type Props = {
   // Sintaxe de método de propósito: aceita ações que declaram só parte do estado (EstadoFormulario ou EstadoSenha).
