@@ -1542,6 +1542,53 @@ export type Database = {
           },
         ]
       }
+      solicitacoes_sienge: {
+        Row: {
+          atualizado_em: string
+          atualizado_por: string | null
+          conta_financeira: string | null
+          criado_em: string
+          criado_por: string
+          id: string
+          itens: Json
+          obra_id: string
+          titulo: string
+          unidade_construtiva: string | null
+        }
+        Insert: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          conta_financeira?: string | null
+          criado_em?: string
+          criado_por?: string
+          id?: string
+          itens?: Json
+          obra_id: string
+          titulo: string
+          unidade_construtiva?: string | null
+        }
+        Update: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          conta_financeira?: string | null
+          criado_em?: string
+          criado_por?: string
+          id?: string
+          itens?: Json
+          obra_id?: string
+          titulo?: string
+          unidade_construtiva?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitacoes_sienge_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       negociacoes: {
         Row: {
           atividades: string | null

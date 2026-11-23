@@ -49,6 +49,7 @@ export default async function LayoutInterno({ children }: LayoutProps<"/">) {
         { href: "/apoio/calendario", rotulo: "Calendário de suprimentos", icone: <IconePanorama /> },
         { href: "/apoio/planilha/mo", rotulo: "Planilha suprimentos MO", icone: <IconeContratos /> },
         { href: "/apoio/planilha/mat", rotulo: "Planilha suprimentos MAT", icone: <IconeContratos /> },
+        { href: "/apoio/solicitacao-sienge", rotulo: "Solicitação Sienge", icone: <IconeContratos /> },
         { href: "/apoio/matriz", rotulo: "Matriz de contratação", icone: <IconeContratos /> },
       ],
     },

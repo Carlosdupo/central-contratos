@@ -14,6 +14,7 @@ Uma página por perfil: o que a pessoa faz, onde e o que recebe de aviso. Vale p
 3. A abertura já conclui a etapa 1. Você registra as **cotações** (pelo menos uma, até 3), a negociação (se o orçamento é menor que R$ 4.000 a obra pode negociar), a **solicitação no Sienge** e a **alçada**.
 4. Aditivo: não há cotações; informe o fornecedor e o valor negociado.
 5. **Mais ações → Cancelar contratação** (administrador e coordenador): pede o motivo.
+6. **Apoio → Solicitação Sienge** (coordenador e auxiliar): crie a solicitação (ex.: BL0087), abra os serviços da EAP, escreva os itens (descrição, código do serviço, quantidade, unidade, preço de mão de obra e de material; **Repetir por pavimento** cria um item por andar) e clique em **Baixar CSV do Sienge** para importar. A unidade construtiva e a conta financeira ficam no topo e são lembradas na próxima solicitação; o código do serviço é lembrado por serviço da EAP. Outras áreas só veem e baixam.
 
 ## Auxiliar de obra
 - Vê a obra, abre a solicitação e faz as etapas até a 3 (cotações e primeira negociação). A etapa 4 em diante é só do coordenador. Não cancela nem assina. Aparece no menu como "Ana - Auxiliar Block". Quem cadastra: administrador, em Usuários.
